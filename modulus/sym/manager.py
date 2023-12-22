@@ -120,7 +120,7 @@ class GraphManager(object):
 
         # Set the defaults
         if not hasattr(obj, "_func_arch"):
-            obj._func_arch = True
+            obj._func_arch = False
         # TODO we should have a debug flag in the global ModulusManager
         # in the future
         if not hasattr(obj, "_debug"):

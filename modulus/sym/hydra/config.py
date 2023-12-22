@@ -48,11 +48,11 @@ class ModulusConfig:
     save_filetypes: str = "vtk"
     summary_histograms: bool = False
     jit: bool = False
-    jit_use_nvfuser: bool = True
+    jit_use_nvfuser: bool = False
     jit_arch_mode: str = "only_activation"
     jit_autograd_nodes: bool = False
 
-    cuda_graphs: bool = True
+    cuda_graphs: bool = False
     cuda_graph_warmup: int = 20
     find_unused_parameters: bool = False
     broadcast_buffers: bool = False
