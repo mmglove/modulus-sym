@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-from torch.utils.data import DataLoader, Dataset
+import paddle
+from paddle. io import DataLoader, Dataset
 import numpy as np
 
 from sympy import Symbol, Eq, Abs, sin, cos

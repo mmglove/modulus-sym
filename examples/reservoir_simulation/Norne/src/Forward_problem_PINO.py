@@ -14,11 +14,11 @@
 
 from NVRS import *
 
-torch.cuda.empty_cache()
-torch.set_default_dtype(torch.float32)
+paddle.device.cuda.empty_cache()
+paddle.set_default_dtype("float32")
 import modulus
 
-# import torch
+# import paddle
 import gc
 from modulus.sym.hydra import ModulusConfig
 
@@ -41,7 +41,7 @@ from skimage.transform import resize
 import requests
 
 from typing import Dict
-import torch.nn.functional as F
+import paddle.nn.functional as F
 from ops import dx, ddx, compute_gradient_3d, compute_second_order_gradient_3d
 from modulus.sym.utils.io.plotter import ValidatorPlotter
 from typing import Union, Tuple
@@ -55,7 +55,7 @@ def dx1(inpt, dx, channel, dim, order=1, padding="zeros"):
 
     # get filter
     if order == 1:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 -0.5,
                 0.0,
@@ -63,7 +63,7 @@ def dx1(inpt, dx, channel, dim, order=1, padding="zeros"):
             ]
         ).to(inpt.device)
     elif order == 3:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 -1.0 / 60.0,
                 3.0 / 20.0,
@@ -74,7 +74,7 @@ def dx1(inpt, dx, channel, dim, order=1, padding="zeros"):
                 1.0 / 60.0,
             ]
         ).to(inpt.device)
-    ddx3D = torch.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
+    ddx3D = paddle.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
 
     # apply convolution
     if padding == "zeros":
@@ -98,7 +98,7 @@ def ddx1(inpt, dx, channel, dim, order=1, padding="zeros"):
 
     # get filter
     if order == 1:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 1.0,
                 -2.0,
@@ -106,7 +106,7 @@ def ddx1(inpt, dx, channel, dim, order=1, padding="zeros"):
             ]
         ).to(inpt.device)
     elif order == 3:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 1.0 / 90.0,
                 -3.0 / 20.0,
@@ -117,7 +117,7 @@ def ddx1(inpt, dx, channel, dim, order=1, padding="zeros"):
                 1.0 / 90.0,
             ]
         ).to(inpt.device)
-    ddx3D = torch.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
+    ddx3D = paddle.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
 
     # apply convolution
     if padding == "zeros":
@@ -162,7 +162,7 @@ def to_absolute_path_and_create(
     return out
 
 
-torch.set_default_dtype(torch.float32)
+paddle.set_default_dtype("float32")
 
 
 def download_file_from_google_drive(id, destination):
@@ -245,7 +245,7 @@ def compute_peacemannoil(
     pressure,
     permeability,
 ):
-    qoil = torch.zeros_like(sgas).to(device)
+    qoil = paddle.zeros_like(sgas).to(device)
     skin = 0
     rwell = 200
     pwf_producer = 100
@@ -258,11 +258,11 @@ def compute_peacemannoil(
         BO_val = calc_bo(p_bub, p_atm, CFO, pre1.mean())
         up = UO * BO_val
         perm1 = permeability[i, 0, :, k, l]
-        down = 2 * torch.pi * perm1 * kro * DZ
-        right = torch.log(RE / rwell) + skin
+        down = 2 * paddle.pi * perm1 * kro * DZ
+        right = paddle.log(RE / rwell) + skin
         J = down / (up * right)
         drawdown = pre1.mean() - pwf_producer
-        qoil1 = torch.abs(-(drawdown * J))
+        qoil1 = paddle.abs(-(drawdown * J))
         return -qoil1
 
     locations = [
@@ -300,7 +300,7 @@ def compute_peacemannoil(
     return qoil
 
 
-class Black_oil_peacemann(torch.nn.Module):
+class Black_oil_peacemann(paddle.nn.Layer):
     def __init__(
         self,
         UO,
@@ -334,7 +334,7 @@ class Black_oil_peacemann(torch.nn.Module):
         self.steppi = steppi
         self.CFO = CFO
 
-    def forward(self, input_var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, input_var: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
 
         in_var = input_var["X"]
         out_var = input_var["Y"]
@@ -344,8 +344,8 @@ class Black_oil_peacemann(torch.nn.Module):
         spit = []
         N = in_var.shape[0]
         pwf_producer = 100
-        spit = torch.zeros(N, 66, self.steppi).to(self.device)
-        # loss_rest = torch.zeros(self.steppi,13).to(self.device)
+        spit = paddle.zeros(N, 66, self.steppi).to(self.device)
+        # loss_rest = paddle.zeros(self.steppi,13).to(self.device)
         for clement in range(N):
 
             inn = in_var[clement, :, :].T * self.max_inn_fcn
@@ -368,23 +368,23 @@ class Black_oil_peacemann(torch.nn.Module):
             # krw,kro,krg = StoneIIModel (paramz,device,gas,water)
             BO = calc_bo(self.p_bub, self.p_atm, self.CFO, pressure.mean())
             up = self.UO * BO
-            down = 2 * torch.pi * permeability * kro * self.DZ
-            right = torch.log(self.RE / rwell) + skin
+            down = 2 * paddle.pi * permeability * kro * self.DZ
+            right = paddle.log(self.RE / rwell) + skin
             J = down / (up * right)
             # drawdown = p_prod - pwf_producer
             drawdown = pressure.mean() - pwf_producer
-            qoil = torch.abs(-(drawdown * J))
+            qoil = paddle.abs(-(drawdown * J))
             loss_oil = qoil - oil_rate
             loss_oil = ((loss_oil)) / N
 
             # Compute water rate loss
             up = self.UW * self.BW
-            down = 2 * torch.pi * permeability * krw * self.DZ
-            right = torch.log(self.RE / rwell) + skin
+            down = 2 * paddle.pi * permeability * krw * self.DZ
+            right = paddle.log(self.RE / rwell) + skin
             J = down / (up * right)
             # drawdown = p_prod - pwf_producer
             drawdown = pressure.mean() - pwf_producer
-            qwater = torch.abs(-(drawdown * J))
+            qwater = paddle.abs(-(drawdown * J))
             loss_water = qwater - water_rate
             loss_water = ((loss_water)) / N
 
@@ -393,16 +393,16 @@ class Black_oil_peacemann(torch.nn.Module):
             BG = calc_bg(self.p_bub, self.p_atm, pressure.mean())
 
             up = UG * BG
-            down = 2 * torch.pi * permeability * krg * self.DZ
-            right = torch.log(self.RE / rwell) + skin
+            down = 2 * paddle.pi * permeability * krg * self.DZ
+            right = paddle.log(self.RE / rwell) + skin
             J = down / (up * right)
             # drawdown = p_prod - pwf_producer
             drawdown = pressure.mean() - pwf_producer
-            qgas = torch.abs(-(drawdown * J))
+            qgas = paddle.abs(-(drawdown * J))
             loss_gas = qgas - gas_rate
             loss_gas = ((loss_gas)) / N
 
-            overall_loss = torch.cat((loss_oil, loss_water, loss_gas), dim=1)
+            overall_loss = paddle.cat((loss_oil, loss_water, loss_gas), dim=1)
             overall_loss = overall_loss.T
 
             # print(overall_loss.shape)
@@ -414,7 +414,7 @@ class Black_oil_peacemann(torch.nn.Module):
         return output_var
 
 
-class Black_oil(torch.nn.Module):
+class Black_oil(paddle.nn.Layer):
     "Custom Black oil PDE definition for PINO"
 
     def __init__(
@@ -478,7 +478,7 @@ class Black_oil(torch.nn.Module):
         self.max_out_fcn = max_out_fcn
         self.DZ = DZ
 
-    def forward(self, input_var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, input_var: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
 
         u = input_var["pressure"]
         perm = input_var["perm"]
@@ -517,17 +517,17 @@ class Black_oil(torch.nn.Module):
 
         # Pressure equation Loss
         cuda = 0
-        device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+        device = paddle.device(f"cuda:{cuda}" if paddle.device.cuda.device_count() >= 1 else "cpu")
 
         # print(pressurey.shape)
-        p_loss = torch.zeros_like(u).to(device, torch.float32)
-        s_loss = torch.zeros_like(u).to(device, torch.float32)
+        p_loss = paddle.zeros_like(u).to(device, paddle.float32)
+        s_loss = paddle.zeros_like(u).to(device, paddle.float32)
 
         finusew = finwater
 
-        prior_pressure = torch.zeros(
+        prior_pressure = paddle.zeros(
             sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny
-        ).to(device, torch.float32)
+        ).to(device, paddle.float32)
         prior_pressure[:, 0, :, :, :] = pini[:, 0, :, :, :]
         prior_pressure[:, 1:, :, :, :] = u[:, :-1, :, :, :]
 
@@ -541,62 +541,62 @@ class Black_oil(torch.nn.Module):
         BG = calc_bg(self.p_bub, self.p_atm, avg_p)
         BO = calc_bo(self.p_bub, self.p_atm, self.CFO, avg_p)
 
-        avg_p = torch.where(
-            torch.isnan(avg_p), torch.tensor(0.0, device=avg_p.device), avg_p
+        avg_p = paddle.where(
+            paddle.isnan(avg_p), paddle.to_tensor(0.0, device=avg_p.device), avg_p
         )
-        avg_p = torch.where(
-            torch.isinf(avg_p), torch.tensor(0.0, device=avg_p.device), avg_p
+        avg_p = paddle.where(
+            paddle.isinf(avg_p), paddle.to_tensor(0.0, device=avg_p.device), avg_p
         )
 
-        UG = torch.where(torch.isnan(UG), torch.tensor(0.0, device=UG.device), UG)
-        UG = torch.where(torch.isinf(UG), torch.tensor(0.0, device=UG.device), UG)
+        UG = paddle.where(paddle.isnan(UG), paddle.to_tensor(0.0, device=UG.device), UG)
+        UG = paddle.where(paddle.isinf(UG), paddle.to_tensor(0.0, device=UG.device), UG)
 
-        BG = torch.where(torch.isnan(BG), torch.tensor(0.0, device=BG.device), BG)
-        BG = torch.where(torch.isinf(BG), torch.tensor(0.0, device=BG.device), BG)
+        BG = paddle.where(paddle.isnan(BG), paddle.to_tensor(0.0, device=BG.device), BG)
+        BG = paddle.where(paddle.isinf(BG), paddle.to_tensor(0.0, device=BG.device), BG)
 
-        RS = torch.where(torch.isnan(RS), torch.tensor(0.0, device=RS.device), RS)
-        RS = torch.where(torch.isinf(RS), torch.tensor(0.0, device=RS.device), RS)
+        RS = paddle.where(paddle.isnan(RS), paddle.to_tensor(0.0, device=RS.device), RS)
+        RS = paddle.where(paddle.isinf(RS), paddle.to_tensor(0.0, device=RS.device), RS)
 
-        BO = torch.where(torch.isnan(BO), torch.tensor(0.0, device=BO.device), BO)
-        BO = torch.where(torch.isinf(BO), torch.tensor(0.0, device=BO.device), BO)
+        BO = paddle.where(paddle.isnan(BO), paddle.to_tensor(0.0, device=BO.device), BO)
+        BO = paddle.where(paddle.isinf(BO), paddle.to_tensor(0.0, device=BO.device), BO)
 
         # dsp = u - prior_pressure  #dp
 
-        prior_sat = torch.zeros(
+        prior_sat = paddle.zeros(
             sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny
-        ).to(device, torch.float32)
+        ).to(device, paddle.float32)
         prior_sat[:, 0, :, :, :] = siniuse * (
-            torch.ones(sat.shape[0], self.nz, self.nx, self.ny).to(
-                device, torch.float32
+            paddle.ones(sat.shape[0], self.nz, self.nx, self.ny).to(
+                device, paddle.float32
             )
         )
         prior_sat[:, 1:, :, :, :] = sat[:, :-1, :, :, :]
 
-        prior_gas = torch.zeros(
+        prior_gas = paddle.zeros(
             sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny
-        ).to(device, torch.float32)
-        prior_gas[:, 0, :, :, :] = torch.zeros(
+        ).to(device, paddle.float32)
+        prior_gas[:, 0, :, :, :] = paddle.zeros(
             sat.shape[0], self.nz, self.nx, self.ny
-        ).to(device, torch.float32)
+        ).to(device, paddle.float32)
         prior_gas[:, 1:, :, :, :] = satg[:, :-1, :, :, :]
 
-        prior_time = torch.zeros(
+        prior_time = paddle.zeros(
             sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny
-        ).to(device, torch.float32)
-        prior_time[:, 0, :, :, :] = torch.zeros(
+        ).to(device, paddle.float32)
+        prior_time[:, 0, :, :, :] = paddle.zeros(
             sat.shape[0], self.nz, self.nx, self.ny
-        ).to(device, torch.float32)
+        ).to(device, paddle.float32)
         prior_time[:, 1:, :, :, :] = dt[:, :-1, :, :, :]
 
         dsw = sat - prior_sat  # ds
-        # dsw = torch.clip(dsw,0.001,None)
+        # dsw = paddle.clip(dsw,0.001,None)
 
         # dsg = satg - prior_gas #ds
-        # dsg = torch.clip(dsg,0.001,None)
+        # dsg = paddle.clip(dsg,0.001,None)
 
         dtime = dt - prior_time  # ds
-        dtime[torch.isnan(dtime)] = 0
-        dtime[torch.isinf(dtime)] = 0
+        dtime[paddle.isnan(dtime)] = 0
+        dtime[paddle.isinf(dtime)] = 0
 
         # Pressure equation Loss
 
@@ -604,38 +604,38 @@ class Black_oil(torch.nn.Module):
         if self.Relperm == 1:
             one_minus_swi_swr = 1 - (self.SWI + self.SWR)
 
-            soa = torch.divide(
+            soa = paddle.divide(
                 (1 - (prior_sat + prior_gas) - self.SWR), one_minus_swi_swr
             )
-            swa = torch.divide((prior_sat - self.SWI), one_minus_swi_swr)
-            sga = torch.divide(prior_gas, one_minus_swi_swr)
+            swa = paddle.divide((prior_sat - self.SWI), one_minus_swi_swr)
+            sga = paddle.divide(prior_gas, one_minus_swi_swr)
 
             KROW = linear_interp(prior_sat, self.SWOW[:, 0], self.SWOW[:, 1])
             KRW = linear_interp(prior_sat, self.SWOW[:, 0], self.SWOW[:, 2])
             KROG = linear_interp(prior_gas, self.SWOG[:, 0], self.SWOG[:, 1])
             KRG = linear_interp(prior_gas, self.SWOG[:, 0], self.SWOG[:, 2])
 
-            KRO = (torch.divide(KROW, (1 - swa)) * torch.divide(KROG, (1 - sga))) * soa
+            KRO = (paddle.divide(KROW, (1 - swa)) * paddle.divide(KROG, (1 - sga))) * soa
         else:
             KRW, KRO, KRG = StoneIIModel(self.params, device, prior_gas, prior_sat)
 
-        Mw = torch.divide(KRW, (self.UW * self.BW))
-        Mo = torch.divide(KRO, (self.UO * BO))
-        Mg = torch.divide(KRG, (UG * BG))
+        Mw = paddle.divide(KRW, (self.UW * self.BW))
+        Mo = paddle.divide(KRO, (self.UO * BO))
+        Mg = paddle.divide(KRG, (UG * BG))
 
-        Mg[torch.isnan(Mg)] = 0
-        Mg[torch.isinf(Mg)] = 0
+        Mg[paddle.isnan(Mg)] = 0
+        Mg[paddle.isinf(Mg)] = 0
 
-        Mw = torch.where(torch.isnan(Mw), torch.tensor(0.0, device=Mw.device), Mw)
-        Mw = torch.where(torch.isinf(Mw), torch.tensor(0.0, device=Mw.device), Mw)
+        Mw = paddle.where(paddle.isnan(Mw), paddle.to_tensor(0.0, device=Mw.device), Mw)
+        Mw = paddle.where(paddle.isinf(Mw), paddle.to_tensor(0.0, device=Mw.device), Mw)
 
-        Mo = torch.where(torch.isnan(Mo), torch.tensor(0.0, device=Mo.device), Mo)
-        Mo = torch.where(torch.isinf(Mo), torch.tensor(0.0, device=Mo.device), Mo)
+        Mo = paddle.where(paddle.isnan(Mo), paddle.to_tensor(0.0, device=Mo.device), Mo)
+        Mo = paddle.where(paddle.isinf(Mo), paddle.to_tensor(0.0, device=Mo.device), Mo)
 
-        Mg = torch.where(torch.isnan(Mg), torch.tensor(0.0, device=Mg.device), Mg)
-        Mg = torch.where(torch.isinf(Mg), torch.tensor(0.0, device=Mg.device), Mg)
+        Mg = paddle.where(paddle.isnan(Mg), paddle.to_tensor(0.0, device=Mg.device), Mg)
+        Mg = paddle.where(paddle.isinf(Mg), paddle.to_tensor(0.0, device=Mg.device), Mg)
 
-        Mt = torch.add(torch.add(torch.add(Mw, Mo), Mg), Mo * RS)
+        Mt = paddle.add(paddle.add(paddle.add(Mw, Mo), Mg), Mo * RS)
 
         a1 = Mt * a * fault  # overall Effective permeability
         a1water = Mw * a * fault  # water Effective permeability
@@ -711,7 +711,7 @@ class Black_oil(torch.nn.Module):
 
             fin = finoil + fingas + finwater
 
-            darcy_pressure = torch.mul(
+            darcy_pressure = paddle.mul(
                 actnum,
                 (
                     fin
@@ -775,8 +775,8 @@ class Black_oil(torch.nn.Module):
                 + finusew
             )
 
-            darcy_saturation = torch.mul(
-                actnum, (poro * torch.divide(dsw, dtime) - inner_diff)
+            darcy_saturation = paddle.mul(
+                actnum, (poro * paddle.divide(dsw, dtime) - inner_diff)
             )
 
             # Zero outer boundary
@@ -862,15 +862,15 @@ class Black_oil(torch.nn.Module):
                 - 9 * fingas
             )
 
-            div_term = torch.divide(
-                torch.mul(
+            div_term = paddle.divide(
+                paddle.mul(
                     poro,
-                    (torch.divide(satg, BG) + torch.mul(torch.divide(sato, BO), RS)),
+                    (paddle.divide(satg, BG) + paddle.mul(paddle.divide(sato, BO), RS)),
                 ),
                 dtime,
             )
 
-            darcy_saturationg = torch.mul(actnum, (inner_sum + div_term))
+            darcy_saturationg = paddle.mul(actnum, (inner_sum + div_term))
 
             sg_loss = dxf * darcy_saturationg * 1e-10
 
@@ -894,16 +894,16 @@ class Black_oil(torch.nn.Module):
                     )
                     gulp.append(dudx_fdma)
                     gulp2.append(dudy_fdma)
-                check = torch.stack(gulp, 2)[:, 0, :, :, :]
-                check2 = torch.stack(gulp2, 2)[:, 0, :, :]
+                check = paddle.stack(gulp, 2)[:, 0, :, :, :]
+                check2 = paddle.stack(gulp2, 2)[:, 0, :, :]
                 gulpa.append(check)
                 gulp2a.append(check2)
-            dudx_fdm = torch.stack(gulpa, 0)
+            dudx_fdm = paddle.stack(gulpa, 0)
             dudx_fdm = dudx_fdm.clamp(
                 min=1e-10
             )  # ensures that all values are at least 1e-10
 
-            dudy_fdm = torch.stack(gulp2a, 0)
+            dudy_fdm = paddle.stack(gulp2a, 0)
             dudy_fdm = dudy_fdm.clamp(min=1e-10)
 
             # Compute second diffrential
@@ -923,13 +923,13 @@ class Black_oil(torch.nn.Module):
                     )
                     gulp.append(dudx_fdma)
                     gulp2.append(dudy_fdma)
-                check = torch.stack(gulp, 2)[:, 0, :, :, :]
-                check2 = torch.stack(gulp2, 2)[:, 0, :, :]
+                check = paddle.stack(gulp, 2)[:, 0, :, :, :]
+                check2 = paddle.stack(gulp2, 2)[:, 0, :, :]
                 gulpa.append(check)
                 gulp2a.append(check2)
-            dduddx_fdm = torch.stack(gulpa, 0)
+            dduddx_fdm = paddle.stack(gulpa, 0)
             dduddx_fdm = dduddx_fdm.clamp(min=1e-10)
-            dduddy_fdm = torch.stack(gulp2a, 0)
+            dduddy_fdm = paddle.stack(gulp2a, 0)
             dduddy_fdm = dduddy_fdm.clamp(min=1e-10)
 
             gulp = []
@@ -944,9 +944,9 @@ class Black_oil(torch.nn.Module):
                 )
                 gulp.append(dudx_fdma)
                 gulp2.append(dudy_fdma)
-            dcdx = torch.stack(gulp, 2)
+            dcdx = paddle.stack(gulp, 2)
             dcdx = dcdx.clamp(min=1e-10)
-            dcdy = torch.stack(gulp2, 2)
+            dcdy = paddle.stack(gulp2, 2)
             dcdy = dcdy.clamp(min=1e-10)
 
             actnum = replace_nan_with_zero(actnum)
@@ -961,30 +961,30 @@ class Black_oil(torch.nn.Module):
 
             # Expand dcdx
             # dss = dcdx
-            dsout = torch.zeros(
+            dsout = paddle.zeros(
                 (sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny)
-            ).to(device, torch.float32)
+            ).to(device, paddle.float32)
             for k in range(dcdx.shape[0]):
                 see = dcdx[k, :, :, :, :]
                 gulp = []
                 for i in range(sat.shape[1]):
                     gulp.append(see)
 
-                checkken = torch.vstack(gulp)
+                checkken = paddle.vstack(gulp)
                 dsout[k, :, :, :, :] = checkken
 
             dcdx = dsout
 
-            dsout = torch.zeros(
+            dsout = paddle.zeros(
                 (sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny)
-            ).to(device, torch.float32)
+            ).to(device, paddle.float32)
             for k in range(dcdx.shape[0]):
                 see = dcdy[k, :, :, :, :]
                 gulp = []
                 for i in range(sat.shape[1]):
                     gulp.append(see)
 
-                checkken = torch.vstack(gulp)
+                checkken = paddle.vstack(gulp)
                 dsout[k, :, :, :, :] = checkken
 
             dcdy = dsout
@@ -1022,9 +1022,9 @@ class Black_oil(torch.nn.Module):
 
             # Zero outer boundary
             # darcy_pressure = F.pad(darcy_pressure[:, :, 2:-2, 2:-2], [2, 2, 2, 2], "constant", 0)
-            # p_loss = dxf * torch.mul(actnum,darcy_pressure) * 1e-10
-            p_loss = torch.mul(actnum, darcy_pressure)
-            p_loss = (torch.abs(p_loss)) / sat.shape[0]
+            # p_loss = dxf * paddle.mul(actnum,darcy_pressure) * 1e-10
+            p_loss = paddle.mul(actnum, darcy_pressure)
+            p_loss = (paddle.abs(p_loss)) / sat.shape[0]
             # p_loss = p_loss.reshape(1, 1)
             p_loss = dxf * p_loss * 1e-30
 
@@ -1047,35 +1047,35 @@ class Black_oil(torch.nn.Module):
                 )
                 gulp.append(dudx_fdma)
                 gulp2.append(dudy_fdma)
-            dadx = torch.stack(gulp, 2)
-            dady = torch.stack(gulp2, 2)
+            dadx = paddle.stack(gulp, 2)
+            dady = paddle.stack(gulp2, 2)
             dadx = dadx.clamp(min=1e-10)
             dady = dady.clamp(min=1e-10)
 
-            dsout = torch.zeros(
+            dsout = paddle.zeros(
                 (sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny)
-            ).to(device, torch.float32)
+            ).to(device, paddle.float32)
             for k in range(dadx.shape[0]):
                 see = dadx[k, :, :, :, :]
                 gulp = []
                 for i in range(sat.shape[1]):
                     gulp.append(see)
 
-                checkken = torch.vstack(gulp)
+                checkken = paddle.vstack(gulp)
                 dsout[k, :, :, :, :] = checkken
 
             dadx = dsout
 
-            dsout = torch.zeros(
+            dsout = paddle.zeros(
                 (sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny)
-            ).to(device, torch.float32)
+            ).to(device, paddle.float32)
             for k in range(dady.shape[0]):
                 see = dady[k, :, :, :, :]
                 gulp = []
                 for i in range(sat.shape[1]):
                     gulp.append(see)
 
-                checkken = torch.vstack(gulp)
+                checkken = paddle.vstack(gulp)
                 dsout[k, :, :, :, :] = checkken
 
             dady = dsout
@@ -1102,8 +1102,8 @@ class Black_oil(torch.nn.Module):
 
             # Zero outer boundary
             # darcy_saturation = F.pad(darcy_saturation[:, :, 2:-2, 2:-2], [2, 2, 2, 2], "constant", 0)
-            s_loss = torch.mul(actnum, darcy_saturation)
-            s_loss = (torch.abs(s_loss)) / sat.shape[0]
+            s_loss = paddle.mul(actnum, darcy_saturation)
+            s_loss = (paddle.abs(s_loss)) / sat.shape[0]
             # s_loss = s_loss.reshape(1, 1)
             s_loss = dxf * s_loss * 1e-30
 
@@ -1137,13 +1137,13 @@ class Black_oil(torch.nn.Module):
                     )
                     gulp.append(dudx_fdma)
                     gulp2.append(dudy_fdma)
-                check = torch.stack(gulp, 2)[:, 0, :, :, :]
-                check2 = torch.stack(gulp2, 2)[:, 0, :, :]
+                check = paddle.stack(gulp, 2)[:, 0, :, :, :]
+                check2 = paddle.stack(gulp2, 2)[:, 0, :, :]
                 gulpa.append(check)
                 gulp2a.append(check2)
-            dubigxdx = torch.stack(gulpa, 0)
+            dubigxdx = paddle.stack(gulpa, 0)
             dubigxdx = dubigxdx.clamp(min=1e-10)
-            dubigxdy = torch.stack(gulp2a, 0)
+            dubigxdy = paddle.stack(gulp2a, 0)
             dubigxdy = dubigxdy.clamp(min=1e-10)
 
             # compute first dffrential
@@ -1163,13 +1163,13 @@ class Black_oil(torch.nn.Module):
                     )
                     gulp.append(dudx_fdma)
                     gulp2.append(dudy_fdma)
-                check = torch.stack(gulp, 2)[:, 0, :, :, :]
-                check2 = torch.stack(gulp2, 2)[:, 0, :, :]
+                check = paddle.stack(gulp, 2)[:, 0, :, :, :]
+                check2 = paddle.stack(gulp2, 2)[:, 0, :, :]
                 gulpa.append(check)
                 gulp2a.append(check2)
-            dubigydx = torch.stack(gulpa, 0)
+            dubigydx = paddle.stack(gulpa, 0)
             dubigydx = dubigydx.clamp(min=1e-10)
-            dubigydy = torch.stack(gulp2a, 0)
+            dubigydy = paddle.stack(gulp2a, 0)
             dubigydy = dubigydy.clamp(min=1e-10)
 
             actnum = replace_nan_with_zero(actnum)
@@ -1188,44 +1188,44 @@ class Black_oil(torch.nn.Module):
 
             left = ((dubigxdx + dubigydx) - fingas) + ((dubigxdy + dubigydy) - fingas)
             right = -(
-                torch.divide(
-                    torch.mul(
+                paddle.divide(
+                    paddle.mul(
                         poro,
                         (
-                            torch.divide(satg, BG)
-                            + torch.mul(torch.divide(sato, BO), RS)
+                            paddle.divide(satg, BG)
+                            + paddle.mul(paddle.divide(sato, BO), RS)
                         ),
                     ),
                     dtime,
                 )
             )
             sg_loss = left - right
-            sg_loss = torch.mul(actnum, (left - right))
+            sg_loss = paddle.mul(actnum, (left - right))
 
-            sg_loss = (torch.abs(sg_loss)) / sat.shape[0]
+            sg_loss = (paddle.abs(sg_loss)) / sat.shape[0]
             # sg_loss = sg_loss.reshape(1, 1)
             sg_loss = dxf * sg_loss * 1e-30
 
-        # p_loss = torch.mul(actnum,p_loss)
-        p_loss = torch.where(
-            torch.isnan(p_loss), torch.tensor(0, device=p_loss.device), p_loss
+        # p_loss = paddle.mul(actnum,p_loss)
+        p_loss = paddle.where(
+            paddle.isnan(p_loss), paddle.to_tensor(0, device=p_loss.device), p_loss
         )
-        p_loss = torch.where(
-            torch.isinf(p_loss), torch.tensor(0, device=p_loss.device), p_loss
-        )
-
-        s_loss = torch.where(
-            torch.isnan(s_loss), torch.tensor(0, device=s_loss.device), s_loss
-        )
-        s_loss = torch.where(
-            torch.isinf(s_loss), torch.tensor(0, device=s_loss.device), s_loss
+        p_loss = paddle.where(
+            paddle.isinf(p_loss), paddle.to_tensor(0, device=p_loss.device), p_loss
         )
 
-        sg_loss = torch.where(
-            torch.isnan(sg_loss), torch.tensor(0, device=sg_loss.device), sg_loss
+        s_loss = paddle.where(
+            paddle.isnan(s_loss), paddle.to_tensor(0, device=s_loss.device), s_loss
         )
-        sg_loss = torch.where(
-            torch.isinf(sg_loss), torch.tensor(0, device=sg_loss.device), sg_loss
+        s_loss = paddle.where(
+            paddle.isinf(s_loss), paddle.to_tensor(0, device=s_loss.device), s_loss
+        )
+
+        sg_loss = paddle.where(
+            paddle.isnan(sg_loss), paddle.to_tensor(0, device=sg_loss.device), sg_loss
+        )
+        sg_loss = paddle.where(
+            paddle.isinf(sg_loss), paddle.to_tensor(0, device=sg_loss.device), sg_loss
         )
         output_var = {
             "pressured": p_loss,
@@ -1235,13 +1235,13 @@ class Black_oil(torch.nn.Module):
 
         # for key, tensor in output_var.items():
         #     tensor_clone = tensor.clone()
-        #     replacement_tensor = torch.tensor(0, dtype=tensor.dtype, device=tensor.device)
-        #     output_var[key] = torch.where(torch.isnan(tensor_clone), replacement_tensor, tensor_clone)
-        #     output_var[key] = torch.where(torch.isinf(tensor_clone), replacement_tensor, tensor_clone)
+        #     replacement_tensor = paddle.to_tensor(0, dtype=tensor.dtype, device=tensor.device)
+        #     output_var[key] = paddle.where(paddle.isnan(tensor_clone), replacement_tensor, tensor_clone)
+        #     output_var[key] = paddle.where(paddle.isinf(tensor_clone), replacement_tensor, tensor_clone)
 
-        # Calculate the square root of torch.float32 max value
-        max_float32 = torch.tensor(torch.finfo(torch.float32).max)
-        sqrt_max_float32 = torch.sqrt(max_float32)
+        # Calculate the square root of paddle.float32 max value
+        max_float32 = paddle.to_tensor(paddle.finfo(paddle.float32).max)
+        sqrt_max_float32 = paddle.sqrt(max_float32)
 
         # Define the range for clipping
         clip_range = sqrt_max_float32.item()  # Convert to a Python float
@@ -1252,21 +1252,21 @@ class Black_oil(torch.nn.Module):
 
         for key, tensor in output_var.items():
             tensor_clone = tensor.clone()
-            replacement_tensor = torch.full_like(tensor_clone, small_value)
-            clipped_tensor = torch.where(
-                torch.isnan(tensor_clone)
-                | torch.isinf(tensor_clone)
+            replacement_tensor = paddle.full_like(tensor_clone, small_value)
+            clipped_tensor = paddle.where(
+                paddle.isnan(tensor_clone)
+                | paddle.isinf(tensor_clone)
                 | (tensor_clone == 0),
                 replacement_tensor,
                 tensor_clone,
             )
-            clipped_tensor = torch.clamp(clipped_tensor, -clip_range, clip_range)
-            clipped_tensor = torch.sqrt(torch.abs(clipped_tensor))
+            clipped_tensor = paddle.clamp(clipped_tensor, -clip_range, clip_range)
+            clipped_tensor = paddle.sqrt(paddle.abs(clipped_tensor))
             output_var[key] = clipped_tensor
 
         for key, tensor in output_var.items():
-            max_value = torch.max(tensor).item()
-            min_value = torch.min(tensor).item()
+            max_value = paddle.max(tensor).item()
+            min_value = paddle.min(tensor).item()
 
             print(f"Key: {key}")
             print(f"Maximum value (before): {max_value}")
@@ -1278,21 +1278,21 @@ class Black_oil(torch.nn.Module):
 
         for key, tensor in output_var.items():
             # Check if the minimum value is less than the threshold
-            if torch.min(tensor) < threshold:
+            if paddle.min(tensor) < threshold:
                 # Replace values below the threshold with the threshold
-                tensor = torch.clamp(tensor, min=threshold)
+                tensor = paddle.clamp(tensor, min=threshold)
 
             # Check if the maximum value is greater than the max_threshold
-            if torch.max(tensor) > max_threshold:
+            if paddle.max(tensor) > max_threshold:
                 # Replace values above max_threshold with max_threshold
-                tensor = torch.clamp(tensor, max=max_threshold)
+                tensor = paddle.clamp(tensor, max=max_threshold)
 
             # Update the value in the output_var dictionary
             output_var[key] = tensor
 
             print(f"Key: {key}")
-            print(f"Maximum value (after): {torch.max(tensor).item()}")
-            print(f"Minimum value (after): {torch.min(tensor).item()}")
+            print(f"Maximum value (after): {paddle.max(tensor).item()}")
+            print(f"Minimum value (after): {paddle.min(tensor).item()}")
             print()
 
         return output_var
@@ -1384,15 +1384,15 @@ def run(cfg: ModulusConfig) -> None:
         print("Selected Stone II method for Relative permeability computation")
         # Parameters for Stone11 method
         params = {
-            "k_rwmax": torch.tensor(0.3),
-            "k_romax": torch.tensor(0.9),
-            "k_rgmax": torch.tensor(0.8),
-            "n": torch.tensor(2.0),
-            "p": torch.tensor(2.0),
-            "q": torch.tensor(2.0),
-            "m": torch.tensor(2.0),
-            "Swi": torch.tensor(0.1),
-            "Sor": torch.tensor(0.2),
+            "k_rwmax": paddle.to_tensor(0.3),
+            "k_romax": paddle.to_tensor(0.9),
+            "k_rgmax": paddle.to_tensor(0.8),
+            "n": paddle.to_tensor(2.0),
+            "p": paddle.to_tensor(2.0),
+            "q": paddle.to_tensor(2.0),
+            "m": paddle.to_tensor(2.0),
+            "Swi": paddle.to_tensor(0.1),
+            "Sor": paddle.to_tensor(0.2),
         }
     else:
         pass
@@ -1423,8 +1423,8 @@ def run(cfg: ModulusConfig) -> None:
         else:
             pass
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
+    if paddle.device.cuda.device_count() >= 1:
+        device = paddle.set_device("gpu")
     else:
         raise RuntimeError("No GPU found. Please run on a system with a GPU.")
 
@@ -1488,11 +1488,11 @@ def run(cfg: ModulusConfig) -> None:
     # fname = 'NORNE/hilda.yaml'
     # plan = read_yaml(fname)
 
-    SWOW = torch.tensor(np.array(np.vstack(cfg.custom.WELLSPECS.SWOW), dtype=float)).to(
+    SWOW = paddle.to_tensor(np.array(np.vstack(cfg.custom.WELLSPECS.SWOW), dtype=float)).to(
         device
     )
 
-    SWOG = torch.tensor(np.array(np.vstack(cfg.custom.WELLSPECS.SWOG), dtype=float)).to(
+    SWOG = paddle.to_tensor(np.array(np.vstack(cfg.custom.WELLSPECS.SWOG), dtype=float)).to(
         device
     )
 
@@ -1515,17 +1515,17 @@ def run(cfg: ModulusConfig) -> None:
     p_bub = cp.float32(float(cfg.custom.PROPS.PB))
 
     params1 = {
-        "BO": torch.tensor(BO),
-        "UO": torch.tensor(UO),
-        "BW": torch.tensor(BW),
-        "UW": torch.tensor(UW),
+        "BO": paddle.to_tensor(BO),
+        "UO": paddle.to_tensor(UO),
+        "BW": paddle.to_tensor(BW),
+        "UW": paddle.to_tensor(UW),
     }
 
-    skin = torch.tensor(0).to(device)
-    rwell = torch.tensor(200).to(device)
-    pwf_producer = torch.tensor(100).to(device)
-    DZ = torch.tensor(100).to(device)
-    RE = torch.tensor(0.2 * 100).to(device)
+    skin = paddle.to_tensor(0).to(device)
+    rwell = paddle.to_tensor(200).to(device)
+    pwf_producer = paddle.to_tensor(100).to(device)
+    DZ = paddle.to_tensor(100).to(device)
+    RE = paddle.to_tensor(0.2 * 100).to(device)
 
     # cgrid = np.genfromtxt("NORNE/clementgrid.out", dtype='float')
 
@@ -1929,20 +1929,20 @@ def run(cfg: ModulusConfig) -> None:
         pass
 
     cuda = 0
-    device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+    device = paddle.device(f"cuda:{cuda}" if paddle.device.cuda.device_count() >= 1 else "cpu")
 
-    SWI = torch.from_numpy(np.array(SWI)).to(device)
-    SWR = torch.from_numpy(np.array(SWR)).to(device)
-    UW = torch.from_numpy(np.array(UW)).to(device)
-    BW = torch.from_numpy(np.array(BW)).to(device)
-    UO = torch.from_numpy(np.array(UO)).to(device)
-    BO = torch.from_numpy(np.array(BO)).to(device)
+    SWI = paddle.from_numpy(np.array(SWI)).to(device)
+    SWR = paddle.from_numpy(np.array(SWR)).to(device)
+    UW = paddle.from_numpy(np.array(UW)).to(device)
+    BW = paddle.from_numpy(np.array(BW)).to(device)
+    UO = paddle.from_numpy(np.array(UO)).to(device)
+    BO = paddle.from_numpy(np.array(BO)).to(device)
 
-    # SWOW = torch.from_numpy(SWOW).to(device)
-    # SWOG = torch.from_numpy(SWOG).to(device)
-    p_bub = torch.from_numpy(np.array(p_bub)).to(device)
-    p_atm = torch.from_numpy(np.array(p_atm)).to(device)
-    CFO = torch.from_numpy(np.array(CFO)).to(device)
+    # SWOW = paddle.from_numpy(SWOW).to(device)
+    # SWOG = paddle.from_numpy(SWOG).to(device)
+    p_bub = paddle.from_numpy(np.array(p_bub)).to(device)
+    p_atm = paddle.from_numpy(np.array(p_atm)).to(device)
+    CFO = paddle.from_numpy(np.array(CFO)).to(device)
 
     mat = sio.loadmat(to_absolute_path("../PACKETS/conversions.mat"))
     minK = mat["minK"]
@@ -1984,22 +1984,22 @@ def run(cfg: ModulusConfig) -> None:
     print("target_min value is:", target_min)
     print("target_max value is:", target_max)
 
-    minKx = torch.from_numpy(minK).to(device)
-    maxKx = torch.from_numpy(maxK).to(device)
-    minTx = torch.from_numpy(minT).to(device)
-    maxTx = torch.from_numpy(maxT).to(device)
-    minPx = torch.from_numpy(minP).to(device)
-    maxPx = torch.from_numpy(maxP).to(device)
-    minQx = torch.from_numpy(minQ).to(device)
-    maxQx = torch.from_numpy(maxQ).to(device)
-    minQgx = torch.from_numpy(minQg).to(device)
-    maxQgx = torch.from_numpy(maxQg).to(device)
-    minQwx = torch.from_numpy(minQw).to(device)
-    maxQwx = torch.from_numpy(maxQw).to(device)
-    min_inn_fcnx = torch.from_numpy(min_inn_fcn).to(device)
-    max_inn_fcnx = torch.from_numpy(max_inn_fcn).to(device)
-    min_out_fcnx = torch.from_numpy(min_out_fcn).to(device)
-    max_out_fcnx = torch.from_numpy(max_out_fcn).to(device)
+    minKx = paddle.from_numpy(minK).to(device)
+    maxKx = paddle.from_numpy(maxK).to(device)
+    minTx = paddle.from_numpy(minT).to(device)
+    maxTx = paddle.from_numpy(maxT).to(device)
+    minPx = paddle.from_numpy(minP).to(device)
+    maxPx = paddle.from_numpy(maxP).to(device)
+    minQx = paddle.from_numpy(minQ).to(device)
+    maxQx = paddle.from_numpy(maxQ).to(device)
+    minQgx = paddle.from_numpy(minQg).to(device)
+    maxQgx = paddle.from_numpy(maxQg).to(device)
+    minQwx = paddle.from_numpy(minQw).to(device)
+    maxQwx = paddle.from_numpy(maxQw).to(device)
+    min_inn_fcnx = paddle.from_numpy(min_inn_fcn).to(device)
+    max_inn_fcnx = paddle.from_numpy(max_inn_fcn).to(device)
+    min_out_fcnx = paddle.from_numpy(min_out_fcn).to(device)
+    max_out_fcnx = paddle.from_numpy(max_out_fcn).to(device)
 
     del mat
     gc.collect()
@@ -2065,11 +2065,11 @@ def run(cfg: ModulusConfig) -> None:
         cTime[0, :, i, :, :] = X_data1["Time"][0, :, :, :, i]
 
     neededM = {
-        "Q": torch.from_numpy(cQ).to(device, torch.float32),
-        "Qw": torch.from_numpy(cQw).to(device, dtype=torch.float32),
-        "Qg": torch.from_numpy(cQg).to(device, dtype=torch.float32),
-        "actnum": torch.from_numpy(cactnum).to(device, dtype=torch.float32),
-        "Time": torch.from_numpy(cTime).to(device, dtype=torch.float32),
+        "Q": paddle.from_numpy(cQ).to(device, paddle.float32),
+        "Qw": paddle.from_numpy(cQw).to(device, dtype=paddle.float32),
+        "Qg": paddle.from_numpy(cQg).to(device, dtype=paddle.float32),
+        "actnum": paddle.from_numpy(cactnum).to(device, dtype=paddle.float32),
+        "Time": paddle.from_numpy(cTime).to(device, dtype=paddle.float32),
     }
 
     for key in neededM:

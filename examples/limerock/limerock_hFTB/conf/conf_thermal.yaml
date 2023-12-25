@@ -23,7 +23,7 @@ network_dir : "network_checkpoint"
 initialization_network_dir : "../limerock_flow/network_checkpoint"
 
 optimizer:
-  lr: 0.001
+  learning_rate: 0.001
 
 scheduler:
   decay_rate: 0.95

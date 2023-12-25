@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-from torch.utils.data import DataLoader, Dataset
+import paddle
+from paddle.io import DataLoader, Dataset
 
 import numpy as np
 from sympy import Symbol, Eq, tanh, Or, And
@@ -85,6 +85,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={"u": channel_sdf, "v": 1.0, "w": 1.0},
     )
     flow_domain.add_constraint(inlet, "inlet")
+    print("finished inlet")
 
     # outlet
     outlet = PointwiseBoundaryConstraint(
@@ -94,6 +95,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.outlet,
     )
     flow_domain.add_constraint(outlet, "outlet")
+    print("finished outlet")
 
     # no slip
     no_slip = PointwiseBoundaryConstraint(
@@ -101,9 +103,10 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"u": 0, "v": 0, "w": 0},
         batch_size=cfg.batch_size.no_slip,
-        batch_per_epoch=15000,
+        # batch_per_epoch=15000,
     )
     flow_domain.add_constraint(no_slip, "no_slip")
+    print("finished no_slip")
 
     # flow interior low res away from limerock
     lr_interior = PointwiseInteriorConstraint(
@@ -121,9 +124,10 @@ def run(cfg: ModulusConfig) -> None:
         criteria=Or(
             (x < limerock.heat_sink_bounds[0]), (x > limerock.heat_sink_bounds[1])
         ),
-        batch_per_epoch=2000,
+        # batch_per_epoch=2000,
     )
     flow_domain.add_constraint(lr_interior, "lr_interior")
+    print("finished lr_interior")
 
     # flow interior high res near limerock
     hr_interior = PointwiseInteriorConstraint(
@@ -141,9 +145,10 @@ def run(cfg: ModulusConfig) -> None:
         criteria=And(
             (x > limerock.heat_sink_bounds[0]), (x < limerock.heat_sink_bounds[1])
         ),
-        batch_per_epoch=2000,
+        # batch_per_epoch=2000,
     )
     flow_domain.add_constraint(hr_interior, "hr_interior")
+    print("finished hr_interior")
 
     # integral continuity
     def integral_criteria(invar, params):
@@ -194,7 +199,7 @@ def run(cfg: ModulusConfig) -> None:
     front_pressure_monitor = PointwiseMonitor(
         invar_pressure,
         output_names=["p"],
-        metrics={"front_pressure": lambda var: torch.mean(var["p"])},
+        metrics={"front_pressure": lambda var: paddle.mean(var["p"])},
         nodes=flow_nodes,
     )
     flow_domain.add_monitor(front_pressure_monitor)
@@ -208,7 +213,7 @@ def run(cfg: ModulusConfig) -> None:
     back_pressure_monitor = PointwiseMonitor(
         invar_pressure,
         output_names=["p"],
-        metrics={"back_pressure": lambda var: torch.mean(var["p"])},
+        metrics={"back_pressure": lambda var: paddle.mean(var["p"])},
         nodes=flow_nodes,
     )
     flow_domain.add_monitor(back_pressure_monitor)

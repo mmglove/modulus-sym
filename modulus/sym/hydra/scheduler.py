@@ -30,7 +30,8 @@ class SchedulerConf:
 
 @dataclass
 class ExponentialLRConf(SchedulerConf):
-    _target_: str = "paddle.optimimizer.lr.ExponentialDecay"
+    _target_: str = "paddle.optimizer.lr.ExponentialDecay"
+    learning_rate: float = 0.001
     gamma: float = 0.99998718
 
 
@@ -45,7 +46,8 @@ class TFExponentialLRConf(SchedulerConf):
 
 @dataclass
 class CosineAnnealingLRConf(SchedulerConf):
-    _target_: str = "paddle.optimimizer.lr.CosineAnnealingDecay"
+    _target_: str = "paddle.optimizer.lr.CosineAnnealingDecay"
+    learning_rate: float = 0.001
     T_max: int = 1000
     eta_min: float = 0
     last_epoch: int = -1
@@ -53,7 +55,8 @@ class CosineAnnealingLRConf(SchedulerConf):
 
 @dataclass
 class CosineAnnealingWarmRestartsConf(SchedulerConf):
-    _target_: str = "paddle.optimimizer.lr.CosineAnnealingWarmRestarts"
+    _target_: str = "paddle.optimizer.lr.CosineAnnealingWarmRestarts"
+    learning_rate: float = 0.001
     T_0: int = 1000
     T_mult: int = 1
     eta_min: float = 0

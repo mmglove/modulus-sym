@@ -33,17 +33,20 @@ limitations under the License.
 """
 
 import numpy as np
-import torch
-import torch.nn.functional as F
-from torch.nn.modules.utils import _triple
+import paddle
+import paddle.nn.functional as F
+# from paddle.nn.modules.utils import _triple
 
+def _triple(x):
+    if not isinstance(x, tuple):
+        return (x, x, x)
 
-class FlowOps(torch.nn.Module):
+class FlowOps(paddle.nn.Layer):
     def __init__(self):
         super().__init__()
         self.register_buffer(
             "ddx1D",
-            torch.Tensor(
+            paddle.Tensor(
                 [
                     -1.0 / 60.0,
                     3.0 / 20.0,
@@ -58,7 +61,7 @@ class FlowOps(torch.nn.Module):
 
     def ddx(self, inpt, dx, channel, dim, padding_mode="replicate"):
         var = inpt[:, channel : channel + 1, :, :, :]
-        ddx3D = torch.reshape(
+        ddx3D = paddle.reshape(
             self.ddx1D, shape=[1, 1] + dim * [1] + [-1] + (2 - dim) * [1]
         )
         padding = _triple(3) + _triple(3)
@@ -163,13 +166,13 @@ class FlowOps(torch.nn.Module):
     #             1.0 / 90.0,
     #         ]
     #     ).to(inpt.device)
-    #     ddx3D = torch.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (2 - dim) * [1])
+    #     ddx3D = paddle.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (2 - dim) * [1])
     #     output = F.conv3d(var, ddx3D, padding="valid")
     #     output = (1.0 / dx ** 2) * output
     #     return output
 
     # def get_TKE(inpt):
-    #     TKE = torch.square(inpt[:, 0, :, :, :])
+    #     TKE = paddle.square(inpt[:, 0, :, :, :])
     #     TKE = TKE + tf.square(inpt[:, 1, :, :, :])
     #     TKE = TKE + tf.square(inpt[:, 2, :, :, :])
     #     TKE = 0.5 * TKE

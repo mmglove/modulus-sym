@@ -61,7 +61,7 @@ class _BaseDataset:
 
         # convert to torch
         tensor_dict = {
-            key: paddle.to_tensor(value, dtype=tf_dt, place=device)
+            key: paddle.to_tensor(value, dtype=tf_dt, place=device, stop_gradient=False)
             for key, value in var_dict.items()
         }
 

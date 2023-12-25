@@ -14,8 +14,8 @@
 
 """Defines the FCN architecture"""
 import logging
-import torch
-from torch import Tensor
+import paddle
+from paddle import Tensor
 from typing import List, Tuple, Dict
 
 from modulus.sym.models.afno.afno import AFNONet
@@ -103,7 +103,7 @@ class FourcastNetArch(Arch):
         for t in range(self.n_tsteps):
             x = self._impl(x)
             ys.append(x)
-        y = torch.cat(ys, dim=1)
+        y = paddle.cat(ys, dim=1)
 
         # prepare output dict
         return self.prepare_output(

@@ -549,7 +549,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     self.apply_gradients()
 
                     # take scheduler step
-                    self.scheduler.step()
+                    if hasattr(self.scheduler, "step"):
+                        self.scheduler.step()
 
                 # check for nans in loss
                 if paddle.isnan(loss):

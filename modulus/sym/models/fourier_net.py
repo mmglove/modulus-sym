@@ -189,12 +189,12 @@ class FourierNetArch(Arch):
         if self.fourier_layer_xyzt is not None:
             in_xyzt_var = self.slice_input(x, self.xyzt_slice_index, dim=-1)
             fourier_xyzt = self.fourier_layer_xyzt(in_xyzt_var)
-            x = paddle.concat((x, fourier_xyzt), axis=1)
+            x = paddle.concat((x, fourier_xyzt), axis=-1)
 
         if self.fourier_layer_params is not None:
             in_params_var = self.slice_input(x, self.params_slice_index, dim=-1)
             fourier_params = self.fourier_layer_params(in_params_var)
-            x = paddle.concat((x, fourier_params), axis=1)
+            x = paddle.concat((x, fourier_params), axis=-1)
 
         x = self.fc(x)
         x = self.process_output(x, self.output_scales_tensor)
@@ -231,7 +231,7 @@ class FourierNetArch(Arch):
                 input_scales=self.input_scales,
             )
             fourier_xyzt = self.fourier_layer_xyzt(in_xyzt_var)
-            x = paddle.concat((x, fourier_xyzt), axis=1)
+            x = paddle.concat((x, fourier_xyzt), axis=-1)
 
         if self.fourier_layer_params is not None:
             in_params_var = self.prepare_input(
@@ -242,7 +242,7 @@ class FourierNetArch(Arch):
                 input_scales=self.input_scales,
             )
             fourier_params = self.fourier_layer_params(in_params_var)
-            x = paddle.concat((x, fourier_params), axis=1)
+            x = paddle.concat((x, fourier_params), axis=-1)
 
         x = self.fc(x)
         return self.prepare_output(

@@ -52,7 +52,7 @@ class DistributedManager(object):
             obj._find_unused_parameters = False
         if not hasattr(obj, "_cuda_graphs"):
             obj._cuda_graphs = False
-        obj.place = paddle.device.set_device("gpu")
+        obj.place = obj._device
         return obj
 
     @property
@@ -164,21 +164,25 @@ class DistributedManager(object):
 
     @staticmethod
     def get_available_backend():
-        if paddle.device.cuda.device_count() >= 1 and dist.get_backend() == "NCCL":
+        if paddle.device.cuda.device_count() <= 1:
+            return "nccl"
+        if paddle.device.cuda.device_count() > 1 and dist.get_backend() == "NCCL":
             return "nccl"
         else:
             return "gloo"
 
     @staticmethod
     def initialize_env():
-        rank = int(os.environ.get("RANK"))
-        world_size = int(os.environ.get("WORLD_SIZE"))
+        rank = dist.get_rank()
+        world_size = dist.get_world_size()
+        if world_size > 1:
+            dist.init_parallel_env()
         if "LOCAL_RANK" in os.environ:
             local_rank = int(os.environ.get("LOCAL_RANK"))
         else:
             local_rank = rank % paddle.device.cuda.device_count()
-        addr = os.environ.get("MASTER_ADDR")
-        port = os.environ.get("MASTER_PORT")
+        addr = None
+        port = None
 
         DistributedManager.setup(
             rank=rank,
@@ -229,7 +233,8 @@ class DistributedManager(object):
         os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "0"
         try:
             DistributedManager.initialize_env()
-        except:
+        except Exception as e:
+            raise e
             if "SLURM_PROCID" in os.environ:
                 DistributedManager.initialize_slurm(port)
             elif "OMPI_COMM_WORLD_RANK" in os.environ:
@@ -241,7 +246,7 @@ class DistributedManager(object):
         manager = DistributedManager()
         if manager.distributed:
             print(
-                f'Initialized process {manager.rank} of {manager.world_size} using method "{manager._initialization_method}". Device set to {str(manager.place)}'
+                f'Initialized process {manager.rank} of {manager.world_size} using method "{manager._initialization_method}". Device set to {str(manager.device)}'
             )
 
     @staticmethod
@@ -254,8 +259,8 @@ class DistributedManager(object):
         backend="nccl",
         method="env",
     ):
-        os.environ["MASTER_ADDR"] = addr
-        os.environ["MASTER_PORT"] = str(port)
+        # os.environ["MASTER_ADDR"] = addr
+        # os.environ["MASTER_PORT"] = str(port)
 
         manager = DistributedManager()
 
@@ -271,7 +276,7 @@ class DistributedManager(object):
 
             # Setup distributed process group
             # time.sleep(1)
-            dist.init_parallel_env()
+            # dist.init_parallel_env()
 
         manager._groups = {}
         manager._group_ranks = {}

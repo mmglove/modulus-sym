@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 from typing import Dict
 
-Tensor = torch.Tensor
+Tensor = paddle.Tensor
 
 
-class LpLoss(torch.nn.Module):
+class LpLoss(paddle.nn.Layer):
     def __init__(
         self,
         d: float = 2.0,
@@ -38,16 +38,16 @@ class LpLoss(torch.nn.Module):
         assert p > 0.0
         self.p = p
 
-    def _rel(self, x: torch.Tensor, y: torch.Tensor) -> float:
+    def _rel(self, x: paddle.Tensor, y: paddle.Tensor) -> float:
         num_examples = x.size()[0]
 
         xv = x.reshape(num_examples, -1)
         yv = y.reshape(num_examples, -1)
 
-        diff_norms = torch.linalg.norm(xv - yv, ord=self.p, dim=1)
-        y_norms = torch.linalg.norm(yv, ord=self.p, dim=1)
+        diff_norms = paddle.linalg.norm(xv - yv, ord=self.p, dim=1)
+        y_norms = paddle.linalg.norm(yv, ord=self.p, dim=1)
 
-        return torch.mean(diff_norms / y_norms)
+        return paddle.mean(diff_norms / y_norms)
 
     def forward(
         self,

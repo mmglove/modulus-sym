@@ -55,7 +55,7 @@ class GridValidator(Validator):
         batch_size: int = 100,
         plotter: GridValidatorPlotter = None,
         requires_grad: bool = False,
-        num_workers: int = 0,
+        num_workers: int = 1,
     ):
 
         # get dataset and dataloader

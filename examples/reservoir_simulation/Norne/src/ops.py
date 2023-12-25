@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.nn.functional as F
+import paddle
+import paddle.nn.functional as F
 
 
 def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
@@ -23,7 +23,7 @@ def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
 
     # get filter
     if order == 1:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 -0.5,
                 0.0,
@@ -31,7 +31,7 @@ def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
             ]
         ).to(inpt.device)
     elif order == 3:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 -1.0 / 60.0,
                 3.0 / 20.0,
@@ -42,7 +42,7 @@ def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
                 1.0 / 60.0,
             ]
         ).to(inpt.device)
-    ddx3D = torch.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
+    ddx3D = paddle.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
 
     # apply convolution
     if padding == "zeros":
@@ -66,7 +66,7 @@ def ddx(inpt, dx, channel, dim, order=1, padding="zeros"):
 
     # get filter
     if order == 1:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 1.0,
                 -2.0,
@@ -74,7 +74,7 @@ def ddx(inpt, dx, channel, dim, order=1, padding="zeros"):
             ]
         ).to(inpt.device)
     elif order == 3:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 1.0 / 90.0,
                 -3.0 / 20.0,
@@ -85,7 +85,7 @@ def ddx(inpt, dx, channel, dim, order=1, padding="zeros"):
                 1.0 / 90.0,
             ]
         ).to(inpt.device)
-    ddx3D = torch.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
+    ddx3D = paddle.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
 
     # apply convolution
     if padding == "zeros":
@@ -130,13 +130,13 @@ def compute_differential(u, dxf):
             # This handles the boundaries where the derivative might not be well-defined
             # Depending on your application, you can either use forward/backward differences or pad with zeros or replicate values
             # Here, as an example, I'm padding with zeros
-            dudz_fdm = torch.zeros_like(slice_u)
+            dudz_fdm = paddle.zeros_like(slice_u)
             derivatives_z.append(dudz_fdm)
 
     # Stack results to get tensors of shape [batch_size, channels, nz, height, width]
-    dudx_fdm = torch.stack(derivatives_x, dim=2)
-    dudy_fdm = torch.stack(derivatives_y, dim=2)
-    dudz_fdm = torch.stack(derivatives_z, dim=2)  # Stack the z derivatives
+    dudx_fdm = paddle.stack(derivatives_x, dim=2)
+    dudy_fdm = paddle.stack(derivatives_y, dim=2)
+    dudz_fdm = paddle.stack(derivatives_z, dim=2)  # Stack the z derivatives
 
     return dudx_fdm, dudy_fdm, dudz_fdm  # Return the z derivatives as well
 
@@ -173,13 +173,13 @@ def compute_second_differential(u, dxf):
         else:
             # This handles the boundaries where the derivative might not be well-defined
             # Padding with zeros for simplicity. You may need to handle this differently based on your application
-            dduddz_fdm = torch.zeros_like(slice_u)
+            dduddz_fdm = paddle.zeros_like(slice_u)
             second_derivatives_z.append(dduddz_fdm)
 
     # Stack results along the nz dimension to get tensors of shape [batch_size, channels, nz, height, width]
-    dduddx_fdm = torch.stack(second_derivatives_x, dim=2)
-    dduddy_fdm = torch.stack(second_derivatives_y, dim=2)
-    dduddz_fdm = torch.stack(
+    dduddx_fdm = paddle.stack(second_derivatives_x, dim=2)
+    dduddy_fdm = paddle.stack(second_derivatives_y, dim=2)
+    dduddz_fdm = paddle.stack(
         second_derivatives_z, dim=2
     )  # Stack the z second derivatives
 
@@ -191,9 +191,9 @@ def compute_gradient_3d(inpt, dx, dim, order=1, padding="zeros"):
 
     # Define filter
     if order == 1:
-        ddx1D = torch.Tensor([-0.5, 0.0, 0.5]).to(inpt.device)
+        ddx1D = paddle.Tensor([-0.5, 0.0, 0.5]).to(inpt.device)
     elif order == 3:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 -1.0 / 60.0,
                 3.0 / 20.0,
@@ -252,7 +252,7 @@ def compute_gradient_3d(inpt, dx, dim, order=1, padding="zeros"):
         outputs.append(out_ch)
 
     # Stack results along the channel dimension
-    output = torch.cat(outputs, dim=1)
+    output = paddle.cat(outputs, dim=1)
 
     return output
 
@@ -261,7 +261,7 @@ def compute_second_order_gradient_3d(inpt, dx, dim, padding="zeros"):
     "Compute second order numerical derivatives (Laplacian) of input tensor for 3D data"
 
     # Define filter for second order derivative
-    ddx1D = torch.Tensor([-1.0, 2.0, -1.0]).to(inpt.device)
+    ddx1D = paddle.Tensor([-1.0, 2.0, -1.0]).to(inpt.device)
 
     # Reshape filter for 3D convolution
     padding_sizes = [(0, 0), (0, 0), (0, 0)]
@@ -310,6 +310,6 @@ def compute_second_order_gradient_3d(inpt, dx, dim, padding="zeros"):
         outputs.append(out_ch)
 
     # Stack results along the channel dimension
-    output = torch.cat(outputs, dim=1)
+    output = paddle.cat(outputs, dim=1)
 
     return output

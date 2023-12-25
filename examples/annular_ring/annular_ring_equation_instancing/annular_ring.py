@@ -16,7 +16,7 @@ import os
 import warnings
 
 from sympy import Symbol, Eq, And
-import torch
+import paddle
 
 import modulus.sym
 from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
@@ -195,12 +195,12 @@ def run(cfg: ModulusConfig) -> None:
         geo.sample_interior(1024),
         output_names=["continuity_0", "momentum_x_0", "momentum_y_0"],
         metrics={
-            "mass_imbalance_0": lambda var: torch.sum(
-                var["area"] * torch.abs(var["continuity_0"])
+            "mass_imbalance_0": lambda var: paddle.sum(
+                var["area"] * paddle.abs(var["continuity_0"])
             ),
-            "momentum_imbalance_0": lambda var: torch.sum(
+            "momentum_imbalance_0": lambda var: paddle.sum(
                 var["area"]
-                * (torch.abs(var["momentum_x_0"]) + torch.abs(var["momentum_y_0"]))
+                * (paddle.abs(var["momentum_x_0"]) + paddle.abs(var["momentum_y_0"]))
             ),
         },
         nodes=nodes,
@@ -212,12 +212,12 @@ def run(cfg: ModulusConfig) -> None:
         geo.sample_interior(1024),
         output_names=["continuity_1", "momentum_x_1", "momentum_y_1"],
         metrics={
-            "mass_imbalance_1": lambda var: torch.sum(
-                var["area"] * torch.abs(var["continuity_1"])
+            "mass_imbalance_1": lambda var: paddle.sum(
+                var["area"] * paddle.abs(var["continuity_1"])
             ),
-            "momentum_imbalance_1": lambda var: torch.sum(
+            "momentum_imbalance_1": lambda var: paddle.sum(
                 var["area"]
-                * (torch.abs(var["momentum_x_1"]) + torch.abs(var["momentum_y_1"]))
+                * (paddle.abs(var["momentum_x_1"]) + paddle.abs(var["momentum_y_1"]))
             ),
         },
         nodes=nodes,
@@ -230,8 +230,8 @@ def run(cfg: ModulusConfig) -> None:
         inner_circle.sample_boundary(1024),
         output_names=["p"],
         metrics={
-            "force_x": lambda var: torch.sum(var["normal_x"] * var["area"] * var["p"]),
-            "force_y": lambda var: torch.sum(var["normal_y"] * var["area"] * var["p"]),
+            "force_x": lambda var: paddle.sum(var["normal_x"] * var["area"] * var["p"]),
+            "force_y": lambda var: paddle.sum(var["normal_y"] * var["area"] * var["p"]),
         },
         nodes=nodes,
     )

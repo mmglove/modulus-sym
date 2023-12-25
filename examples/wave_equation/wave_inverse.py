@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, sin
 
@@ -76,6 +76,7 @@ def run(cfg: ModulusConfig) -> None:
         invar=invar_numpy,
         outvar=outvar_numpy,
         batch_size=cfg.batch_size.data,
+        num_workers=0,
     )
     domain.add_constraint(data, "interior_data")
 
@@ -83,7 +84,7 @@ def run(cfg: ModulusConfig) -> None:
     monitor = PointwiseMonitor(
         invar_numpy,
         output_names=["c"],
-        metrics={"mean_c": lambda var: torch.mean(var["c"])},
+        metrics={"mean_c": lambda var: paddle.mean(var["c"])},
         nodes=nodes,
     )
     domain.add_monitor(monitor)

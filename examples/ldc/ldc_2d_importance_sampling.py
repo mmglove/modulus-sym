@@ -16,7 +16,7 @@ import os
 import warnings
 
 from sympy import Symbol, Eq, Abs
-import torch
+import paddle
 
 import modulus.sym
 from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
@@ -50,7 +50,7 @@ def run(cfg: ModulusConfig) -> None:
     nodes = ns.make_nodes() + [flow_net.make_node(name="flow_network")]
 
     # make importance model
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = paddle.set_device("gpu:0" if paddle.device.cuda.device_count() > 0 else "cpu")
     importance_model_graph = Graph(
         nodes,
         invar=[Key("x"), Key("y")],
@@ -60,7 +60,7 @@ def run(cfg: ModulusConfig) -> None:
             Key("v", derivatives=[Key("x")]),
             Key("v", derivatives=[Key("y")]),
         ],
-    ).to(device)
+    )
 
     def importance_measure(invar):
         outvar = importance_model_graph(
@@ -72,7 +72,7 @@ def run(cfg: ModulusConfig) -> None:
             + outvar["v__x"] ** 2
             + outvar["v__y"] ** 2
         ) ** 0.5 + 10
-        return importance.cpu().detach().numpy()
+        return importance
 
     # add constraints to solver
     # make geometry

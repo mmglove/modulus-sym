@@ -19,6 +19,7 @@ import paddle.nn as nn
 from paddle import Tensor
 
 import modulus.sym.models.layers as layers
+from modulus.sym.models.activation import Activation
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -56,7 +57,7 @@ class ModifiedFourierNetArch(Arch):
     frequencies_params : Tuple[str, List[float]] = ("axis", [i for i in range(10)])
         Same as `frequencies` except these are used for encodings
         on any inputs not in the list `['x', 'y', 'z', 't']`.
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     layer_size : int = 512
         Layer size for every hidden layer of the model.
@@ -78,7 +79,7 @@ class ModifiedFourierNetArch(Arch):
         detach_keys: List[Key] = [],
         frequencies=("axis", [i for i in range(10)]),
         frequencies_params=("axis", [i for i in range(10)]),
-        activation_fn=layers.Activation.SILU,
+        activation_fn=Activation.SILU,
         layer_size: int = 512,
         nr_layers: int = 6,
         skip_connections: bool = False,
@@ -181,7 +182,7 @@ class ModifiedFourierNetArch(Arch):
         self.final_layer = layers.FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=Activation.IDENTITY,
             weight_norm=False,
             activation_par=None,
         )

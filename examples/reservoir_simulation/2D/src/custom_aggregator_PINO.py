@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 from typing import Dict
 
 # Import from Modulus
@@ -27,20 +27,20 @@ class CustomSum(Aggregator):
     def __init__(self, params, num_losses, weights=None):
         super().__init__(params, num_losses, weights)
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Aggregates the losses by summation
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses
         step : int
             Optimizer step
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss
         """
 
@@ -48,11 +48,11 @@ class CustomSum(Aggregator):
         losses = self.weigh_losses(losses, self.weights)
 
         # Initialize loss
-        loss: torch.Tensor = torch.zeros_like(self.init_loss)
+        loss: paddle.Tensor = paddle.zeros_like(self.init_loss)
 
         smoothness = 0.0005  # use 0.0005 to smoothen the transition over ~10k steps
-        step_tensor = torch.tensor(step, dtype=torch.float32)
-        decay_weight1 = (torch.tanh((10000 - step_tensor) * smoothness) + 1.0) * 0.5
+        step_tensor = paddle.to_tensor(step, dtype=paddle.float32)
+        decay_weight1 = (paddle.tanh((10000 - step_tensor) * smoothness) + 1.0) * 0.5
         lambda_pressure = 1.0
         lambda_saturation = 1.0
         lambda_pressured = 0.1

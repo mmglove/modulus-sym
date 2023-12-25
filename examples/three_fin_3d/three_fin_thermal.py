@@ -15,7 +15,7 @@
 import os
 import warnings
 
-import torch
+import paddle
 from sympy import Symbol, Eq, Abs, tanh, Or, And
 import itertools
 import numpy as np
@@ -398,7 +398,7 @@ def run(cfg: ModulusConfig) -> None:
             peak_temp_monitor = PointwiseMonitor(
                 invar_temp,
                 output_names=["theta_s"],
-                metrics={metric: lambda var: torch.max(var["theta_s"])},
+                metrics={metric: lambda var: paddle.max(var["theta_s"])},
                 nodes=thermal_nodes,
             )
             thermal_domain.add_monitor(peak_temp_monitor)

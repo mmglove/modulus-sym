@@ -15,7 +15,7 @@
 import numpy as np
 import os
 import modulus
-import torch
+import paddle
 from modulus.sym.hydra import ModulusConfig
 from modulus.sym.hydra import to_absolute_path
 from modulus.sym.key import Key
@@ -34,7 +34,7 @@ from skimage.transform import resize
 import scipy.io as sio
 import requests
 
-torch.set_default_dtype(torch.float32)
+paddle.set_default_dtype("float32")
 
 
 def download_file_from_google_drive(id, destination):

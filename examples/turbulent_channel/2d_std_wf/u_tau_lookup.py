@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq, sin, cos, Min, Max, Abs, log, exp
 from scipy import optimize

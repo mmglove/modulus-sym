@@ -18,7 +18,7 @@ import os
 import warnings
 
 import csv
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq, Abs, tanh, And, Or
 

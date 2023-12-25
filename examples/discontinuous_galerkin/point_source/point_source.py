@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
@@ -69,8 +69,8 @@ class DGLoss(Loss):
         vy_interior = self.v.eval_test("vy", x=list_invar[1]["x"], y=list_invar[1]["y"])
         v_source = self.v.eval_test(
             "v",
-            x=torch.zeros(1, 1, device=list_invar[1]["x"].device, dtype=tf_dt),
-            y=torch.zeros(1, 1, device=list_invar[1]["x"].device, dtype=tf_dt),
+            x=paddle.zeros(1, 1, device=list_invar[1]["x"].device, dtype=tf_dt),
+            y=paddle.zeros(1, 1, device=list_invar[1]["x"].device, dtype=tf_dt),
         )
 
         # calculate du/dn on surface
@@ -89,7 +89,7 @@ class DGLoss(Loss):
         int_interior = tensor_int(list_invar[1]["area"], uxvx + uyvy) - fv
 
         losses = {
-            "variational_poisson": torch.abs(int_interior - int_outside).pow(2).sum()
+            "variational_poisson": paddle.abs(int_interior - int_outside).pow(2).sum()
         }
         return losses
 

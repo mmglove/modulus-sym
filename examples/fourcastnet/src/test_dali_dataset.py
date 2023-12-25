@@ -20,8 +20,8 @@ from typing import List
 
 import h5py
 import numpy as np
-import torch
-from torch.utils.data import DataLoader
+import paddle
+from paddle. io import DataLoader
 
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.domain.constraint.constraint import Constraint
@@ -121,14 +121,14 @@ def test_dali_dataset_basic(
             )
 
             # Check invars.
-            assert torch.allclose(invar_d["x_t0"], invar_b["x_t0"])
+            assert paddle.allclose(invar_d["x_t0"], invar_b["x_t0"])
 
             # Check outvars.
             assert len(outvar_d) == len(outvar_b)
             assert len(lw_d) == len(lw_b)
 
             for k in outvar_d.keys():
-                assert torch.allclose(outvar_d[k], outvar_b[k])
+                assert paddle.allclose(outvar_d[k], outvar_b[k])
                 # Weights are consts, so should be exactly the same.
                 assert (lw_d[k] == lw_b[k]).all()
             num_iters += 1
@@ -171,9 +171,9 @@ def test_dali_shuffle(test_data: Path, batch_size: int, num_workers: int):
         base_batches = list(base_loader)
         shuf_batches = list(shuf_loader)
         # Check that shuf_batches is a permutation of the original.
-        x_t0_base = torch.cat([b[0]["x_t0"] for b in base_batches], dim=0)
+        x_t0_base = paddle.cat([b[0]["x_t0"] for b in base_batches], dim=0)
         assert x_t0_base.size(0) == NUM_SAMPLES
-        x_t0_shuf = torch.cat([b[0]["x_t0"] for b in shuf_batches], dim=0)
+        x_t0_shuf = paddle.cat([b[0]["x_t0"] for b in shuf_batches], dim=0)
         assert x_t0_shuf.size(0) == NUM_SAMPLES
 
         for i in range(NUM_SAMPLES):
@@ -208,7 +208,7 @@ def test_distributed_dali_loader(data_path: Path):
         batch_size,
     )
     base_batches = list(base_loader)
-    x_t0_base = torch.cat([b[0]["x_t0"] for b in base_batches], dim=0)
+    x_t0_base = paddle.cat([b[0]["x_t0"] for b in base_batches], dim=0)
     # Make sure baseline contains all samples.
     assert x_t0_base.size(0) == NUM_SAMPLES
 
@@ -225,12 +225,12 @@ def test_distributed_dali_loader(data_path: Path):
     num_samples_per_rank = NUM_SAMPLES // world_size
 
     dali_batches = list(dali_loader)
-    x_t0_dali = torch.cat([b[0]["x_t0"] for b in dali_batches], dim=0)
+    x_t0_dali = paddle.cat([b[0]["x_t0"] for b in dali_batches], dim=0)
     assert x_t0_dali.size(0) == num_samples_per_rank
 
     # Check the samples are distributed across ranks properly.
     idx_start = num_samples_per_rank * m.rank
-    assert torch.allclose(
+    assert paddle.allclose(
         x_t0_base[idx_start : idx_start + num_samples_per_rank], x_t0_dali.cpu()
     )
 

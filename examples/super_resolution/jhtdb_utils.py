@@ -14,7 +14,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
+import paddle
 
 try:
     import pyJHTDB
@@ -98,7 +98,7 @@ def get_jhtdb(
             np.save(file_dir, results)
         # Wait for all processes to get here
         if DistributedManager().distributed:
-            torch.distributed.barrier()
+            paddle.distributed.barrier()
         results = np.load(file_dir)
 
     return results

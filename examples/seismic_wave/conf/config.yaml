@@ -21,8 +21,8 @@ defaults :
   - loss: sum
   - _self_
 
-summary_histograms: true
-jit : true
+summary_histograms: false
+jit : false
 save_filetypes : "vtk"
 
 arch:
@@ -33,8 +33,9 @@ scheduler:
   gamma: 0.99998718
 
 optimizer:
-  lr: 3.e-4
-  betas: [0.9, 0.999]
+  learning_rate: 3.e-4
+  beta1: 0.9
+  beta2: 0.999
 
 training:
   rec_validation_freq: 1000

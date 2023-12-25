@@ -521,8 +521,8 @@ print("|-----------------------------------------------------------------|")
 print("")
 
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
+if paddle.device.cuda.device_count() >= 1:
+    device = paddle.set_device("gpu")
 else:
     raise RuntimeError("No GPU found. Please run on a system with a GPU.")
 inn = ensemble_pytorch(
@@ -631,7 +631,7 @@ if bb == False:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    fno_pressure.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
+    fno_pressure.load_state_dict(paddle.load("fno_forward_model_pressure.0.pth"))
     fno_pressure = fno_pressure.to(device)
     fno_pressure.eval()
     os.chdir(oldfolder)
@@ -639,7 +639,7 @@ else:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for dynamic properties pressure model")
-    fno_pressure.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
+    fno_pressure.load_state_dict(paddle.load("fno_forward_model_pressure.0.pth"))
     fno_pressure = fno_pressure.to(device)
     fno_pressure.eval()
     os.chdir(oldfolder)
@@ -655,7 +655,7 @@ if bb == False:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    fno_water.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
+    fno_water.load_state_dict(paddle.load("fno_forward_model_water.0.pth"))
     fno_water = fno_water.to(device)
     fno_water.eval()
     os.chdir(oldfolder)
@@ -663,7 +663,7 @@ else:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for dynamic properties- water model")
-    fno_water.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
+    fno_water.load_state_dict(paddle.load("fno_forward_model_water.0.pth"))
     fno_water = fno_water.to(device)
     fno_water.eval()
     os.chdir(oldfolder)
@@ -679,7 +679,7 @@ if bb == False:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    fno_gas.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
+    fno_gas.load_state_dict(paddle.load("fno_forward_model_gas.0.pth"))
     fno_gas = fno_gas.to(device)
     fno_gas.eval()
     os.chdir(oldfolder)
@@ -687,7 +687,7 @@ else:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for dynamic properties - Gas model")
-    fno_gas.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
+    fno_gas.load_state_dict(paddle.load("fno_forward_model_gas.0.pth"))
     fno_gas = fno_gas.to(device)
     fno_gas.eval()
     os.chdir(oldfolder)
@@ -705,14 +705,14 @@ if bba == False:
     print("...Downlaod completed.......")
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    fno_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
+    fno_peacemann.load_state_dict(paddle.load("fno_forward_model_peacemann.0.pth"))
     fno_peacemann = fno_peacemann.to(device)
     fno_peacemann.eval()
     os.chdir(oldfolder)
 else:
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for peacemann well model")
-    fno_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
+    fno_peacemann.load_state_dict(paddle.load("fno_forward_model_peacemann.0.pth"))
     fno_peacemann = fno_peacemann.to(device)
     fno_peacemann.eval()
     os.chdir(oldfolder)

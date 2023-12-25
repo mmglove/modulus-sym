@@ -15,8 +15,8 @@
 import os
 import warnings
 
-import torch
-from torch.utils.data import DataLoader, Dataset
+import paddle
+from paddle. io import DataLoader, Dataset
 from sympy import Symbol, Eq, Abs, tanh, Or, And
 import numpy as np
 import itertools
@@ -268,7 +268,7 @@ def run(cfg: ModulusConfig) -> None:
     pressure_monitor = PointwiseMonitor(
         invar_inlet_pressure,
         output_names=["p"],
-        metrics={"inlet_pressure": lambda var: torch.mean(var["p"])},
+        metrics={"inlet_pressure": lambda var: paddle.mean(var["p"])},
         nodes=flow_nodes,
     )
     flow_domain.add_monitor(pressure_monitor)
@@ -335,7 +335,7 @@ def run(cfg: ModulusConfig) -> None:
             front_pressure_monitor = PointwiseMonitor(
                 invar_pressure,
                 output_names=["p"],
-                metrics={metric: lambda var: torch.mean(var["p"])},
+                metrics={metric: lambda var: paddle.mean(var["p"])},
                 nodes=flow_nodes,
             )
             flow_domain.add_monitor(front_pressure_monitor)
@@ -366,7 +366,7 @@ def run(cfg: ModulusConfig) -> None:
             back_pressure_monitor = PointwiseMonitor(
                 invar_pressure,
                 output_names=["p"],
-                metrics={metric: lambda var: torch.mean(var["p"])},
+                metrics={metric: lambda var: paddle.mean(var["p"])},
                 nodes=flow_nodes,
             )
             flow_domain.add_monitor(back_pressure_monitor)

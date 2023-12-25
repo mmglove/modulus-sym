@@ -45,7 +45,7 @@ scheduler:
   decay_steps: 8000             # Change this based on arch chosen
 
 optimizer:
-  lr: 1e-3                      # Change this based on arch chosen
+  learning_rate: 1e-3                      # Change this based on arch chosen
 
 training:
   rec_validation_freq: 1000

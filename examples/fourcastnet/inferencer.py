@@ -15,10 +15,10 @@
 "Script to carry out Fourcastnet inference"
 
 import omegaconf
-import torch
+import paddle
 import logging
 import numpy as np
-from torch.utils.data import DataLoader, Sampler
+from paddle. io import DataLoader, Sampler
 
 from modulus.sym.hydra import to_absolute_path
 from modulus.sym.key import Key
@@ -56,7 +56,7 @@ var_key_dict = {
 
 def to_device(tensor_dict):
     return {
-        key: torch.as_tensor(value, dtype=torch.float32, device=device)
+        key: paddle.as_tensor(value, dtype=paddle.float32, device=device)
         for key, value in tensor_dict.items()
     }
 
@@ -113,7 +113,7 @@ model = FourcastNetArch(
 )
 
 # load parameters
-model.load_state_dict(torch.load(model_path))
+model.load_state_dict(paddle.load(model_path))
 model.to(device)
 logging.info(f"Loaded model {model_path}")
 
@@ -126,11 +126,11 @@ last = len(test_dataset) - 1 - nsteps * cfg.custom.tstep
 acc_recursive = {key: [] for key in var_key_dict.values()}
 rmse_recursive = {key: [] for key in var_key_dict.values()}
 # Normalization stats
-mu = torch.tensor(test_dataset.mu[0]).to(device)  # shape [C, 1, 1]
-sd = torch.tensor(test_dataset.sd[0]).to(device)  # shape [C, 1, 1]
+mu = paddle.to_tensor(test_dataset.mu[0]).to(device)  # shape [C, 1, 1]
+sd = paddle.to_tensor(test_dataset.sd[0]).to(device)  # shape [C, 1, 1]
 
 # run inference
-with torch.no_grad():
+with paddle.no_grad():
     for ic in range(0, min([8 * nics + 1, last])):
         subset = cfg.custom.tstep * np.arange(nsteps) + ic
         if (ic + 1) % 8 == 0 or (ic + 1) % 36 == 0 or ic == 0:
@@ -144,8 +144,8 @@ with torch.no_grad():
                 worker_init_fn=test_dataset.worker_init_fn,
             )
 
-            acc_error = torch.zeros(nsteps, test_dataset.nchans)
-            rmse_error = torch.zeros(nsteps, test_dataset.nchans)
+            acc_error = paddle.zeros(nsteps, test_dataset.nchans)
+            rmse_error = paddle.zeros(nsteps, test_dataset.nchans)
             for tstep, (invar, true_outvar, _) in enumerate(dataloader):
                 if tstep % 10 == 0:
                     logging.info(f"ic: {ic} tstep: {tstep}/{nsteps}")

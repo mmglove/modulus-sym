@@ -26,7 +26,7 @@ scheduler:
   decay_steps: 1000
 
 optimizer:
-  lr: 1e-4
+  learning_rate: 1e-4
 
 training:
   rec_results_freq : 1000

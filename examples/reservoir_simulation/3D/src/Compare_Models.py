@@ -28,7 +28,7 @@ from modulus.sym.models.afno.afno import *
 import shutil
 import pandas as pd
 import scipy.io as sio
-import torch
+import paddle
 import yaml
 from PIL import Image
 

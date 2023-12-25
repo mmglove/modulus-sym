@@ -20,7 +20,7 @@ from modulus.sym.models.fno import *
 import shutil
 import pandas as pd
 import scipy.io as sio
-import torch
+import paddle
 import yaml
 from multiprocessing import Lock, Value
 from PIL import Image
@@ -300,7 +300,7 @@ skin = 0  # well deformation
 pwf_producer = 100
 cuda = 0
 input_channel = 7  # [Perm, Q,QW,Phi,dt, initial_pressure, initial_water_sat]
-device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+device = paddle.device(f"cuda:{cuda}" if paddle.device.cuda.device_count() >= 1 else "cpu")
 N_inj = 4
 N_pr = 4
 
@@ -492,7 +492,7 @@ if surrogate == 1:
         os.chdir("outputs/Forward_problem_FNO/ResSim")
         print(" Surrogate model learned with FNO")
 
-        modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("fno_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -500,7 +500,7 @@ if surrogate == 1:
 
         os.chdir("outputs/Forward_problem_FNO/ResSim")
         print(" Surrogate model learned with FNO")
-        modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("fno_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -518,14 +518,14 @@ if surrogate == 1:
         os.chdir("outputs/Forward_problem_FNO/ResSim")
         print(" Surrogate model learned with FNO")
 
-        modelS.load_state_dict(torch.load("fno_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("fno_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
     else:
         os.chdir("outputs/Forward_problem_FNO/ResSim")
         print(" Surrogate model learned with FNO")
-        modelS.load_state_dict(torch.load("fno_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("fno_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
@@ -548,7 +548,7 @@ elif surrogate == 2:
         os.chdir("outputs/Forward_problem_PINO/ResSim")
         print(" Surrogate model learned with PINO")
 
-        modelP.load_state_dict(torch.load("pino_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("pino_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -556,7 +556,7 @@ elif surrogate == 2:
 
         os.chdir("outputs/Forward_problem_PINO/ResSim")
         print(" Surrogate model learned with PINO")
-        modelP.load_state_dict(torch.load("pino_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("pino_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -574,14 +574,14 @@ elif surrogate == 2:
         os.chdir("outputs/Forward_problem_PINO/ResSim")
         print(" Surrogate model learned with PINO")
 
-        modelS.load_state_dict(torch.load("pino_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("pino_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
     else:
         os.chdir("outputs/Forward_problem_PINO/ResSim")
         print(" Surrogate model learned with PINO")
-        modelS.load_state_dict(torch.load("pino_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("pino_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
@@ -609,7 +609,7 @@ elif surrogate == 3:
         os.chdir("outputs/Forward_problem_AFNOD/ResSim")
         print(" Surrogate model learned with AFNO (data driven)")
 
-        modelP.load_state_dict(torch.load("afno_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("afno_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -617,7 +617,7 @@ elif surrogate == 3:
 
         os.chdir("outputs/Forward_problem_AFNOD/ResSim")
         print(" Surrogate model learned with AFNO (data-driven)")
-        modelP.load_state_dict(torch.load("afno_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("afno_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -635,14 +635,14 @@ elif surrogate == 3:
         os.chdir("outputs/Forward_problem_AFNOD/ResSim")
         print(" Surrogate model learned with AFNO (data-driven)")
 
-        modelS.load_state_dict(torch.load("afno_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("afno_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
     else:
         os.chdir("outputs/Forward_problem_AFNOD/ResSim")
         print(" Surrogate model learned with AFNO (data-driven)")
-        modelS.load_state_dict(torch.load("afno_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("afno_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
@@ -669,7 +669,7 @@ elif surrogate == 4:
         os.chdir("outputs/Forward_problem_AFNOP/ResSim")
         print(" Surrogate model learned with AFNO (physics driven)")
 
-        modelP.load_state_dict(torch.load("afnop_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("afnop_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -677,7 +677,7 @@ elif surrogate == 4:
 
         os.chdir("outputs/Forward_problem_AFNOP/ResSim")
         print(" Surrogate model learned with AFNO (physics-driven)")
-        modelP.load_state_dict(torch.load("afnop_forward_model_pressure.0.pth"))
+        modelP.load_state_dict(paddle.load("afnop_forward_model_pressure.0.pth"))
         modelP = modelP.to(device)
         modelP.eval()
         os.chdir(oldfolder)
@@ -695,27 +695,27 @@ elif surrogate == 4:
         os.chdir("outputs/Forward_problem_AFNOP/ResSim")
         print(" Surrogate model learned with AFNO (physics-driven)")
 
-        modelS.load_state_dict(torch.load("afnop_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("afnop_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
     else:
         os.chdir("outputs/Forward_problem_AFNOP/ResSim")
         print(" Surrogate model learned with AFNO (physics-driven)")
-        modelS.load_state_dict(torch.load("afnop_forward_model_saturation.0.pth"))
+        modelS.load_state_dict(paddle.load("afnop_forward_model_saturation.0.pth"))
         modelS = modelS.to(device)
         modelS.eval()
         os.chdir(oldfolder)
 print("********************Model Loaded*************************************")
 
 inn = {
-    "perm": torch.from_numpy(ini_ensemble1).to(device, torch.float32),
-    "Q": torch.from_numpy(ini_ensemble2).to(device, dtype=torch.float32),
-    "Qw": torch.from_numpy(ini_ensemble3).to(device, dtype=torch.float32),
-    "Phi": torch.from_numpy(ini_ensemble4).to(device, dtype=torch.float32),
-    "Time": torch.from_numpy(ini_ensemble5).to(device, dtype=torch.float32),
-    "Pini": torch.from_numpy(ini_ensemble6).to(device, dtype=torch.float32),
-    "Swini": torch.from_numpy(ini_ensemble7).to(device, dtype=torch.float32),
+    "perm": paddle.from_numpy(ini_ensemble1).to(device, paddle.float32),
+    "Q": paddle.from_numpy(ini_ensemble2).to(device, dtype=paddle.float32),
+    "Qw": paddle.from_numpy(ini_ensemble3).to(device, dtype=paddle.float32),
+    "Phi": paddle.from_numpy(ini_ensemble4).to(device, dtype=paddle.float32),
+    "Time": paddle.from_numpy(ini_ensemble5).to(device, dtype=paddle.float32),
+    "Pini": paddle.from_numpy(ini_ensemble6).to(device, dtype=paddle.float32),
+    "Swini": paddle.from_numpy(ini_ensemble7).to(device, dtype=paddle.float32),
 }
 
 print("")

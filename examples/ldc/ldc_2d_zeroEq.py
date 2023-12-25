@@ -16,7 +16,7 @@ import os
 import warnings
 
 from sympy import Symbol, Eq, Abs
-import torch
+import paddle
 import modulus.sym
 from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
 from modulus.sym.utils.io import csv_to_dict
@@ -152,18 +152,18 @@ def run(cfg: ModulusConfig) -> None:
         rec.sample_interior(4000),
         output_names=["continuity", "momentum_x", "momentum_y"],
         metrics={
-            "mass_imbalance": lambda var: torch.sum(
-                var["area"] * torch.abs(var["continuity"])
+            "mass_imbalance": lambda var: paddle.sum(
+                var["area"] * paddle.abs(var["continuity"])
             ),
-            "momentum_imbalance": lambda var: torch.sum(
+            "momentum_imbalance": lambda var: paddle.sum(
                 var["area"]
-                * (torch.abs(var["momentum_x"]) + torch.abs(var["momentum_y"]))
+                * (paddle.abs(var["momentum_x"]) + paddle.abs(var["momentum_y"]))
             ),
         },
         nodes=nodes,
         requires_grad=True,
     )
-    ldc_domain.add_monitor(global_monitor)
+    # ldc_domain.add_monitor(global_monitor)
 
     # make solver
     slv = Solver(cfg, ldc_domain)

@@ -24,7 +24,7 @@ import os
 import warnings
 
 from sympy import Symbol, Eq, And
-import torch
+import paddle
 
 import modulus.sym
 from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
@@ -51,6 +51,8 @@ from pdes.navier_stokes import NavierStokes
 
 @modulus.sym.main(config_path="conf", config_name="config")
 def run(cfg: ModulusConfig) -> None:
+    paddle.framework.core.set_prim_eager_enabled(True)
+    paddle.framework.core._set_prim_all_enabled(True)
     # make list of nodes to unroll graph on
     ns = NavierStokes(nu=0.01, rho=1.0, dim=2, time=False)
     normal_dot_vel = NormalDotVec(["u", "v"])
@@ -205,12 +207,12 @@ def run(cfg: ModulusConfig) -> None:
         geo.sample_interior(1024),
         output_names=["continuity", "momentum_x", "momentum_y"],
         metrics={
-            "mass_imbalance": lambda var: torch.sum(
-                var["area"] * torch.abs(var["continuity"])
+            "mass_imbalance": lambda var: paddle.sum(
+                var["area"] * paddle.abs(var["continuity"])
             ),
-            "momentum_imbalance": lambda var: torch.sum(
+            "momentum_imbalance": lambda var: paddle.sum(
                 var["area"]
-                * (torch.abs(var["momentum_x"]) + torch.abs(var["momentum_y"]))
+                * (paddle.abs(var["momentum_x"]) + paddle.abs(var["momentum_y"]))
             ),
         },
         nodes=nodes,
@@ -223,8 +225,8 @@ def run(cfg: ModulusConfig) -> None:
         inner_circle.sample_boundary(1024),
         output_names=["p"],
         metrics={
-            "force_x": lambda var: torch.sum(var["normal_x"] * var["area"] * var["p"]),
-            "force_y": lambda var: torch.sum(var["normal_y"] * var["area"] * var["p"]),
+            "force_x": lambda var: paddle.sum(var["normal_x"] * var["area"] * var["p"]),
+            "force_y": lambda var: paddle.sum(var["normal_y"] * var["area"] * var["p"]),
         },
         nodes=nodes,
     )

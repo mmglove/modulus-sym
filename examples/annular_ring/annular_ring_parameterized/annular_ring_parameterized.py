@@ -17,7 +17,7 @@ import warnings
 
 from sympy import Symbol, Eq
 import numpy as np
-import torch
+import paddle
 
 import modulus.sym
 from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
@@ -271,12 +271,12 @@ def run(cfg: ModulusConfig) -> None:
         ),
         output_names=["continuity", "momentum_x", "momentum_y"],
         metrics={
-            "mass_imbalance": lambda var: torch.sum(
-                var["area"] * torch.abs(var["continuity"])
+            "mass_imbalance": lambda var: paddle.sum(
+                var["area"] * paddle.abs(var["continuity"])
             ),
-            "momentum_imbalance": lambda var: torch.sum(
+            "momentum_imbalance": lambda var: paddle.sum(
                 var["area"]
-                * (torch.abs(var["momentum_x"]) + torch.abs(var["momentum_y"]))
+                * (paddle.abs(var["momentum_x"]) + paddle.abs(var["momentum_y"]))
             ),
         },
         nodes=nodes,
@@ -297,11 +297,11 @@ def run(cfg: ModulusConfig) -> None:
             output_names=["p"],
             metrics={
                 "force_x_r"
-                + str(radius): lambda var: torch.sum(
+                + str(radius): lambda var: paddle.sum(
                     var["normal_x"] * var["area"] * var["p"]
                 ),
                 "force_y_r"
-                + str(radius): lambda var: torch.sum(
+                + str(radius): lambda var: paddle.sum(
                     var["normal_y"] * var["area"] * var["p"]
                 ),
             },

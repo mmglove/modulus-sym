@@ -15,7 +15,7 @@
 import os
 import warnings
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq
 
@@ -256,12 +256,12 @@ def run(cfg: ModulusConfig) -> None:
         geo.sample_interior(100),
         output_names=["continuity", "momentum_x", "momentum_y"],
         metrics={
-            "mass_imbalance": lambda var: torch.sum(
-                var["area"] * torch.abs(var["continuity"])
+            "mass_imbalance": lambda var: paddle.sum(
+                var["area"] * paddle.abs(var["continuity"])
             ),
-            "momentum_imbalance": lambda var: torch.sum(
+            "momentum_imbalance": lambda var: paddle.sum(
                 var["area"]
-                * (torch.abs(var["momentum_x"]) + torch.abs(var["momentum_y"]))
+                * (paddle.abs(var["momentum_x"]) + paddle.abs(var["momentum_y"]))
             ),
         },
         nodes=nodes,
@@ -273,8 +273,8 @@ def run(cfg: ModulusConfig) -> None:
         heat_sink.sample_boundary(100),
         output_names=["p"],
         metrics={
-            "force_x": lambda var: torch.sum(var["normal_x"] * var["area"] * var["p"]),
-            "force_y": lambda var: torch.sum(var["normal_y"] * var["area"] * var["p"]),
+            "force_x": lambda var: paddle.sum(var["normal_x"] * var["area"] * var["p"]),
+            "force_y": lambda var: paddle.sum(var["normal_y"] * var["area"] * var["p"]),
         },
         nodes=nodes,
     )
@@ -283,7 +283,7 @@ def run(cfg: ModulusConfig) -> None:
     peakT = PointwiseMonitor(
         heat_sink.sample_boundary(100),
         output_names=["c"],
-        metrics={"peakT": lambda var: torch.max(var["c"])},
+        metrics={"peakT": lambda var: paddle.max(var["c"])},
         nodes=nodes,
     )
     domain.add_monitor(peakT)

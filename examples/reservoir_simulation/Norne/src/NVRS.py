@@ -66,10 +66,10 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.cluster import MiniBatchKMeans
 import os.path
-import torch
-from torch.utils.data import DataLoader
+import paddle
+from paddle. io import DataLoader
 
-torch.set_default_dtype(torch.float32)
+paddle.set_default_dtype("float32")
 from joblib import Parallel, delayed
 from scipy import interpolate
 import multiprocessing
@@ -94,8 +94,8 @@ from sklearn.linear_model import LinearRegression
 
 # from PIL import Image
 from scipy.fftpack import dct
-from torch.utils.dlpack import to_dlpack
-from torch.utils.dlpack import from_dlpack
+from paddle.utils.dlpack import to_dlpack
+from paddle.utils.dlpack import from_dlpack
 import numpy.matlib
 from matplotlib import pyplot
 
@@ -838,7 +838,7 @@ def Plot_RSM_percentile(pertoutt, True_mat, timezz):
 
 def MyLossClement(a, b):
 
-    loss = torch.sum(torch.abs(a - b) / a.shape[0])
+    loss = paddle.sum(paddle.abs(a - b) / a.shape[0])
 
     # loss = ((a-b)**2).mean()
     return loss
@@ -1027,31 +1027,31 @@ class LpLoss(object):
         # Assume uniform mesh
         h = 1.0 / (x.size()[1] - 1.0)
 
-        all_norms = (h ** (self.d / self.p)) * torch.norm(
+        all_norms = (h ** (self.d / self.p)) * paddle.norm(
             x.view(num_examples, -1) - y.view(num_examples, -1), self.p, 1
         )
 
         if self.reduction:
             if self.size_average:
-                return torch.mean(all_norms)
+                return paddle.mean(all_norms)
             else:
-                return torch.sum(all_norms)
+                return paddle.sum(all_norms)
 
         return all_norms
 
     def rel(self, x, y):
         num_examples = x.size()[0]
 
-        diff_norms = torch.norm(
+        diff_norms = paddle.norm(
             x.reshape(num_examples, -1) - y.reshape(num_examples, -1), self.p, 1
         )
-        y_norms = torch.norm(y.reshape(num_examples, -1), self.p, 1)
+        y_norms = paddle.norm(y.reshape(num_examples, -1), self.p, 1)
 
         if self.reduction:
             if self.size_average:
-                return torch.mean(diff_norms / y_norms)
+                return paddle.mean(diff_norms / y_norms)
             else:
-                return torch.sum(diff_norms / y_norms)
+                return paddle.sum(diff_norms / y_norms)
 
         return diff_norms / y_norms
 
@@ -1542,36 +1542,36 @@ def calc_mu_g(p):
 def calc_rs(p_bub, p):
     # p=average reservoir pressure
     cuda = 0
-    device1 = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
-    rs_factor = torch.where(
+    device1 = paddle.device(f"cuda:{cuda}" if paddle.device.cuda.device_count() >= 1 else "cpu")
+    rs_factor = paddle.where(
         p < p_bub,
-        torch.tensor(1.0).to(device1, torch.float32),
-        torch.tensor(0.0).to(device1, torch.float32),
+        paddle.to_tensor(1.0).to(device1, paddle.float32),
+        paddle.to_tensor(0.0).to(device1, paddle.float32),
     )
     rs = (
         (178.11**2)
         / 5.615
-        * (torch.pow(p / p_bub, 1.3) * rs_factor + (1 - rs_factor))
+        * (paddle.pow(p / p_bub, 1.3) * rs_factor + (1 - rs_factor))
     )
     return rs
 
 
 def calc_dp(p_bub, p_atm, p):
-    dp = torch.where(p < p_bub, p_atm - p, p_atm - p_bub)
+    dp = paddle.where(p < p_bub, p_atm - p, p_atm - p_bub)
     return dp
 
 
 def calc_bg(p_bub, p_atm, p):
     # P is average reservoir pressure
-    b_g = torch.divide(1, torch.exp(1.7e-3 * calc_dp(p_bub, p_atm, p)))
+    b_g = paddle.divide(1, paddle.exp(1.7e-3 * calc_dp(p_bub, p_atm, p)))
     return b_g
 
 
 def calc_bo(p_bub, p_atm, CFO, p):
     # p is average reservoir pressure
-    exp_term1 = torch.where(p < p_bub, -8e-5 * (p_atm - p), -8e-5 * (p_atm - p_bub))
-    exp_term2 = -CFO * torch.where(p < p_bub, torch.zeros_like(p), p - p_bub)
-    b_o = torch.divide(1, torch.exp(exp_term1) * torch.exp(exp_term2))
+    exp_term1 = paddle.where(p < p_bub, -8e-5 * (p_atm - p), -8e-5 * (p_atm - p_bub))
+    exp_term2 = -CFO * paddle.where(p < p_bub, paddle.zeros_like(p), p - p_bub)
+    b_o = paddle.divide(1, paddle.exp(exp_term1) * paddle.exp(exp_term2))
     return b_o
 
 
@@ -2745,13 +2745,13 @@ def ensemble_pytorch(
     # Permeability
     ini_ensemble1 = fit_clement(ini_ensemble1, target_min, target_max, minK, maxK)
 
-    # ini_ensemble = torch.from_numpy(ini_ensemble).to(device, dtype=torch.float32)
+    # ini_ensemble = paddle.from_numpy(ini_ensemble).to(device, dtype=paddle.float32)
     inn = {
-        "perm": torch.from_numpy(ini_ensemble1).to(device, torch.float32),
-        "fault": torch.from_numpy(ini_ensemble4).to(device, dtype=torch.float32),
-        "Phi": torch.from_numpy(ini_ensemble2).to(device, dtype=torch.float32),
-        "Pini": torch.from_numpy(ini_ensemble9).to(device, dtype=torch.float32),
-        "Swini": torch.from_numpy(ini_ensemble10).to(device, dtype=torch.float32),
+        "perm": paddle.from_numpy(ini_ensemble1).to(device, paddle.float32),
+        "fault": paddle.from_numpy(ini_ensemble4).to(device, dtype=paddle.float32),
+        "Phi": paddle.from_numpy(ini_ensemble2).to(device, dtype=paddle.float32),
+        "Pini": paddle.from_numpy(ini_ensemble9).to(device, dtype=paddle.float32),
+        "Swini": paddle.from_numpy(ini_ensemble10).to(device, dtype=paddle.float32),
     }
     return inn
 
@@ -3507,7 +3507,7 @@ def convert_back(rescaled_tensor, target_min, target_max, min_val, max_val):
 
 
 def replace_nans_and_infs(tensor, value=0.0):
-    tensor[torch.isnan(tensor) | torch.isinf(tensor)] = value
+    tensor[paddle.isnan(tensor) | paddle.isinf(tensor)] = value
     return tensor
 
 
@@ -3700,10 +3700,10 @@ def Forward_model_ensemble(
     minK, maxK, minT, maxT, minP, maxP : float
         Min-max values for permeability, time, and pressure.
 
-    modelP1, modelW1, modelG1, modelP2 : torch.nn.Module
+    modelP1, modelW1, modelG1, modelP2 : paddle.nn.Layer
         Trained PyTorch models for predicting pressure, water saturation, gas saturation, and the secondary pressure model respectively.
 
-    device : torch.device
+    device : paddle.device
         The device (CPU or GPU) where the PyTorch models will run.
 
     min_out_fcn, max_out_fcn : float
@@ -3741,7 +3741,7 @@ def Forward_model_ensemble(
             "Swini": x_true["Swini"][clem, :, :, :, :][None, :, :, :, :],
         }
 
-        with torch.no_grad():
+        with paddle.no_grad():
             ouut_p1 = modelP1(temp)["pressure"]
             ouut_s1 = modelW1(temp)["water_sat"]
             ouut_sg1 = modelG1(temp)["gas_sat"]
@@ -3751,13 +3751,13 @@ def Forward_model_ensemble(
         Sgas.append(ouut_sg1)
 
         del temp
-        torch.cuda.empty_cache()
+        paddle.device.cuda.empty_cache()
 
-    pressure = torch.vstack(pressure).detach().cpu().numpy()
+    pressure = paddle.vstack(pressure).detach().cpu().numpy()
     pressure = Make_correct(pressure)
-    Swater = torch.vstack(Swater).detach().cpu().numpy()
+    Swater = paddle.vstack(Swater).detach().cpu().numpy()
     Swater = Make_correct(Swater)
-    Sgas = torch.vstack(Sgas).detach().cpu().numpy()
+    Sgas = paddle.vstack(Sgas).detach().cpu().numpy()
     Sgas = Make_correct(Sgas)
     Soil = np.ones_like(Swater) - (Swater + Sgas)
 
@@ -3909,13 +3909,13 @@ def Forward_model_ensemble(
             innn[i, :, :] = inn1
 
     if Trainmoe == 1:
-        innn = torch.from_numpy(innn).to(device, torch.float32)
+        innn = paddle.from_numpy(innn).to(device, paddle.float32)
         ouut_p = []
         # x_true = ensemblepy
         for clem in range(N):
             temp = {"X": innn[clem, :, :][None, :, :]}
 
-            with torch.no_grad():
+            with paddle.no_grad():
                 ouut_p1 = modelP2(temp)["Y"]
                 ouut_p1 = convert_back(
                     ouut_p1.detach().cpu().numpy(),
@@ -3927,7 +3927,7 @@ def Forward_model_ensemble(
 
             ouut_p.append(ouut_p1)
             del temp
-            torch.cuda.empty_cache()
+            paddle.device.cuda.empty_cache()
         ouut_p = np.vstack(ouut_p)
         ouut_p = np.transpose(ouut_p, (0, 2, 1))
     else:
@@ -5246,9 +5246,9 @@ def historydata(timestep, steppi, steppi_indices):
 
 
 # def linear_interp(x, xp, fp):
-#     #left_indices = torch.clamp(torch.searchsorted(xp, x) - 1, 0, len(xp) - 2)
+#     #left_indices = paddle.clamp(paddle.searchsorted(xp, x) - 1, 0, len(xp) - 2)
 #     contiguous_xp = xp.contiguous()
-#     left_indices = torch.clamp(torch.searchsorted(contiguous_xp, x) - 1, 0, len(contiguous_xp) - 2)
+#     left_indices = paddle.clamp(paddle.searchsorted(contiguous_xp, x) - 1, 0, len(contiguous_xp) - 2)
 #     interpolated_value = (((fp[left_indices + 1] - fp[left_indices]) / (contiguous_xp[left_indices + 1] - contiguous_xp[left_indices])) \
 #                           * (x - contiguous_xp[left_indices])) + fp[left_indices]
 #     return interpolated_value
@@ -5256,8 +5256,8 @@ def historydata(timestep, steppi, steppi_indices):
 
 def linear_interp(x, xp, fp):
     contiguous_xp = xp.contiguous()
-    left_indices = torch.clamp(
-        torch.searchsorted(contiguous_xp, x) - 1, 0, len(contiguous_xp) - 2
+    left_indices = paddle.clamp(
+        paddle.searchsorted(contiguous_xp, x) - 1, 0, len(contiguous_xp) - 2
     )
 
     # Calculate denominators and handle zero case
@@ -5273,14 +5273,14 @@ def linear_interp(x, xp, fp):
 
 
 def replace_nan_with_zero(tensor):
-    nan_mask = torch.isnan(tensor)
+    nan_mask = paddle.isnan(tensor)
     return tensor * (~nan_mask).float() + nan_mask.float() * 0.0
 
 
 def interp_torch(cuda, reference_matrix1, reference_matrix2, tensor1):
     chunk_size = 1
 
-    chunks = torch.chunk(tensor1, chunks=chunk_size, dim=0)
+    chunks = paddle.chunk(tensor1, chunks=chunk_size, dim=0)
     processed_chunks = []
     for start_idx in range(chunk_size):
         interpolated_chunk = linear_interp(
@@ -5288,7 +5288,7 @@ def interp_torch(cuda, reference_matrix1, reference_matrix2, tensor1):
         )
         processed_chunks.append(interpolated_chunk)
 
-    torch.cuda.empty_cache()
+    paddle.device.cuda.empty_cache()
     return processed_chunks
 
 

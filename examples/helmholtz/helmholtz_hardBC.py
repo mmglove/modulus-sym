@@ -15,7 +15,7 @@
 import os
 import warnings
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, pi, sin
 from typing import List, Tuple, Dict
@@ -52,7 +52,7 @@ class HardBC(ADF):
         self.mu: float = 2.0
         self.m: float = 2.0
 
-    def forward(self, invar: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, invar: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
         """
         Forms the solution anstaz for the Helmholtz example
         """
@@ -98,6 +98,9 @@ class HardBC(ADF):
 
 @modulus.sym.main(config_path="conf", config_name="config_hardBC")
 def run(cfg: ModulusConfig) -> None:
+    paddle.framework.core.set_prim_eager_enabled(True)
+    paddle.framework.core._set_prim_all_enabled(True)
+
     # make list of nodes to unroll graph on
     wave = HelmholtzEquation(u="u", k=1.0, dim=2, mixed_form=True)
     hard_bc = HardBC()

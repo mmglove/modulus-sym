@@ -72,7 +72,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.cluster import MiniBatchKMeans
 import os.path
-import torch
+import paddle
 
 # import yaml
 from scipy import interpolate
@@ -1296,31 +1296,31 @@ class LpLoss(object):
         # Assume uniform mesh
         h = 1.0 / (x.size()[1] - 1.0)
 
-        all_norms = (h ** (self.d / self.p)) * torch.norm(
+        all_norms = (h ** (self.d / self.p)) * paddle.norm(
             x.view(num_examples, -1) - y.view(num_examples, -1), self.p, 1
         )
 
         if self.reduction:
             if self.size_average:
-                return torch.mean(all_norms)
+                return paddle.mean(all_norms)
             else:
-                return torch.sum(all_norms)
+                return paddle.sum(all_norms)
 
         return all_norms
 
     def rel(self, x, y):
         num_examples = x.size()[0]
 
-        diff_norms = torch.norm(
+        diff_norms = paddle.norm(
             x.reshape(num_examples, -1) - y.reshape(num_examples, -1), self.p, 1
         )
-        y_norms = torch.norm(y.reshape(num_examples, -1), self.p, 1)
+        y_norms = paddle.norm(y.reshape(num_examples, -1), self.p, 1)
 
         if self.reduction:
             if self.size_average:
-                return torch.mean(diff_norms / y_norms)
+                return paddle.mean(diff_norms / y_norms)
             else:
-                return torch.sum(diff_norms / y_norms)
+                return paddle.sum(diff_norms / y_norms)
 
         return diff_norms / y_norms
 

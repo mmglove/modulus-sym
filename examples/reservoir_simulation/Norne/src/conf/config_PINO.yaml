@@ -136,7 +136,7 @@ scheduler:
   
 optimizer:
     weight_decay: 1e-4
-    lr: 1e-3
+    learning_rate: 1e-3
 
 training:
   rec_results_freq : 10000

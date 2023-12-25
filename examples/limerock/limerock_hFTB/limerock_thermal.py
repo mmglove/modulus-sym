@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-from torch.utils.data import DataLoader, Dataset
-from torch import Tensor
+import paddle
+from paddle. io import DataLoader, Dataset
+from paddle import Tensor
 import copy
 
 import numpy as np
@@ -396,7 +396,7 @@ def run(cfg: ModulusConfig) -> None:
     peak_temp_monitor = PointwiseMonitor(
         invar_temp,
         output_names=["theta_s"],
-        metrics={"peak_temp": lambda var: torch.max(var["theta_s"])},
+        metrics={"peak_temp": lambda var: paddle.max(var["theta_s"])},
         nodes=thermal_nodes,
     )
     cycle_n_domain.add_monitor(peak_temp_monitor)

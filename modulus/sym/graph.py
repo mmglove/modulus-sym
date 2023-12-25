@@ -84,7 +84,7 @@ class Graph(paddle.nn.Layer):
         invar: List[Key],
         req_names: List[Key],
         diff_nodes: List[Node] = [],
-        func_arch: Optional[bool] = None,
+        func_arch: Optional[bool] = False,
         func_arch_allow_partial_hessian: Optional[bool] = None,
     ):
         super().__init__()

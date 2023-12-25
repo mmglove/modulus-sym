@@ -14,8 +14,8 @@
 
 from typing import Dict
 import numpy as np
-import torch
-import torch.nn.functional as F
+import paddle
+import paddle.nn.functional as F
 import os
 import modulus
 from modulus.sym.hydra import ModulusConfig
@@ -38,7 +38,7 @@ import scipy.io as sio
 import requests
 from modulus.sym.utils.io.plotter import ValidatorPlotter
 
-torch.set_default_dtype(torch.float32)
+paddle.set_default_dtype("float32")
 
 
 def download_file_from_google_drive(id, destination):
@@ -672,7 +672,7 @@ class CustomValidatorPlotterS(ValidatorPlotter):
 
 # [pde-loss]
 # define custom class for black oil model
-class Black_oil(torch.nn.Module):
+class Black_oil(paddle.nn.Layer):
     "Custom Black oil PDE definition for PINO"
 
     def __init__(
@@ -713,7 +713,7 @@ class Black_oil(torch.nn.Module):
         self.ny = ny
         self.approach = approach
 
-    def forward(self, input_var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, input_var: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
 
         # get inputs
 
@@ -740,13 +740,13 @@ class Black_oil(torch.nn.Module):
             fin = fin * self.UIR
             finwater = finwater * self.UIR
             cuda = 0
-            device = torch.device(
-                f"cuda:{cuda}" if torch.cuda.is_available() else "cpu"
+            device = paddle.device(
+                f"cuda:{cuda}" if paddle.device.cuda.device_count() >= 1 else "cpu"
             )
 
             # print(pressurey.shape)
-            p_loss = torch.zeros_like(u).to(device, torch.float32)
-            s_loss = torch.zeros_like(u).to(device, torch.float32)
+            p_loss = paddle.zeros_like(u).to(device, paddle.float32)
+            s_loss = paddle.zeros_like(u).to(device, paddle.float32)
 
             a = perm  # absolute permeability
             v_min, v_max = self.LUB, self.HUB
@@ -763,44 +763,44 @@ class Black_oil(torch.nn.Module):
             pressure = u
             # water_sat = sat
 
-            prior_pressure = torch.zeros(
+            prior_pressure = paddle.zeros(
                 sat.shape[0], sat.shape[1], self.nx, self.ny
-            ).to(device, torch.float32)
+            ).to(device, paddle.float32)
             prior_pressure[:, 0, :, :] = self.pini_alt * (
-                torch.ones(sat.shape[0], self.nx, self.ny).to(device, torch.float32)
+                paddle.ones(sat.shape[0], self.nx, self.ny).to(device, paddle.float32)
             )
             prior_pressure[:, 1:, :, :] = u[:, :-1, :, :]
 
             # dsp = u - prior_pressure  #dp
 
-            prior_sat = torch.zeros(sat.shape[0], sat.shape[1], self.nx, self.ny).to(
-                device, torch.float32
+            prior_sat = paddle.zeros(sat.shape[0], sat.shape[1], self.nx, self.ny).to(
+                device, paddle.float32
             )
             prior_sat[:, 0, :, :] = siniuse * (
-                torch.ones(sat.shape[0], self.nx, self.ny).to(device, torch.float32)
+                paddle.ones(sat.shape[0], self.nx, self.ny).to(device, paddle.float32)
             )
             prior_sat[:, 1:, :, :] = sat[:, :-1, :, :]
 
             dsw = sat - prior_sat  # ds
-            dsw = torch.clip(dsw, 0.001, None)
+            dsw = paddle.clip(dsw, 0.001, None)
 
-            S = torch.div(
-                torch.sub(prior_sat, self.SWI, alpha=1), (1 - self.SWI - self.SWR)
+            S = paddle.div(
+                paddle.sub(prior_sat, self.SWI, alpha=1), (1 - self.SWI - self.SWR)
             )
 
             # Pressure equation Loss
-            Mw = torch.divide(torch.square(S), (self.UW * self.BW))  # Water mobility
-            Mo = torch.div(
-                torch.square(torch.sub(torch.ones(S.shape, device=u.device), S)),
+            Mw = paddle.divide(paddle.square(S), (self.UW * self.BW))  # Water mobility
+            Mo = paddle.div(
+                paddle.square(paddle.sub(paddle.ones(S.shape, device=u.device), S)),
                 (self.UO * self.BO),
             )
 
-            # krw = torch.square(S)
-            # kroil = torch.square(torch.sub(torch.ones(S.shape,\
+            # krw = paddle.square(S)
+            # kroil = paddle.square(paddle.sub(paddle.ones(S.shape,\
             #                         device = u.device),S))
             Mt = Mw + Mo
-            a1 = torch.mul(Mt, a)  # overall Effective permeability
-            a1water = torch.mul(Mw, a)  # water Effective permeability
+            a1 = paddle.mul(Mt, a)  # overall Effective permeability
+            a1water = paddle.mul(Mw, a)  # water Effective permeability
 
             # compute first dffrential
             gulpa = []
@@ -815,8 +815,8 @@ class Black_oil(torch.nn.Module):
                 )
                 gulpa.append(dudx_fdma)
                 gulp2a.append(dudy_fdma)
-            dudx_fdm = torch.stack(gulpa, 0)[:, :, 0, :, :]
-            dudy_fdm = torch.stack(gulp2a, 0)[:, :, 0, :, :]
+            dudx_fdm = paddle.stack(gulpa, 0)[:, :, 0, :, :]
+            dudy_fdm = paddle.stack(gulp2a, 0)[:, :, 0, :, :]
 
             # Compute second diffrential
 
@@ -832,8 +832,8 @@ class Black_oil(torch.nn.Module):
                 )
                 gulpa.append(dudx_fdma)
                 gulp2a.append(dudy_fdma)
-            dduddx_fdm = torch.stack(gulpa, 0)[:, :, 0, :, :]
-            dduddy_fdm = torch.stack(gulp2a, 0)[:, :, 0, :, :]
+            dduddx_fdm = paddle.stack(gulpa, 0)[:, :, 0, :, :]
+            dduddy_fdm = paddle.stack(gulp2a, 0)[:, :, 0, :, :]
 
             inn_now2 = a1
             dcdx = dx(
@@ -893,13 +893,13 @@ class Black_oil(torch.nn.Module):
             fin = fin * self.UIR
             finwater = finwater * self.UIR
             cuda = 0
-            device = torch.device(
-                f"cuda:{cuda}" if torch.cuda.is_available() else "cpu"
+            device = paddle.device(
+                f"cuda:{cuda}" if paddle.device.cuda.device_count() >= 1 else "cpu"
             )
 
             # print(pressurey.shape)
-            p_loss = torch.zeros_like(u).to(device, torch.float32)
-            s_loss = torch.zeros_like(u).to(device, torch.float32)
+            p_loss = paddle.zeros_like(u).to(device, paddle.float32)
+            s_loss = paddle.zeros_like(u).to(device, paddle.float32)
             # print(sat.shape)
             # output_var  = dict()
             for zig in range(sat.shape[0]):
@@ -922,24 +922,24 @@ class Black_oil(torch.nn.Module):
                     m = (new_max - new_min) / (v_max - v_min)
                     b = new_min - m * v_min
                     a = m * a + b
-                    S = torch.div(
-                        torch.sub(prior_sat, self.SWI, alpha=1),
+                    S = paddle.div(
+                        paddle.sub(prior_sat, self.SWI, alpha=1),
                         (1 - self.SWI - self.SWR),
                     )
 
                     # Pressure equation Loss
 
-                    Mw = torch.divide(
-                        torch.square(S), (self.UW * self.BW)
+                    Mw = paddle.divide(
+                        paddle.square(S), (self.UW * self.BW)
                     )  # Water mobility
-                    Mo = torch.div(
-                        torch.square(
-                            torch.sub(torch.ones(S.shape, device=u.device), S)
+                    Mo = paddle.div(
+                        paddle.square(
+                            paddle.sub(paddle.ones(S.shape, device=u.device), S)
                         ),
                         (self.UO * self.BO),
                     )
                     Mt = Mw + Mo
-                    a1 = torch.mul(Mt, a)  # Effective permeability
+                    a1 = paddle.mul(Mt, a)  # Effective permeability
 
                     ua = pressure
                     a2 = a1
@@ -982,21 +982,21 @@ class Black_oil(torch.nn.Module):
 
                     p_loss[zig, count, :, :] = darcy_pressure
 
-                    # output_var["darcy_pressure"] = torch.mean(p_loss,dim = 0)[None,:,:,:]
+                    # output_var["darcy_pressure"] = paddle.mean(p_loss,dim = 0)[None,:,:,:]
 
                     # Saturation equation Loss
 
                     finuse = finwater[zig, 0, :, :][None, None, :, :]
                     dsw = water_sat - prior_sat
-                    dsw = torch.clip(dsw, 0.001, None)
+                    dsw = paddle.clip(dsw, 0.001, None)
 
                     dta = dtin[zig, 0, :, :][None, None, :, :]
 
-                    Mw = torch.divide(
-                        torch.square(S), (self.UW * self.BW)
+                    Mw = paddle.divide(
+                        paddle.square(S), (self.UW * self.BW)
                     )  # Water mobility
                     Mt = Mw
-                    a1 = torch.mul(Mt, a)  # Effective permeability to water
+                    a1 = paddle.mul(Mt, a)  # Effective permeability to water
 
                     ua = pressure
                     a2 = a1

@@ -16,7 +16,7 @@ from typing import Iterable, List
 
 import h5py
 import numpy as np
-import torch
+import paddle
 
 from modulus.sym.dataset import IterableDataset
 from modulus.sym.distributed import DistributedManager
@@ -87,7 +87,7 @@ class ERA5HDF5GridDaliIterableDataset(ERA5HDF5GridBaseDataset, IterableDataset):
             outvar = {self.outvar_keys[t]: outvar[:, t] for t in range(self.n_tsteps)}
             outvar = self._to_tensor_dict(outvar)
 
-            lambda_weighting = {k: torch.ones_like(v) for k, v in outvar.items()}
+            lambda_weighting = {k: paddle.ones_like(v) for k, v in outvar.items()}
 
             yield invar, outvar, lambda_weighting
 

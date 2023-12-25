@@ -29,7 +29,7 @@ from modulus.sym.utils.io.plotter import GridValidatorPlotter
 from utilities import download_FNO_dataset, load_FNO_dataset
 
 import os
-import torch.distributed as dist
+import paddle.distributed as dist
 
 # Set model parallel size to 2
 os.environ["MODEL_PARALLEL_SIZE"] = "2"

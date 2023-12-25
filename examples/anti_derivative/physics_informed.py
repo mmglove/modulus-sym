@@ -16,7 +16,7 @@ import os
 import sys
 import warnings
 
-import torch
+import paddle
 import numpy as np
 
 import modulus.sym

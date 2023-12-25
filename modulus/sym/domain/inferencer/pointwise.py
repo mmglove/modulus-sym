@@ -86,7 +86,7 @@ class PointwiseInferencer(Inferencer):
             self.model = model
         self.manager = DistributedManager()
         self.place = self.manager.place
-        self.model.to(self.place)
+        # self.model.to(self.place)
 
         # set foward method
         self.stop_gradient = not requires_grad

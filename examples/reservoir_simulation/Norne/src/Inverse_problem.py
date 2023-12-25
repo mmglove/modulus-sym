@@ -125,16 +125,16 @@ import numpy.matlib
 
 # os.environ['KERAS_BACKEND'] = 'tensorflow'
 import os.path
-import torch
+import paddle
 
-torch.cuda.empty_cache()
+paddle.device.cuda.empty_cache()
 import random as ra
 
-# import torch.nn.functional as F
+# import paddle.nn.functional as F
 import scipy.linalg as sla
-from torch.utils.data import DataLoader, TensorDataset
+from paddle. io import DataLoader, TensorDataset
 
-# from torch.autograd import Variable
+# from paddle.autograd import Variable
 # from gstools.random import MasterRNG
 # import dolfin as df
 import pandas as pd
@@ -198,8 +198,8 @@ print(" This computer has %d cores, which will all be utilised in parallel " % c
 print(" ")
 print("......................DEFINE SOME FUNCTIONS.....................")
 
-torch.cuda.empty_cache()
-torch.set_default_dtype(torch.float32)
+paddle.device.cuda.empty_cache()
+paddle.set_default_dtype("float32")
 
 
 def download_file_from_google_drive(id, destination):
@@ -268,7 +268,7 @@ def ShowBar(Bar):
 def load_data_numpy(inn, batch_size):
     x_data = inn
     print(f"x_data: {x_data.shape}")
-    data_tuple = (torch.FloatTensor(x_data),)
+    data_tuple = (paddle.FloatTensor(x_data),)
     data_loader = DataLoader(
         TensorDataset(*data_tuple), batch_size=batch_size, shuffle=True, drop_last=True
     )
@@ -461,7 +461,7 @@ def convert_back(rescaled_tensor, target_min, target_max, min_val, max_val):
 
 
 def replace_nans_and_infs(tensor, value=0.0):
-    tensor[torch.isnan(tensor) | torch.isinf(tensor)] = value
+    tensor[paddle.isnan(tensor) | paddle.isinf(tensor)] = value
     return tensor
 
 
@@ -607,10 +607,10 @@ def Forward_model_ensemble(
     minK, maxK, minT, maxT, minP, maxP : float
         Min-max values for permeability, time, and pressure.
 
-    modelP1, modelW1, modelG1, modelP2 : torch.nn.Module
+    modelP1, modelW1, modelG1, modelP2 : paddle.nn.Layer
         Trained PyTorch models for predicting pressure, water saturation, gas saturation, and the secondary pressure model respectively.
 
-    device : torch.device
+    device : paddle.device
         The device (CPU or GPU) where the PyTorch models will run.
 
     min_out_fcn, max_out_fcn : float
@@ -648,7 +648,7 @@ def Forward_model_ensemble(
             "Swini": x_true["Swini"][clem, :, :, :, :][None, :, :, :, :],
         }
 
-        with torch.no_grad():
+        with paddle.no_grad():
             ouut_p1 = modelP1(temp)["pressure"]
             ouut_s1 = modelW1(temp)["water_sat"]
             ouut_sg1 = modelG1(temp)["gas_sat"]
@@ -658,13 +658,13 @@ def Forward_model_ensemble(
         Sgas.append(ouut_sg1)
 
         del temp, ouut_p1, ouut_s1, ouut_sg1
-        torch.cuda.empty_cache()
+        paddle.device.cuda.empty_cache()
 
-    pressure = torch.vstack(pressure).detach().cpu().numpy()
+    pressure = paddle.vstack(pressure).detach().cpu().numpy()
     pressure = Make_correct(pressure)
-    Swater = torch.vstack(Swater).detach().cpu().numpy()
+    Swater = paddle.vstack(Swater).detach().cpu().numpy()
     Swater = Make_correct(Swater)
-    Sgas = torch.vstack(Sgas).detach().cpu().numpy()
+    Sgas = paddle.vstack(Sgas).detach().cpu().numpy()
     Sgas = Make_correct(Sgas)
     Soil = np.ones_like(Swater) - (Swater + Sgas)
 
@@ -817,13 +817,13 @@ def Forward_model_ensemble(
             innn[i, :, :] = inn1
 
     if Trainmoe == 1:
-        innn = torch.from_numpy(innn).to(device, torch.float32)
+        innn = paddle.from_numpy(innn).to(device, paddle.float32)
         ouut_p = []
         # x_true = ensemblepy
         for clem in range(N):
             temp = {"X": innn[clem, :, :][None, :, :]}
 
-            with torch.no_grad():
+            with paddle.no_grad():
                 ouut_p1 = modelP2(temp)["Y"]
                 ouut_p1 = convert_back(
                     ouut_p1.detach().cpu().numpy(),
@@ -835,7 +835,7 @@ def Forward_model_ensemble(
 
             ouut_p.append(ouut_p1)
             del temp
-            torch.cuda.empty_cache()
+            paddle.device.cuda.empty_cache()
         ouut_p = np.vstack(ouut_p)
         ouut_p = np.transpose(ouut_p, (0, 2, 1))
         ouut_p[ouut_p <= 0] = 0
@@ -2482,8 +2482,8 @@ def historydata2(timestep, steppi, steppi_indices):
 
 def linear_interp(x, xp, fp):
     contiguous_xp = xp.contiguous()
-    left_indices = torch.clamp(
-        torch.searchsorted(contiguous_xp, x) - 1, 0, len(contiguous_xp) - 2
+    left_indices = paddle.clamp(
+        paddle.searchsorted(contiguous_xp, x) - 1, 0, len(contiguous_xp) - 2
     )
 
     # Calculate denominators and handle zero case
@@ -2499,7 +2499,7 @@ def linear_interp(x, xp, fp):
 
 
 def replace_nan_with_zero(tensor):
-    nan_mask = torch.isnan(tensor)
+    nan_mask = paddle.isnan(tensor)
     return tensor * (~nan_mask).float() + nan_mask.float() * 0.0
 
 
@@ -3479,7 +3479,7 @@ class MinMaxScalerVectorized(object):
             A tensor with scaled features using requested preprocessor.
         """
 
-        tensor = torch.stack(tensor)
+        tensor = paddle.stack(tensor)
 
         # Feature range
         a, b = self.feature_range
@@ -3498,7 +3498,7 @@ def load_data_numpy_2(inn, out, ndata, batch_size):
     y_data = out
     print(f"xtrain_data: {x_data.shape}")
     print(f"ytrain_data: {y_data.shape}")
-    data_tuple = (torch.FloatTensor(x_data), torch.FloatTensor(y_data))
+    data_tuple = (paddle.FloatTensor(x_data), paddle.FloatTensor(y_data))
     data_loader = DataLoader(
         TensorDataset(*data_tuple), batch_size=batch_size, shuffle=True, drop_last=True
     )
@@ -3758,7 +3758,7 @@ def ensemble_pytorch(
     - target_min, target_max (float): Range of target values.
     - minK, maxK, minT, maxT, ...: Min and max values for various properties such as permeability, temperature, pressure, etc.
     - steppi (int/float): Step size, increment value.
-    - device (torch.device): PyTorch device, e.g., 'cpu' or 'cuda'.
+    - device (paddle.device): PyTorch device, e.g., 'cpu' or 'cuda'.
     - steppi_indices (array-like): Indices or locations to apply the 'steppi' value.
 
     Returns:
@@ -3792,13 +3792,13 @@ def ensemble_pytorch(
     # Permeability
     ini_ensemble1 = fit_clement(ini_ensemble1, target_min, target_max, minK, maxK)
 
-    # ini_ensemble = torch.from_numpy(ini_ensemble).to(device, dtype=torch.float32)
+    # ini_ensemble = paddle.from_numpy(ini_ensemble).to(device, dtype=paddle.float32)
     inn = {
-        "perm": torch.from_numpy(ini_ensemble1).to(device, torch.float32),
-        "fault": torch.from_numpy(ini_ensemble4).to(device, dtype=torch.float32),
-        "Phi": torch.from_numpy(ini_ensemble2).to(device, dtype=torch.float32),
-        "Pini": torch.from_numpy(ini_ensemble9).to(device, dtype=torch.float32),
-        "Swini": torch.from_numpy(ini_ensemble10).to(device, dtype=torch.float32),
+        "perm": paddle.from_numpy(ini_ensemble1).to(device, paddle.float32),
+        "fault": paddle.from_numpy(ini_ensemble4).to(device, dtype=paddle.float32),
+        "Phi": paddle.from_numpy(ini_ensemble2).to(device, dtype=paddle.float32),
+        "Pini": paddle.from_numpy(ini_ensemble9).to(device, dtype=paddle.float32),
+        "Swini": paddle.from_numpy(ini_ensemble10).to(device, dtype=paddle.float32),
     }
     return inn
 
@@ -6847,7 +6847,7 @@ def inverse_to_pytorch(Ne, val, nx, ny, nz, device, make_up):
             newy = imresize(tempp[:, :, kk], output_shape=(nx + make_up, ny + make_up))
             aa[kk, :, :] = newy
         X_unie[i, :, :, :] = aa
-    return torch.from_numpy(X_unie).to(device, dtype=torch.float32)
+    return paddle.from_numpy(X_unie).to(device, dtype=paddle.float32)
 
 
 def pytorch_to_inverse(Ne, val, nx, ny, nz):
@@ -7845,10 +7845,10 @@ print("Random Seed: ", seed)
 
 
 ra.seed(seed)
-torch.manual_seed(seed)
+paddle.manual_seed(seed)
 
 cuda = 0
-device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+device = paddle.device(f"cuda:{cuda}" if paddle.device.cuda.device_count() >= 1 else "cpu")
 
 
 input_channel = 5  # [K,F,Fw,phi,dt,Pini,Sini]
@@ -7993,7 +7993,7 @@ if bb == False:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
+    modelP.load_state_dict(paddle.load("fno_forward_model_pressure.0.pth"))
     modelP = modelP.to(device)
     modelP.eval()
     os.chdir(oldfolder)
@@ -8001,7 +8001,7 @@ else:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for dynamic properties pressure model")
-    modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
+    modelP.load_state_dict(paddle.load("fno_forward_model_pressure.0.pth"))
     modelP = modelP.to(device)
     modelP.eval()
     os.chdir(oldfolder)
@@ -8017,7 +8017,7 @@ if bb == False:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    modelW.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
+    modelW.load_state_dict(paddle.load("fno_forward_model_water.0.pth"))
     modelW = modelW.to(device)
     modelW.eval()
     os.chdir(oldfolder)
@@ -8025,7 +8025,7 @@ else:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for dynamic properties- water model")
-    modelW.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
+    modelW.load_state_dict(paddle.load("fno_forward_model_water.0.pth"))
     modelW = modelW.to(device)
     modelW.eval()
     os.chdir(oldfolder)
@@ -8041,7 +8041,7 @@ if bb == False:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    modelG.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
+    modelG.load_state_dict(paddle.load("fno_forward_model_gas.0.pth"))
     modelG = modelG.to(device)
     modelG.eval()
     os.chdir(oldfolder)
@@ -8049,7 +8049,7 @@ else:
 
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for dynamic properties - Gas model")
-    modelG.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
+    modelG.load_state_dict(paddle.load("fno_forward_model_gas.0.pth"))
     modelG = modelG.to(device)
     modelG.eval()
     os.chdir(oldfolder)
@@ -8067,14 +8067,14 @@ if bba == False:
     print("...Downlaod completed.......")
     os.chdir("outputs/Forward_problem_PINO/ResSim")
 
-    model_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
+    model_peacemann.load_state_dict(paddle.load("fno_forward_model_peacemann.0.pth"))
     model_peacemann = model_peacemann.to(device)
     model_peacemann.eval()
     os.chdir(oldfolder)
 else:
     os.chdir("outputs/Forward_problem_PINO/ResSim")
     print(" Surrogate model learned with PINO for peacemann well model")
-    model_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
+    model_peacemann.load_state_dict(paddle.load("fno_forward_model_peacemann.0.pth"))
     model_peacemann = model_peacemann.to(device)
     model_peacemann.eval()
     os.chdir(oldfolder)
@@ -8133,8 +8133,8 @@ num_cores = njobs  # multiprocessing.cpu_count()
 
 rho = 1.05
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
+if paddle.device.cuda.device_count() >= 1:
+    device = paddle.set_device("gpu")
 else:
     raise RuntimeError("No GPU found. Please run on a system with a GPU.")
 
@@ -8926,8 +8926,8 @@ while snn < 1:
         print("Current iteration mean cost = " + str(tinuke))
         print("Current best MAP cost = " + str(best_cost_best))
         print("Current iteration MAP cost = " + str(tinukebest))
-        # torch.save(model_pressure.state_dict(), oldfolder + '/pressure_model.pth')
-        # torch.save(model_saturation.state_dict(), oldfolder + '/saturation_model.pth')
+        # paddle.save(model_pressure.state_dict(), oldfolder + '/pressure_model.pth')
+        # paddle.save(model_saturation.state_dict(), oldfolder + '/saturation_model.pth')
         best_cost_mean = tinuke
         best_cost_best = tinukebest
         use_k = ensemble

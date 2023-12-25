@@ -19,7 +19,7 @@ import paddle
 import paddle.nn as nn
 from paddle import Tensor
 
-from modulus.models.layers import FCLayer, Conv1dFCLayer
+from modulus.sym.models.layers.fully_connected_layers import FCLayer, Conv1dFCLayer
 from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 
@@ -70,11 +70,13 @@ class FullyConnectedArchCore(nn.Layer):
         for i in range(nr_layers):
             self.layers.append(
                 fc_layer(
-                    layer_in_features,
-                    layer_size,
-                    activation_fn[i],
-                    weight_norm,
-                    activation_par,
+                    in_features=layer_in_features,
+                    out_features=layer_size,
+                    activation_fn=get_activation_fn(
+                        activation_fn[i], out_features=out_features
+                    ),
+                    weight_norm=weight_norm,
+                    activation_par=activation_par,
                 )
             )
             layer_in_features = layer_size

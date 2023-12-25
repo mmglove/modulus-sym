@@ -18,7 +18,7 @@ import os
 import warnings
 
 import sys
-import torch
+import paddle
 import modulus.sym
 from sympy import Symbol, Eq, Abs, tanh, And, Or
 import numpy as np
@@ -291,7 +291,7 @@ def run(cfg: ModulusConfig) -> None:
     pressure_monitor = PointwiseMonitor(
         invar_front_pressure,
         output_names=["p"],
-        metrics={"front_pressure": lambda var: torch.mean(var["p"])},
+        metrics={"front_pressure": lambda var: paddle.mean(var["p"])},
         nodes=flow_nodes,
     )
     flow_domain.add_monitor(pressure_monitor)
@@ -305,7 +305,7 @@ def run(cfg: ModulusConfig) -> None:
     pressure_monitor = PointwiseMonitor(
         invar_back_pressure,
         output_names=["p"],
-        metrics={"back_pressure": lambda var: torch.mean(var["p"])},
+        metrics={"back_pressure": lambda var: paddle.mean(var["p"])},
         nodes=flow_nodes,
     )
     flow_domain.add_monitor(pressure_monitor)

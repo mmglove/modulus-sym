@@ -16,7 +16,7 @@ import os
 import sys
 import warnings
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq
 
@@ -149,7 +149,7 @@ def run(cfg: ModulusConfig) -> None:
     monitor = PointwiseMonitor(
         openfoam_invar_numpy,
         output_names=["nu"],
-        metrics={"mean_nu": lambda var: torch.mean(var["nu"])},
+        metrics={"mean_nu": lambda var: paddle.mean(var["nu"])},
         nodes=nodes,
     )
     domain.add_monitor(monitor)
@@ -157,7 +157,7 @@ def run(cfg: ModulusConfig) -> None:
     monitor = PointwiseMonitor(
         openfoam_invar_numpy,
         output_names=["D"],
-        metrics={"mean_D": lambda var: torch.mean(var["D"])},
+        metrics={"mean_D": lambda var: paddle.mean(var["D"])},
         nodes=nodes,
     )
     domain.add_monitor(monitor)

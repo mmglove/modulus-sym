@@ -265,6 +265,8 @@ def instantiate_sched(
             "_target_": "paddle.optimizer.lr.ConstantLR",
             "factor": 1.0,
         }
+    if isinstance(optim_cfg.get("learning_rate", None), float):
+        sched_cfg.update({"learning_rate": optim_cfg.learning_rate})
     # Handle custom cases
     if sched_cfg._target_ == "custom":
         if "tf.ExponentialLR" in sched_cfg._name_:

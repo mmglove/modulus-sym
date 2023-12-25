@@ -39,7 +39,7 @@ scheduler:
   decay_steps: 2000
 
 optimizer:
-  lr: 0.0001
+  learning_rate: 0.0001
 
 training:
   rec_validation_freq: 250

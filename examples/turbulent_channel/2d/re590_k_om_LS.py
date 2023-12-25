@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq, sin, cos, Min, Max, Abs, log, exp
 import modulus.sym
@@ -36,6 +36,7 @@ from custom_k_om_ls import kOmegaInit, kOmega, kOmegaLSWF
 
 @modulus.sym.main(config_path="conf_re590_k_om_LS", config_name="config")
 def run(cfg: ModulusConfig) -> None:
+    paddle.framework.core.set_prim_eager_enabled(True)
     # simulation parameters
     Re = 590
     nu = 1 / Re
@@ -209,7 +210,7 @@ def run(cfg: ModulusConfig) -> None:
         invar_wf_pt,
         output_names=["k"],
         metrics={
-            "mean_u_tau": lambda var: torch.mean((0.09**0.25) * torch.sqrt(var["k"]))
+            "mean_u_tau": lambda var: paddle.mean((0.09**0.25) * paddle.sqrt(var["k"]))
         },
         nodes=nodes,
     )

@@ -15,7 +15,7 @@
 import os
 import warnings
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq, tanh, Or, And
 
@@ -329,11 +329,12 @@ def run(cfg: ModulusConfig) -> None:
         chip2d.sample_boundary(10000, criteria=Eq(y, source_origin[1])),
         output_names=["theta_s"],
         metrics={
-            "peak_temp": lambda var: torch.max(var["theta_s"]),
+            "peak_temp": lambda var: paddle.max(var["theta_s"]),
         },
         nodes=nodes,
     )
     domain.add_monitor(monitor)
+    print("==> prepare constraint finished")
 
     # add validation data
     file_path = "openfoam/2d_real_cht_fluid.csv"

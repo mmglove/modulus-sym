@@ -88,7 +88,7 @@ scheduler:
   
 optimizer:
     weight_decay: 0.0001
-    lr: 0.001
+    learning_rate: 0.001
 
 training:
   rec_results_freq : 100000

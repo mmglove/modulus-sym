@@ -13,8 +13,8 @@
 # limitations under the License.
 
 # Import libraries
-import torch
-from torch import nn
+import paddle
+from paddle import nn
 from typing import Dict, List
 
 # Import from Modulus
@@ -30,20 +30,20 @@ class CustomSum(Aggregator):
     def __init__(self, params, num_losses, weights=None):
         super().__init__(params, num_losses, weights)
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Aggregates the losses by summation
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses
         step : int
             Optimizer step
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss
         """
 
@@ -51,11 +51,11 @@ class CustomSum(Aggregator):
         losses = self.weigh_losses(losses, self.weights)
 
         # Initialize loss
-        loss: torch.Tensor = torch.zeros_like(self.init_loss)
+        loss: paddle.Tensor = paddle.zeros_like(self.init_loss)
 
         smoothness = 0.0005  # use 0.0005 to smoothen the transition over ~10k steps
-        step_tensor = torch.tensor(step, dtype=torch.float32)
-        decay_weight = (torch.tanh((20000 - step_tensor) * smoothness) + 1.0) * 0.5
+        step_tensor = paddle.to_tensor(step, dtype=paddle.float32)
+        decay_weight = (paddle.tanh((20000 - step_tensor) * smoothness) + 1.0) * 0.5
 
         # Add losses
         for key in losses.keys():

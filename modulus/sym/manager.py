@@ -126,7 +126,7 @@ class GraphManager(object):
         if not hasattr(obj, "_debug"):
             obj._debug = False
         if not hasattr(obj, "_func_arch_allow_partial_hessian"):
-            obj._func_arch_allow_partial_hessian = True
+            obj._func_arch_allow_partial_hessian = False
 
         return obj
 

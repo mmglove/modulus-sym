@@ -77,7 +77,7 @@ class Constraint:
             Key.convert_list(self.dataset.invar_keys),
             Key.convert_list(self.dataset.outvar_keys),
         )
-        self.model.to(self.place)
+        # self.model.to(self.place)
         if self.manager.distributed:
             # https://pytorch.org/docs/master/notes/cuda.html#id5
             s = paddle.device.cuda.Stream()
@@ -181,12 +181,14 @@ class Constraint:
                     drop_last=drop_last,
                 )
             if dataset.auto_collation:
+                # wrap batch_sampler again into BatchSampler for dataset.auto_collation=True
                 dataloader = DataLoader(
                     dataset,
-                    batch_sampler=batch_sampler,
+                    batch_sampler=BatchSampler(sampler=batch_sampler, batch_size=1),
                     num_workers=num_workers,
                     worker_init_fn=dataset.worker_init_fn,
                     persistent_workers=persistent_workers,
+                    collate_fn=lambda batch: batch[0],
                 )
 
             # otherwise turn on automatic batching in dataloader
@@ -208,7 +210,7 @@ class Constraint:
             dataloader = DataLoader(
                 dataset,
                 batch_size=None,
-                num_workers=num_workers,
+                num_workers=0,
                 worker_init_fn=dataset.worker_init_fn,
                 persistent_workers=persistent_workers,
             )

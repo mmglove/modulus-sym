@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 
 import modulus.sym
 from modulus.sym.hydra import instantiate_arch, ModulusConfig
@@ -143,7 +143,7 @@ class DGLoss(Loss):
         int_interior = tensor_int(list_invar[2]["area"], uxvx + uyvy - fv)
 
         losses = {
-            "variational_poisson": torch.abs(int_interior - int_center - int_outside)
+            "variational_poisson": paddle.abs(int_interior - int_center - int_outside)
             .pow(2)
             .sum()
         }

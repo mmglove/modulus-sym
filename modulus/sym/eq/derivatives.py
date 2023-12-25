@@ -41,7 +41,7 @@ def gradient(y: paddle.Tensor, x: List[paddle.Tensor]) -> List[paddle.Tensor]:
         x,
         # grad_outputs=grad_outputs,
         create_graph=True,
-        # allow_unused=True,
+        allow_unused=True,
     )
     if grad is None:
         grad = [paddle.zeros_like(xx) for xx in x]

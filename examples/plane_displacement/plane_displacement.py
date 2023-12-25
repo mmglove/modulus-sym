@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq
 
@@ -78,8 +78,8 @@ class DGLoss(Loss):
         list_outvar,
         step: int,
     ):
-        torch.cuda.nvtx.range_push("Make_DGLoss")
-        torch.cuda.nvtx.range_push("Make_DGLoss_Get_Data")
+        paddle.framework.core.nvprof_nvtx_push("Make_DGLoss")
+        paddle.framework.core.nvprof_nvtx_push("Make_DGLoss_Get_Data")
         # self.v.sample_vector_test()
         # get points on the interior
         x_interior = list_invar[2]["x"]
@@ -115,15 +115,15 @@ class DGLoss(Loss):
         u_y_top_dir = list_outvar[1]["u__y"]
         v_x_top_dir = list_outvar[1]["v__x"]
         v_y_top_dir = list_outvar[1]["v__y"]
-        torch.cuda.nvtx.range_pop()
-        torch.cuda.nvtx.range_push("Make_DGLoss_Test_Function")
+        paddle.framework.core.nvprof_nvtx_pop()
+        paddle.framework.core.nvprof_nvtx_push("Make_DGLoss_Test_Function")
         # test functions
         vx_x_interior, vy_x_interior = self.v.eval_test("vx", x_interior, y_interior)
         vx_y_interior, vy_y_interior = self.v.eval_test("vy", x_interior, y_interior)
         vx_bottom_dir, vy_bottom_dir = self.v.eval_test("v", x_bottom_dir, y_bottom_dir)
         vx_top_dir, vy_top_dir = self.v.eval_test("v", x_top_dir, y_top_dir)
-        torch.cuda.nvtx.range_pop()
-        torch.cuda.nvtx.range_push("Make_DGLoss_Computation")
+        paddle.framework.core.nvprof_nvtx_pop()
+        paddle.framework.core.nvprof_nvtx_push("Make_DGLoss_Computation")
         w_z_interior = -lambda_ / (lambda_ + 2 * mu) * (u_x_interior + v_y_interior)
         sigma_xx_interior = (
             lambda_ * (u_x_interior + v_y_interior + w_z_interior)
@@ -171,8 +171,8 @@ class DGLoss(Loss):
         traction_y_top_dir = (
             sigma_xy_top_dir * normal_x_top_dir + sigma_yy_top_dir * normal_y_top_dir
         )
-        torch.cuda.nvtx.range_pop()
-        torch.cuda.nvtx.range_push("Make_DGLoss_Integral")
+        paddle.framework.core.nvprof_nvtx_pop()
+        paddle.framework.core.nvprof_nvtx_push("Make_DGLoss_Integral")
         interior_loss = tensor_int(
             area_interior,
             sigma_xx_interior * vx_x_interior
@@ -188,17 +188,17 @@ class DGLoss(Loss):
             area_top_dir,
             traction_x_top_dir * vx_top_dir + traction_y_top_dir * vy_top_dir,
         )
-        torch.cuda.nvtx.range_pop()
-        torch.cuda.nvtx.range_push("Make_DGLoss_Register_Loss")
+        paddle.framework.core.nvprof_nvtx_pop()
+        paddle.framework.core.nvprof_nvtx_push("Make_DGLoss_Register_Loss")
         losses = {
-            "variational_plane": torch.abs(
+            "variational_plane": paddle.abs(
                 interior_loss - boundary_loss1 - boundary_loss2
             )
             .pow(2)
             .sum()
         }
-        torch.cuda.nvtx.range_pop()
-        torch.cuda.nvtx.range_pop()
+        paddle.framework.core.nvprof_nvtx_pop()
+        paddle.framework.core.nvprof_nvtx_pop()
         return losses
 
 

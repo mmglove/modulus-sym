@@ -15,11 +15,11 @@
 from typing import Dict
 
 import numpy as np
-import torch
-import torch.nn.functional as F
+import paddle
+import paddle.nn.functional as F
 
 import modulus.sym
-from modulus.models.layers.spectral_layers import fourier_derivatives
+from modulus.sym.models.layers.spectral_layers import fourier_derivatives
 from modulus.sym.hydra import instantiate_arch, ModulusConfig
 from modulus.sym.key import Key
 from modulus.sym.node import Node
@@ -37,14 +37,14 @@ from ops import dx, ddx
 
 
 # [pde-loss]
-class Darcy(torch.nn.Module):
+class Darcy(paddle.nn.Layer):
     "Custom Darcy PDE definition for PINO"
 
     def __init__(self, gradient_method: str = "exact"):
         super().__init__()
         self.gradient_method = str(gradient_method)
 
-    def forward(self, input_var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, input_var: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
         # get inputs
         u = input_var["sol"]
         c = input_var["coeff"]

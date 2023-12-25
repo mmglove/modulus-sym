@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import sympy as sp
 import numpy as np
 
@@ -49,7 +49,7 @@ class SuperResolutionConstraint(Constraint):
         loss_weighting: Dict[str, int],
         dx: float = 1.0,
         lambda_weighting: Dict[str, Union[np.array, sp.Basic]] = None,
-        num_workers: int = 0,
+        num_workers: int = 1,
     ):
         dataset = DictGridDataset(
             invar=invar, outvar=outvar, lambda_weighting=lambda_weighting
@@ -101,7 +101,7 @@ class SuperResolutionConstraint(Constraint):
 
         if "dU" in self.fields:
             # Add to output dictionary
-            grad_output = torch.cat(
+            grad_output = paddle.cat(
                 [
                     grad_output[key]
                     for key in [
@@ -121,7 +121,7 @@ class SuperResolutionConstraint(Constraint):
             vel_output = {"dU": grad_output}
 
         if "omega" in self.fields:
-            vort_output = torch.cat(
+            vort_output = paddle.cat(
                 [vort_output[key] for key in ["omega_x", "omega_y", "omega_z"]], dim=1
             )
             vort_output = {"omega": vort_output}
@@ -194,7 +194,7 @@ class SuperResolutionConstraint(Constraint):
         # compute forward pass of conv net
         self._pred_outvar = self.model(self._input_vars)
 
-    def loss(self, step: int) -> Dict[str, torch.Tensor]:
+    def loss(self, step: int) -> Dict[str, paddle.Tensor]:
         # Calc flow related stats
         pred_outvar = self.calc_flow_stats(self._pred_outvar)
         target_vars = self.calc_flow_stats(self._target_vars)
@@ -247,12 +247,12 @@ class SuperResolutionValidator(GridValidator):
             }
 
         # Concat mini-batch tensors
-        invar_cpu = {key: torch.cat(value) for key, value in invar_cpu.items()}
+        invar_cpu = {key: paddle.cat(value) for key, value in invar_cpu.items()}
         true_outvar_cpu = {
-            key: torch.cat(value) for key, value in true_outvar_cpu.items()
+            key: paddle.cat(value) for key, value in true_outvar_cpu.items()
         }
         pred_outvar_cpu = {
-            key: torch.cat(value) for key, value in pred_outvar_cpu.items()
+            key: paddle.cat(value) for key, value in pred_outvar_cpu.items()
         }
         # compute losses on cpu
         losses = GridValidator._l2_relative_error(true_outvar_cpu, pred_outvar_cpu)

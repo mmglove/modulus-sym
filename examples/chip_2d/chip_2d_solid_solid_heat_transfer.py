@@ -15,7 +15,7 @@
 import os
 import warnings
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq, Or, And
 
@@ -275,7 +275,7 @@ def run(cfg: ModulusConfig) -> None:
         chip2d.sample_boundary(10000, criteria=Eq(y, source_origin[1])),
         output_names=["theta_II"],
         metrics={
-            "peak_temp": lambda var: torch.max(var["theta_II"]),
+            "peak_temp": lambda var: paddle.max(var["theta_II"]),
         },
         nodes=nodes,
     )

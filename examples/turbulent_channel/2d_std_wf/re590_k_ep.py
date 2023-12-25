@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, Eq, sin, cos, Min, Max, Abs, log, exp
 
@@ -39,6 +39,7 @@ from custom_k_ep import kEpsilonInit, kEpsilon, kEpsilonStdWF
 
 @modulus.sym.main(config_path="conf_re590_k_ep", config_name="config")
 def run(cfg: ModulusConfig) -> None:
+    paddle.framework.core.set_prim_eager_enabled(True)
     # simulation parameters
     Re = 590
     nu = 1 / Re
@@ -251,7 +252,7 @@ def run(cfg: ModulusConfig) -> None:
     u_tau_monitor = PointwiseMonitor(
         invar_wf_pt,
         output_names=["u_tau"],
-        metrics={"mean_u_tau": lambda var: torch.mean(var["u_tau"])},
+        metrics={"mean_u_tau": lambda var: paddle.mean(var["u_tau"])},
         nodes=nodes + nodes_u_tau,
     )
     domain.add_monitor(u_tau_monitor)

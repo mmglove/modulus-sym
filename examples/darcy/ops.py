@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.nn.functional as F
+import paddle
+import paddle.nn.functional as F
 
 
 def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
@@ -23,7 +23,7 @@ def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
 
     # get filter
     if order == 1:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 -0.5,
                 0.0,
@@ -31,7 +31,7 @@ def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
             ]
         ).to(inpt.device)
     elif order == 3:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 -1.0 / 60.0,
                 3.0 / 20.0,
@@ -42,7 +42,7 @@ def dx(inpt, dx, channel, dim, order=1, padding="zeros"):
                 1.0 / 60.0,
             ]
         ).to(inpt.device)
-    ddx3D = torch.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
+    ddx3D = paddle.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
 
     # apply convolution
     if padding == "zeros":
@@ -66,7 +66,7 @@ def ddx(inpt, dx, channel, dim, order=1, padding="zeros"):
 
     # get filter
     if order == 1:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 1.0,
                 -2.0,
@@ -74,7 +74,7 @@ def ddx(inpt, dx, channel, dim, order=1, padding="zeros"):
             ]
         ).to(inpt.device)
     elif order == 3:
-        ddx1D = torch.Tensor(
+        ddx1D = paddle.Tensor(
             [
                 1.0 / 90.0,
                 -3.0 / 20.0,
@@ -85,7 +85,7 @@ def ddx(inpt, dx, channel, dim, order=1, padding="zeros"):
                 1.0 / 90.0,
             ]
         ).to(inpt.device)
-    ddx3D = torch.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
+    ddx3D = paddle.reshape(ddx1D, shape=[1, 1] + dim * [1] + [-1] + (1 - dim) * [1])
 
     # apply convolution
     if padding == "zeros":

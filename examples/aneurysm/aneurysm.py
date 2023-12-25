@@ -15,7 +15,7 @@
 import os
 import warnings
 
-import torch
+import paddle
 import numpy as np
 from sympy import Symbol, sqrt, Max
 
@@ -229,7 +229,7 @@ def run(cfg: ModulusConfig) -> None:
     pressure_monitor = PointwiseMonitor(
         inlet_mesh.sample_boundary(16),
         output_names=["p"],
-        metrics={"pressure_drop": lambda var: torch.mean(var["p"])},
+        metrics={"pressure_drop": lambda var: paddle.mean(var["p"])},
         nodes=nodes,
     )
     domain.add_monitor(pressure_monitor)

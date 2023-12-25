@@ -17,7 +17,7 @@ from fpga_geometry import *
 import os
 import warnings
 
-import torch
+import paddle
 from sympy import Symbol, Eq, Abs, tanh, And, Or
 import numpy as np
 
@@ -371,7 +371,7 @@ def run(cfg: ModulusConfig) -> None:
     temperature_monitor = PointwiseMonitor(
         invar_heat_source,
         output_names=["theta_s"],
-        metrics={"peak_temp": lambda var: torch.max(var["theta_s"])},
+        metrics={"peak_temp": lambda var: paddle.max(var["theta_s"])},
         nodes=thermal_nodes,
     )
     thermal_domain.add_monitor(temperature_monitor)
