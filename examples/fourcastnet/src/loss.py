@@ -39,7 +39,7 @@ class LpLoss(paddle.nn.Layer):
         self.p = p
 
     def _rel(self, x: paddle.Tensor, y: paddle.Tensor) -> float:
-        num_examples = x.size()[0]
+        num_examples = x.shape[0]
 
         xv = x.reshape(num_examples, -1)
         yv = y.reshape(num_examples, -1)

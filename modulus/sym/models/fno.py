@@ -22,7 +22,7 @@ import numpy as np
 import logging
 
 import modulus.sym.models.layers as layers
-from modulus.sym.models.activation import Activation
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.layers.spectral_layers import (
     calc_latent_derivatives,
     first_order_pino_grads,
@@ -62,7 +62,7 @@ class FNO1DEncoder(nn.Layer):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 1
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.LayerList()
         self.conv_layers = nn.LayerList()
@@ -139,7 +139,7 @@ class FNO2DEncoder(nn.Layer):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 2
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.LayerList()
         self.conv_layers = nn.LayerList()
@@ -225,7 +225,7 @@ class FNO3DEncoder(nn.Layer):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 3
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.LayerList()
         self.conv_layers = nn.LayerList()

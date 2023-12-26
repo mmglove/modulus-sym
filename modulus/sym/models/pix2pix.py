@@ -61,7 +61,7 @@ import numpy as np
 
 from modulus.sym.key import Key
 import modulus.sym.models.layers as layers
-from modulus.sym.models.activation import Activation
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 
 Tensor = paddle.Tensor
@@ -87,7 +87,7 @@ class Pix2PixModelCore(nn.Layer):
         assert padding_type in ["reflect", "zero", "replicate"], "Invalid padding type"
         super().__init__()
 
-        activation = layers.get_activation_fn(activation_fn, module=True, inplace=True)
+        activation = get_activation_fn(activation_fn, module=True)
         # set padding and convolutions
         if dimension == 1:
             padding = nn.Pad1D(padding=3, mode="reflect")

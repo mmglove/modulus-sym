@@ -49,7 +49,7 @@ class Metrics:
         lat = paddle.linspace(90, -90, nlat)
         lat_weight = paddle.cos(paddle.pi * (lat / 180))
         lat_weight = nlat * lat_weight / lat_weight.sum()
-        self.lat_weight = lat_weight.view(1, nlat, 1)
+        self.lat_weight = lat_weight.reshape([1, nlat, 1])
 
         # place on device
         if self.device is not None:

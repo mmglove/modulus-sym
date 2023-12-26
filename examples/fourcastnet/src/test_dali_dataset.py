@@ -172,9 +172,9 @@ def test_dali_shuffle(test_data: Path, batch_size: int, num_workers: int):
         shuf_batches = list(shuf_loader)
         # Check that shuf_batches is a permutation of the original.
         x_t0_base = paddle.cat([b[0]["x_t0"] for b in base_batches], dim=0)
-        assert x_t0_base.size(0) == NUM_SAMPLES
+        assert x_t0_base.shape[0] == NUM_SAMPLES
         x_t0_shuf = paddle.cat([b[0]["x_t0"] for b in shuf_batches], dim=0)
-        assert x_t0_shuf.size(0) == NUM_SAMPLES
+        assert x_t0_shuf.shape[0] == NUM_SAMPLES
 
         for i in range(NUM_SAMPLES):
             dst_idx = epoch_indices[epoch][i]
@@ -210,7 +210,7 @@ def test_distributed_dali_loader(data_path: Path):
     base_batches = list(base_loader)
     x_t0_base = paddle.cat([b[0]["x_t0"] for b in base_batches], dim=0)
     # Make sure baseline contains all samples.
-    assert x_t0_base.size(0) == NUM_SAMPLES
+    assert x_t0_base.shape[0] == NUM_SAMPLES
 
     dali_loader, _ = _create_dali_dataloader(
         data_path,
@@ -226,7 +226,7 @@ def test_distributed_dali_loader(data_path: Path):
 
     dali_batches = list(dali_loader)
     x_t0_dali = paddle.cat([b[0]["x_t0"] for b in dali_batches], dim=0)
-    assert x_t0_dali.size(0) == num_samples_per_rank
+    assert x_t0_dali.shape[0] == num_samples_per_rank
 
     # Check the samples are distributed across ranks properly.
     idx_start = num_samples_per_rank * m.rank

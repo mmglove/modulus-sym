@@ -1028,7 +1028,7 @@ class LpLoss(object):
         h = 1.0 / (x.size()[1] - 1.0)
 
         all_norms = (h ** (self.d / self.p)) * paddle.norm(
-            x.view(num_examples, -1) - y.view(num_examples, -1), self.p, 1
+            x.reshape([num_examples, -1]) - y.reshape([num_examples, -1]), self.p, 1
         )
 
         if self.reduction:
@@ -1043,9 +1043,9 @@ class LpLoss(object):
         num_examples = x.size()[0]
 
         diff_norms = paddle.norm(
-            x.reshape(num_examples, -1) - y.reshape(num_examples, -1), self.p, 1
+            x.reshape([num_examples, -1]) - y.reshape([num_examples, -1]), self.p, 1
         )
-        y_norms = paddle.norm(y.reshape(num_examples, -1), self.p, 1)
+        y_norms = paddle.norm(y.reshape([num_examples, -1]), self.p, 1)
 
         if self.reduction:
             if self.size_average:

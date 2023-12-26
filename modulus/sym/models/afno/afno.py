@@ -140,7 +140,7 @@ class AFNO2D(nn.Layer):
         x = x.astype(dtype="float32")
         B, H, W, C = x.shape
         x = paddle.fft.rfft2(x=x, axes=(1, 2), norm="ortho")
-        x = x.reshape(B, H, W // 2 + 1, self.num_blocks, self.block_size)
+        x = x.reshape([B, H, W // 2 + 1, self.num_blocks, self.block_size])
         o1_real = paddle.zeros(
             shape=[
                 B,
@@ -167,14 +167,14 @@ class AFNO2D(nn.Layer):
             :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
         ] = F.relu(
             x=paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 x[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ].real(),
                 self.w1[0],
             )
             - paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 x[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ].imag(),
@@ -186,14 +186,14 @@ class AFNO2D(nn.Layer):
             :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
         ] = F.relu(
             x=paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 x[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ].imag(),
                 self.w1[0],
             )
             + paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 x[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ].real(),
@@ -203,14 +203,14 @@ class AFNO2D(nn.Layer):
         )
         o2_real[:, total_modes - kept_modes : total_modes + kept_modes, :kept_modes] = (
             paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 o1_real[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ],
                 self.w2[0],
             )
             - paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 o1_imag[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ],
@@ -220,14 +220,14 @@ class AFNO2D(nn.Layer):
         )
         o2_imag[:, total_modes - kept_modes : total_modes + kept_modes, :kept_modes] = (
             paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 o1_imag[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ],
                 self.w2[0],
             )
             + paddle.einsum(
-                "...bi,bio->...bo",
+                "acdbi,bio->acdbo",
                 o1_real[
                     :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
                 ],
@@ -238,7 +238,7 @@ class AFNO2D(nn.Layer):
         x = paddle.stack(x=[o2_real, o2_imag], axis=-1)
         x = F.softshrink(x=x, threshold=self.sparsity_threshold)
         x = paddle.as_complex(x=x)
-        x = x.reshape(B, H, W // 2 + 1, C)
+        x = x.reshape([B, H, W // 2 + 1, C])
         x = paddle.fft.irfft2(x=x, s=(H, W), axes=(1, 2), norm="ortho")
         x = x.astype(dtype)
         return x + bias
@@ -319,15 +319,10 @@ class AFNONet(nn.Layer):
             embed_dim=embed_dim,
         )
         num_patches = self.patch_embed.num_patches
-        out_82 = self.create_parameter(
-            shape=paddle.zeros(shape=[1, num_patches, embed_dim]).shape,
-            dtype=paddle.zeros(shape=[1, num_patches, embed_dim]).numpy().dtype,
-            default_initializer=nn.initializer.Assign(
-                paddle.zeros(shape=[1, num_patches, embed_dim])
-            ),
+        self.pos_embed = self.create_parameter(
+            [1, num_patches, embed_dim],
+            default_initializer=nn.initializer.Constant(0),
         )
-        out_82.stop_gradient = not True
-        self.pos_embed = out_82
         self.pos_drop = nn.Dropout(drop_rate)
         self.h = img_size[0] // self.patch_size[0]
         self.w = img_size[1] // self.patch_size[1]
@@ -358,13 +353,10 @@ class AFNONet(nn.Layer):
         if isinstance(m, nn.Linear):
             nn.initializer.TruncatedNormal(std=0.02)(m.weight)
             if isinstance(m, nn.Linear) and m.bias is not None:
-                init_Constant = nn.initializer.Constant(0)
-                init_Constant(m.bias)
+                nn.initializer.Constant(0)(m.bias)
         elif isinstance(m, nn.LayerNorm):
-            init_Constant = nn.initializer.Constant(0)
-            init_Constant(m.bias)
-            init_Constant = nn.initializer.Constant(1.0)
-            init_Constant(m.weight)
+            nn.initializer.Constant(0)(m.bias)
+            nn.initializer.Constant(1.0)(m.weight)
 
     def no_weight_decay(self):
         return {"pos_embed", "cls_token"}
@@ -374,20 +366,28 @@ class AFNONet(nn.Layer):
         x = self.patch_embed(x)
         x = x + self.pos_embed
         x = self.pos_drop(x)
-        x = x.reshape(B, self.h, self.w, self.embed_dim)
-        for blk in self.blocks:
+        x = x.reshape([B, self.h, self.w, self.embed_dim])
+        for i, blk in enumerate(self.blocks):
             x = blk(x)
 
         return x
 
     def forward(self, x: paddle.Tensor) -> paddle.Tensor:
         x = self.forward_features(x)
+        # print(f"1 {x.shape}")
         x = self.head(x)
+        # print(f"2 {x.shape}")
         out = x.reshape(
             list(x.shape[:-1]) + [self.patch_size[0], self.patch_size[1], -1]
         )
+        # print(f"3 {out.shape}")
         out = paddle.transpose(x=out, perm=(0, 5, 1, 3, 2, 4))
+        # print(f"4 {out.shape}")
         out = out.reshape(list(out.shape[:2]) + [self.img_size[0], self.img_size[1]])
+        # print(f"5 {out.shape}")
+        # print("==> start BWD")
+        # print("==> END BWD")
+        # exit()
         return out
 
 

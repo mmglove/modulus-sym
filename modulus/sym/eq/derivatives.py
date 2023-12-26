@@ -267,7 +267,7 @@ class MeshlessFiniteDerivative(paddle.nn.Layer):
             for key, value in outputs.items():
                 outputs[key] = paddle.split(
                     value.reshape([-1, len(stencil_batch)]),
-                    value.view(-1, len(stencil_batch)).shape[1] // 1,
+                    value.reshape([-1, len(stencil_batch)]).shape[1] // 1,
                     axis=1,
                 )
             for i, stencil_str in enumerate(stencil_batch):
@@ -353,7 +353,7 @@ class MeshlessFiniteDerivative(paddle.nn.Layer):
                 outputs[var_name][:, i] = outputs[var_name][:, i] + spacing * self.dx
 
         for key, value in outputs.items():
-            outputs[key] = value.view(-1, 1)
+            outputs[key] = value.reshape([-1, 1])
 
         return outputs
 
