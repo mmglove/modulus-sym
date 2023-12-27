@@ -787,6 +787,7 @@ class FuncArch(nn.Module):
         return get_jacobian
 
     def _hessian_impl(self, forward_func):
+        print(f"==> Using hessian_impl")
         def hessian_func(x, v1, v2):
             def jacobian_func(x):
                 pred, vjpfunc = torch.func.vjp(forward_func, x)

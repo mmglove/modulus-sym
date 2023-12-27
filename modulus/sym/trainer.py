@@ -716,6 +716,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     break
 
                 torch.cuda.nvtx.range_pop()
+                # self.log.info(f"==> max_memory_allocated = {torch.cuda.max_memory_allocated() // (1<<20)} MB")
 
     def _cuda_graph_training_step(self, step: int):
         # Training step method for using cuda graphs
