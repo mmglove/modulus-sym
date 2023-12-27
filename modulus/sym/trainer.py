@@ -62,6 +62,7 @@ class AdamMixin:
         for agg_step in range(self.grad_agg_freq):
             with paddle.amp.auto_cast(enable=self.amp, dtype=self.amp_dtype):
                 paddle.framework.core.nvprof_nvtx_push("Loss computation")
+                # fwd_tic = time.perf_counter()
                 losses_minibatch = self.compute_losses(step)
                 paddle.framework.core.nvprof_nvtx_pop()
                 losses_minibatch = {
@@ -72,11 +73,14 @@ class AdamMixin:
                 loss_minibatch = aggregator(losses_minibatch, step)
                 paddle.framework.core.nvprof_nvtx_pop()
                 loss += loss_minibatch
+                # self.fwd_cost = time.perf_counter() - fwd_tic
             paddle.framework.core.nvprof_nvtx_push("Weight gradients")
+            # bwd_tic = time.perf_counter()
             if not self.enable_scaler:
                 loss_minibatch.backward()
             else:
                 self.scaler.scale(loss_minibatch).backward()
+            # self.bwd_cost = time.perf_counter() - bwd_tic
             paddle.framework.core.nvprof_nvtx_pop()
             losses.update(losses_minibatch)
 
@@ -536,7 +540,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     loss, losses = self._cuda_graph_training_step(step)
                 else:
                     # Load all data for constraints
+                    # data_tic = time.perf_counter()
                     self.load_data()
+                    # data_cost = time.perf_counter() - data_tic
 
                     self.optimizer.clear_grad()
 
@@ -545,9 +551,12 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         self.aggregator, self.global_optimizer_model, step
                     )
 
+                    # opt_tic = time.perf_counter()
                     # take optimizer step
                     self.apply_gradients()
+                    # opt_cost = time.perf_counter() - opt_tic
 
+                    # self.log.info(f"reader_cost: {data_cost:.3f} fwd_cost: {self.fwd_cost:.3f} bwd_cost: {self.bwd_cost:.3f} opt_cost: {opt_cost:.3f}")
                     # take scheduler step
                     if hasattr(self.scheduler, "step"):
                         self.scheduler.step()
