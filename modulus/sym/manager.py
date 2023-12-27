@@ -75,6 +75,7 @@ class JitManager(object):
         # https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/codegen/cuda/README.md
         # enable fusing single node and prevent tiny autodiff graph are inlined/reverted
         if flag:
+            logger.info(f"==> Set jit to {flag}")
             torch._C._jit_set_nvfuser_single_node_mode(True)
             torch._C._debug_set_autodiff_subgraph_inlining(False)
         self._enabled = flag
@@ -86,6 +87,7 @@ class JitManager(object):
     @use_nvfuser.setter
     def use_nvfuser(self, flag):
         self._use_nvfuser = flag
+        logger.info(f"==> Set use_nvfuser to {flag}")
         torch._C._jit_set_nvfuser_enabled(flag)
         backend = "NVFuser" if flag else "NNC"
         if self.enabled:

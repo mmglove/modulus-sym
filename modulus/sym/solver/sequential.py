@@ -140,6 +140,8 @@ class SequentialSolver(Solver):
                     # run user defined custom update operation
                     if self.custom_update_operation is not None:
                         self.custom_update_operation()
+                    self.log.info("==> Finished first iteration and now exit for paddle-torch becnhmark test...")
+                    exit()
 
         elif self.cfg.run_mode == "eval":
             raise NotImplementedError(

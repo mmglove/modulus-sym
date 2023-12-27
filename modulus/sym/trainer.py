@@ -427,6 +427,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             num_losses=self.get_num_losses(),
         )
 
+        self.log.info(f"==> self.cfg.jit = {self.cfg.jit}")
         if self.cfg.jit:
             # Warn user if pytorch version difference
             if not torch.__version__ == JIT_PYTORCH_VERSION:

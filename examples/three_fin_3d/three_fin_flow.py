@@ -108,7 +108,7 @@ def run(cfg: ModulusConfig) -> None:
             "w": 1.0,
         },  # weight zero on edges
         parameterization=geo.pr,
-        batch_per_epoch=5000,
+        batch_per_epoch=600,
     )
     flow_domain.add_constraint(constraint_inlet, "inlet")
 
@@ -121,7 +121,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=Eq(x, channel_origin[0] + channel_dim[0]),
         lambda_weighting={"p": 1.0},
         parameterization=geo.pr,
-        batch_per_epoch=5000,
+        batch_per_epoch=600,
     )
     flow_domain.add_constraint(constraint_outlet, "outlet")
 
@@ -137,7 +137,7 @@ def run(cfg: ModulusConfig) -> None:
             "w": 1.0,
         },  # weight zero on edges
         parameterization=geo.pr,
-        batch_per_epoch=5000,
+        batch_per_epoch=600,
     )
     flow_domain.add_constraint(no_slip, "no_slip")
 
@@ -155,7 +155,7 @@ def run(cfg: ModulusConfig) -> None:
         },
         compute_sdf_derivatives=True,
         parameterization=geo.pr,
-        batch_per_epoch=5000,
+        batch_per_epoch=600,
         criteria=Or(x < -1.1, x > 0.5),
     )
     flow_domain.add_constraint(lr_interior, "lr_interior")
@@ -174,7 +174,7 @@ def run(cfg: ModulusConfig) -> None:
         },
         compute_sdf_derivatives=True,
         parameterization=geo.pr,
-        batch_per_epoch=5000,
+        batch_per_epoch=600,
         criteria=And(x > -1.1, x < 0.5),
     )
     flow_domain.add_constraint(hr_interior, "hr_interior")
