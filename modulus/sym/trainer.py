@@ -73,6 +73,7 @@ class AdamMixin:
                 if agg_step != 0:  # load new data for subsequent steps
                     self.load_data()
                 torch.cuda.nvtx.range_push("Loss computation")
+                # fwd_tic = time.perf_counter()
                 losses_minibatch = self.compute_losses(step)
                 torch.cuda.nvtx.range_pop()
                 losses_minibatch = {
@@ -83,8 +84,11 @@ class AdamMixin:
                 loss_minibatch = aggregator(losses_minibatch, step)
                 torch.cuda.nvtx.range_pop()
                 loss += loss_minibatch
+                # self.fwd_cost = time.perf_counter() - fwd_tic
             torch.cuda.nvtx.range_push("Weight gradients")
+            # bwd_tic = time.perf_counter()
             self.scaler.scale(loss_minibatch).backward()
+            # self.bwd_cost = time.perf_counter() - bwd_tic
             torch.cuda.nvtx.range_pop()
             losses.update(losses_minibatch)
 
@@ -544,7 +548,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     loss, losses = self._cuda_graph_training_step(step)
                 else:
                     # Load all data for constraints
+                    # data_tic = time.perf_counter()
                     self.load_data()
+                    # data_cost = time.perf_counter() - data_tic
 
                     self.global_optimizer_model.zero_grad(set_to_none=True)
 
@@ -553,9 +559,12 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         self.aggregator, self.global_optimizer_model, step
                     )
 
+                    # opt_tic = time.perf_counter()
                     # take optimizer step
                     self.apply_gradients()
+                    # opt_cost = time.perf_counter() - opt_tic
 
+                    # self.log.info(f"reader_cost: {data_cost:.3f} fwd_cost: {self.fwd_cost:.3f} bwd_cost: {self.bwd_cost:.3f} opt_cost: {opt_cost:.3f}")
                     # take scheduler step
                     self.scheduler.step()
 
