@@ -438,6 +438,7 @@ class Arch(nn.Module):
                     compute_derivs[order].append(n)
         # Filtering out the Jacobian terms that are not required for the Hessian terms,
         # these Jacobian terms will get picked up by the regular autograd engine.
+        logger.info(f"==> allow_partial_hessian = {allow_partial_hessian}")
         if allow_partial_hessian and len(compute_derivs[2]):
             needed_hessian_name = set([d.name for d in compute_derivs[2]])
             compute_derivs[1] = [
@@ -772,6 +773,7 @@ class FuncArch(nn.Module):
         return deriv_key_dict, max_order
 
     def _jacobian_impl(self, forward_func):
+        print(f"==> Using _jacobian_impl")
         def jacobian_func(x, v):
             pred, vjpfunc = torch.func.vjp(forward_func, x)
             return vjpfunc(v)[0], pred

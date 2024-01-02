@@ -504,6 +504,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             start_event = torch.cuda.Event(enable_timing=True)
             end_event = torch.cuda.Event(enable_timing=True)
             start_event.record()
+            # t = time.time()
+            t = time.perf_counter()
         else:
             t = time.time()
 
@@ -558,6 +560,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     loss, losses = self.compute_gradients(
                         self.aggregator, self.global_optimizer_model, step
                     )
+                    if step == self.max_steps - 10:
+                        self.log.info(f"==> max_memory_allocated = {torch.cuda.max_memory_allocated() // (1<<20)} MB")
 
                     # opt_tic = time.perf_counter()
                     # take optimizer step
@@ -673,6 +677,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         elapsed_time = start_event.elapsed_time(
                             end_event
                         )  # in milliseconds
+                        torch.cuda.synchronize()
+                        end_time = time.perf_counter()
+                        timetime = (end_time - t) * 1.0e3  # in milliseconds
                     else:
                         t_end = time.time()
                         elapsed_time = (t_end - t) * 1.0e3  # in milliseconds
@@ -689,12 +696,13 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         f"{self.step_str} loss: {loss.cpu().detach().numpy():10.3e}"
                     )
                     if step >= self.initial_step + self.print_stats_freq:
-                        print_statement += f", time/iteration: {elapsed_time/self.print_stats_freq:10.3e} ms"
+                        print_statement += f", time/iteration: {elapsed_time/self.print_stats_freq:10.3e} ms, timetime: {timetime/self.print_stats_freq:10.3e} ms"
                     if self.manager.rank == 0:
                         self.log.info(print_statement)
 
                     if self.manager.cuda:
                         start_event.record()
+                        t = time.perf_counter()
                     else:
                         t = time.time()
 
@@ -716,7 +724,6 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     break
 
                 torch.cuda.nvtx.range_pop()
-                # self.log.info(f"==> max_memory_allocated = {torch.cuda.max_memory_allocated() // (1<<20)} MB")
 
     def _cuda_graph_training_step(self, step: int):
         # Training step method for using cuda graphs
