@@ -432,6 +432,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         )
 
         self.log.info(f"==> self.cfg.jit = {self.cfg.jit}")
+        self.log.info(f"==> self.cfg.cuda_graphs = {self.cfg.cuda_graphs}")
         if self.cfg.jit:
             # Warn user if pytorch version difference
             if not torch.__version__ == JIT_PYTORCH_VERSION:
