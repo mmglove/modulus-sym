@@ -605,8 +605,7 @@ class FNOArch(Arch):
                     self.output_keys_fno,
                     paddle.split(
                         output_dx[d],
-                        num_or_sections=output_dx[d].shape[1]
-                        // list(self.output_key_fno_dict.values()),
+                        num_or_sections=list(self.output_key_fno_dict.values()),
                         axis=1,
                     ),
                 ):  # Loop through variables
