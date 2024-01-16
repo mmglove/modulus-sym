@@ -207,13 +207,14 @@ class Constraint:
         elif isinstance(dataset, IterableDataset):
 
             # for iterable datasets, must do batching/sampling within dataset
-            dataloader = DataLoader(
-                dataset,
-                batch_size=None,
-                num_workers=0,
-                worker_init_fn=dataset.worker_init_fn,
-                persistent_workers=persistent_workers,
-            )
+            # dataloader = DataLoader(
+            #     dataset,
+            #     batch_size=None,
+            #     num_workers=0,
+            #     worker_init_fn=dataset.worker_init_fn,
+            #     persistent_workers=persistent_workers,
+            # )
+            dataloader = dataset
 
         # make dataloader infinite
         if infinite:

@@ -68,6 +68,8 @@ class MovingTimeWindowArch(Arch):
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
         with paddle.no_grad():
             in_vars["t"] += self.window_location
+        # FIXME: manually reset stop_gradient to False for iadd is not supported in paddle
+        in_vars["t"].stop_gradient = False
         y_prev_step = self.arch_prev_step.forward(in_vars)
         y = self.arch.forward(in_vars)
         y_keys = list(y.keys())
