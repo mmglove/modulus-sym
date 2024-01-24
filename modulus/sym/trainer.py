@@ -51,8 +51,6 @@ from .distributed.manager import DistributedManager
 
 from contextlib import ContextDecorator
 
-import sys
-
 class PaddleProfiler(ContextDecorator):
     """
     Profiler list how many kinds of C++ API is called.
@@ -69,8 +67,10 @@ class PaddleProfiler(ContextDecorator):
         self.prof.start()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def step(self):
         self.prof.step()
+
+    def __exit__(self, type, value, traceback):
         self.prof.stop()
 
         self.prof.summary(
@@ -81,10 +81,8 @@ class PaddleProfiler(ContextDecorator):
         )
         print(
             "[Wariorning] This profiler mainly for count how many kinds of C++ API is called. "
-            "And will exit after 1 step"
+            "It is recommend to exit after 1 step for it is enough to gather called C++ API information."
         )
-        print("Exiiting...")
-        sys.exit(0)
 
 
 class AdamMixin:
