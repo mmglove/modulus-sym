@@ -23,7 +23,7 @@ defaults :
   - _self_
 
 jit : false
-scheduler : 
+scheduler :
   decay_rate : 0.95
   decay_steps : 8000
 
@@ -33,7 +33,7 @@ save_filetypes : "vtk,npz"
 
 cuda_graphs: False
 
-optimizer: 
+optimizer:
   learning_rate: 1e-4
 
 training:
@@ -45,7 +45,7 @@ training:
 
 batch_size:
   wf_pt: 512
-  interior: 2048 
+  interior: 2048
   inlet: 256
   outlet: 256
   interior_init: 2048

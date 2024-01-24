@@ -120,6 +120,8 @@ def run(cfg: ModulusConfig) -> None:
         ]
         + [Node.from_sympy(Min(log(1 + exp(Symbol("k_star"))) + 1e-4, 20), "k")]
         + [Node.from_sympy(Min(log(1 + exp(Symbol("ep_star"))) + 1e-4, 180), "ep")]
+        # + [Node.from_sympy(Symbol("k_star"), "k")]
+        # + [Node.from_sympy(Symbol("ep_star"), "ep")]
         + [flow_net.make_node(name="flow_network")]
         + [p_net.make_node(name="p_network")]
         + [k_net.make_node(name="k_network")]

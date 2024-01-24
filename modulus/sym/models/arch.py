@@ -288,7 +288,7 @@ class Arch(nn.Layer):
             ) / input_scales_tensor[1]
         if periodicity is not None:
             assert input_dict is not None
-            print(input_dict)
+            # print(input_dict)
             inputs = paddle.split(input_tensor, list(input_dict.values()), axis=dim)
             outputs = []
             for i, key in enumerate(input_dict.keys()):

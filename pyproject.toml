@@ -12,7 +12,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "Apache 2.0"}
 dependencies = [
-    "nvidia-modulus>=0.2.0",
+    # "nvidia-modulus>=0.2.0",
     "hydra-core>=1.2.0",
     "termcolor>=2.1.1",
     "chaospy>=4.3.7",
@@ -22,17 +22,18 @@ dependencies = [
     "scikit-learn==1.0.2",
     "symengine>=0.10.0",
     "sympy==1.12",
-    "timm==0.5.4",
-    "torch-optimizer==0.3.0",
+    # "timm==0.5.4",
+    # "torch-optimizer==0.3.0",
     "transforms3d==0.3.1",
     "typing==3.7.4.3",
     "pillow==10.0.1",
     "notebook==6.4.12",
     "mistune==2.0.3",
     "pint==0.19.2",
-    "tensorboard>=2.8.0",
+    # "tensorboard>=2.8.0",
     "vtk>=9.2.6",
     "h5py>=3.7.0",
+    "tensorboardX==2.6.2.2",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -45,7 +46,7 @@ dynamic = ["version"]
 version = {attr = "modulus.sym.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["modulus.*"] 
+include = ["modulus.*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml"]
