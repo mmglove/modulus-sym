@@ -67,6 +67,7 @@ def gelu(x: paddle.Tensor) -> paddle.Tensor:
 
 
 def custom_silu(x: paddle.Tensor) -> paddle.Tensor:
+    # return paddle.nn.functional.silu(x)
     return x * paddle.nn.functional.sigmoid(x)
 
 

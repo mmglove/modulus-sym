@@ -49,6 +49,43 @@ from .hydra import (
 )
 from .distributed.manager import DistributedManager
 
+from contextlib import ContextDecorator
+
+import sys
+
+class PaddleProfiler(ContextDecorator):
+    """
+    Profiler list how many kinds of C++ API is called.
+    """
+    def __init__(self):
+        super().__init__()
+        self.prof = profiler.Profiler(
+            targets=[profiler.ProfilerTarget.CPU, profiler.ProfilerTarget.GPU],
+            # scheduler=(3, 7),
+            on_trace_ready=profiler.export_chrome_tracing("./log"),
+        )
+
+    def __enter__(self):
+        self.prof.start()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.prof.step()
+        self.prof.stop()
+
+        self.prof.summary(
+            sorted_by=profiler.SortedKeys.GPUTotal,
+            op_detail=True,
+            thread_sep=False,
+            time_unit="ms",
+        )
+        print(
+            "[Wariorning] This profiler mainly for count how many kinds of C++ API is called. "
+            "And will exit after 1 step"
+        )
+        print("Exiiting...")
+        sys.exit(0)
+
 
 class AdamMixin:
     """Special functions for training using the standard optimizers
