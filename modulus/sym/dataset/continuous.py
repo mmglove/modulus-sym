@@ -182,10 +182,10 @@ class DictImportanceSampledPointwiseIterableDataset(
                     for i in range(len(next(iter(list_invar.values())))):
                         importance = self.importance_measure(
                             {key: value[i] for key, value in list_invar.items()}
-                        )
+                        ).numpy()
                         list_importance.append(importance)
                     importance = np.concatenate(list_importance, axis=0)
-                    prob = importance / np.sum(self.invar["area"].numpy() * importance)
+                    prob = importance / np.sum(self.invar["area"] * importance)
 
                 # sample points from probability distribution and store idx
                 idx = np.array([])
