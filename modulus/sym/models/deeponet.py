@@ -193,8 +193,6 @@ class DeepONetArch(Arch):
         branch_output = branch_output["branch"]
         trunk_output = trunk_output["trunk"]
         # Convert ouputs into 1D feature vectors
-        print(branch_output.shape, branch_output.is_contiguous())
-        print(trunk_output.shape, trunk_output.is_contiguous())
         branch_output = branch_output.reshape([branch_output.shape[0], -1])
         trunk_output = trunk_output.reshape([trunk_output.shape[0], -1])
 

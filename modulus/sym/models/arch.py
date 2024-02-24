@@ -338,11 +338,11 @@ class Arch(nn.Layer):
         """
         Used in fourier-like architectures.
         """
-        channel = input_tensor.shape[-1]
-        right_mul_mat = paddle.zeros([channel, slice_index.size], input_tensor.dtype)
-        for col, keep_col in enumerate(slice_index.numpy()):
-            right_mul_mat[keep_col, col] = 1.0
-        right_mul_mat.stop_gradient = True
+        with paddle.no_grad():
+            channel = input_tensor.shape[-1]
+            right_mul_mat = paddle.zeros([channel, slice_index.size], input_tensor.dtype)
+            for col, keep_col in enumerate(slice_index.numpy()):
+                right_mul_mat[keep_col, col] = 1.0
         return paddle.matmul(input_tensor, right_mul_mat)
         # if slice_index.max() >= input_tensor.shape[dim]:
         #     raise ValueError(

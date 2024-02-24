@@ -55,11 +55,11 @@ class PaddleProfiler(ContextDecorator):
     """
     Profiler list how many kinds of C++ API is called.
     """
-    def __init__(self):
+    def __init__(self, scheduler=None):
         super().__init__()
         self.prof = profiler.Profiler(
             targets=[profiler.ProfilerTarget.CPU, profiler.ProfilerTarget.GPU],
-            # scheduler=(3, 7),
+            scheduler=scheduler,
             on_trace_ready=profiler.export_chrome_tracing("./log"),
         )
 
@@ -75,12 +75,13 @@ class PaddleProfiler(ContextDecorator):
 
         self.prof.summary(
             sorted_by=profiler.SortedKeys.GPUTotal,
-            op_detail=True,
+            op_detail=False,
             thread_sep=False,
             time_unit="ms",
+            views=profiler.SummaryView.OperatorView,
         )
         print(
-            "[Wariorning] This profiler mainly for count how many kinds of C++ API is called. "
+            "[Warning] This profiler mainly for count how many kinds of C++ API is called. "
             "It is recommend to exit after 1 step for it is enough to gather called C++ API information."
         )
 
@@ -540,6 +541,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.sigterm_handler = sigterm_handler
 
         # train loop
+        # with PaddleProfiler((10, 20)) as pd_prof:
+        self.log.info(f"Prim = {paddle.framework.core._is_eager_prim_enabled()}")
         with ExitStack() as stack:
             if self.profile:
                 raise NotImplementedError(
@@ -589,6 +592,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     # opt_tic = time.perf_counter()
                     # take optimizer step
                     self.apply_gradients()
+                    # if step == 5:
+                    #     self.log.info(f"Mem = {paddle.device.cuda.max_memory_allocated() / (1<<30):.3f} GB")
+
                     # opt_cost = time.perf_counter() - opt_tic
 
                     # self.log.info(f"reader_cost: {data_cost:.3f} fwd_cost: {self.fwd_cost:.3f} bwd_cost: {self.bwd_cost:.3f} opt_cost: {opt_cost:.3f}")
@@ -597,9 +603,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         self.scheduler.step()
 
                 # check for nans in loss
-                if paddle.isnan(loss):
-                    self.log.error("loss went to Nans")
-                    break
+                # if paddle.isnan(loss):
+                #     self.log.error("loss went to Nans")
+                #     break
 
                 self.step_str = f"[step: {step:10d}]"
 
@@ -642,27 +648,27 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         barrier_flag = True
 
                 # write train / inference / validation datasets to tensorboard and file
-                if step % self.cfg.training.rec_constraint_freq == 0:
-                    barrier_flag = True
-                    self._record_constraints()
+                # if step % self.cfg.training.rec_constraint_freq == 0:
+                #     barrier_flag = True
+                #     self._record_constraints()
 
-                if (step % self.cfg.training.rec_validation_freq == 0) and (
-                    self.has_validators
-                ):
-                    barrier_flag = True
-                    self._record_validators(step)
+                # if (step % self.cfg.training.rec_validation_freq == 0) and (
+                #     self.has_validators
+                # ):
+                #     barrier_flag = True
+                #     self._record_validators(step)
 
-                if (step % self.cfg.training.rec_inference_freq == 0) and (
-                    self.has_inferencers
-                ):
-                    barrier_flag = True
-                    self._record_inferencers(step)
+                # if (step % self.cfg.training.rec_inference_freq == 0) and (
+                #     self.has_inferencers
+                # ):
+                #     barrier_flag = True
+                #     self._record_inferencers(step)
 
-                if (step % self.cfg.training.rec_monitor_freq == 0) and (
-                    self.has_monitors
-                ):
-                    barrier_flag = True
-                    self._record_monitors(step)
+                # if (step % self.cfg.training.rec_monitor_freq == 0) and (
+                #     self.has_monitors
+                # ):
+                #     barrier_flag = True
+                #     self._record_monitors(step)
 
                 # save checkpoint
                 if step % self.save_network_freq == 0:
@@ -740,6 +746,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     break
 
                 paddle.framework.core.nvprof_nvtx_pop()
+                    # pd_prof.step()
 
     def _cuda_graph_training_step(self, step: int):
         raise NotImplementedError("CUDA graph training is not implemented yet")
