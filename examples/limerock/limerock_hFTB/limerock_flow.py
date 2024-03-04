@@ -101,7 +101,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"u": 0, "v": 0, "w": 0},
         batch_size=cfg.batch_size.no_slip,
-        batch_per_epoch=15000,
+        batch_per_epoch=150,
     )
     flow_domain.add_constraint(no_slip, "no_slip")
 
@@ -121,7 +121,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=Or(
             (x < limerock.heat_sink_bounds[0]), (x > limerock.heat_sink_bounds[1])
         ),
-        batch_per_epoch=2000,
+        batch_per_epoch=20,
     )
     flow_domain.add_constraint(lr_interior, "lr_interior")
 
@@ -141,7 +141,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=And(
             (x > limerock.heat_sink_bounds[0]), (x < limerock.heat_sink_bounds[1])
         ),
-        batch_per_epoch=2000,
+        batch_per_epoch=20,
     )
     flow_domain.add_constraint(hr_interior, "hr_interior")
 

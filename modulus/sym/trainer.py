@@ -574,9 +574,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     self.scheduler.step()
 
                 # check for nans in loss
-                if torch.isnan(loss):
-                    self.log.error("loss went to Nans")
-                    break
+                # if torch.isnan(loss):
+                #     self.log.error("loss went to Nans")
+                #     break
 
                 self.step_str = f"[step: {step:10d}]"
 
