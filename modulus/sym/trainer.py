@@ -524,6 +524,16 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 stack.enter_context(torch.autograd.profiler.emit_nvtx())
 
             for step in range(self.initial_step, self.max_steps + 1):
+                # profiler step id between 10~20
+                # if step == 10:
+                #     torch.cuda.cudart().cudaProfilerStart()
+                #     torch.cuda.nvtx.range_push(f"step_{step}")
+                # elif 10 < step < 20:
+                #     torch.cuda.nvtx.range_pop()
+                #     torch.cuda.nvtx.range_push(f"step_{step}")
+                # elif 20 == step:
+                #     torch.cuda.nvtx.range_pop()
+                #     torch.cuda.cudart().cudaProfilerStop()
 
                 if self.sigterm_handler():
                     if self.manager.rank == 0:
