@@ -517,6 +517,17 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.sigterm_handler = sigterm_handler
 
         # train loop
+        # with torch.profiler.profile(
+        #     # schedule=torch.profiler.schedule(wait=1, warmup=1, active=3, repeat=1),
+        #     on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/'),
+        #     # record_shapes=True,
+        #     activities=[
+        #         torch.profiler.ProfilerActivity.CPU,
+        #         torch.profiler.ProfilerActivity.CUDA,
+        #     ],
+        #     # with_stack=True,
+        #     use_cuda=True,
+        # ) as prof:
         with ExitStack() as stack:
             if self.profile:
                 # Add NVTX context if in profile mode
@@ -726,6 +737,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         )
                     break
 
+                # prof.step()
                 # check max steps
                 if step >= self.max_steps:
                     if self.manager.rank == 0:
@@ -735,6 +747,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     break
 
                 torch.cuda.nvtx.range_pop()
+            # prof.stop()
+        # print(prof.key_averages(group_by_input_shape=True).table(sort_by="cuda_time_total", row_limit=10))
+
 
     def _cuda_graph_training_step(self, step: int):
         # Training step method for using cuda graphs
