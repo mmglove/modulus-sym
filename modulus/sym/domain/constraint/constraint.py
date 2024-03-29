@@ -97,6 +97,12 @@ class Constraint:
 
         # put loss on device
         self._loss = loss
+        from paddle import jit
+        from paddle import static
+        build_strategy = static.BuildStrategy()
+        build_strategy.build_cinn_pass = False
+        self.model.forward = jit.to_static(build_strategy=build_strategy, full_graph=True)(self.model.forward)
+
 
     @property
     def input_names(self) -> List[Key]:

@@ -232,7 +232,7 @@ class Graph(paddle.nn.Layer):
             print(self)
 
     def forward(self, invar: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
-        outvar = invar
+        outvar = {k: v for k, v in invar.items()}  # Avoid side-effect via shallow copy
         for i, e in enumerate(self.evaluation_order):
             paddle.framework.core.nvprof_nvtx_push(self.node_names[i])
             outvar.update(e(outvar))

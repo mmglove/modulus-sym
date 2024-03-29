@@ -36,6 +36,9 @@ from modulus.sym.utils.io import (
     InferencerPlotter,
 )
 
+import paddle
+paddle.framework.core.set_prim_eager_enabled(True)
+paddle.framework.core._set_prim_all_enabled(True)
 
 @modulus.sym.main(config_path="conf", config_name="config")
 def run(cfg: ModulusConfig) -> None:
