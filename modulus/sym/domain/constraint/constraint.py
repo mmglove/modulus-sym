@@ -97,6 +97,8 @@ class Constraint:
 
         # put loss on device
         self._loss = loss
+
+        # enable dy2st
         from paddle import jit
         from paddle import static
         build_strategy = static.BuildStrategy()
