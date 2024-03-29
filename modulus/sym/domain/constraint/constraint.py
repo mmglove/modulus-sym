@@ -104,6 +104,7 @@ class Constraint:
         build_strategy = static.BuildStrategy()
         build_strategy.build_cinn_pass = False
         self.model.forward = jit.to_static(build_strategy=build_strategy, full_graph=True)(self.model.forward)
+        logger.info(f"Using jit.to_static in Constraint.__init__ in {__file__}")
 
 
     @property
