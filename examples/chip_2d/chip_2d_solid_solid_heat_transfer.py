@@ -42,6 +42,10 @@ from modulus.sym.node import Node
 from modulus.sym.models.modified_fourier_net import ModifiedFourierNetArch
 
 
+import paddle
+paddle.framework.core.set_prim_eager_enabled(True)
+paddle.framework.core._set_prim_all_enabled(True)
+
 @modulus.sym.main(config_path="conf_2d_solid_solid", config_name="config")
 def run(cfg: ModulusConfig) -> None:
     # add constraints to solver

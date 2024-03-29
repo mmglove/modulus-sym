@@ -47,6 +47,10 @@ from modulus.sym.eq.pdes.basic import NormalDotVec, GradNormal
 from limerock_properties import *
 
 
+import paddle
+paddle.framework.core.set_prim_eager_enabled(True)
+paddle.framework.core._set_prim_all_enabled(True)
+
 @modulus.sym.main(config_path="conf", config_name="conf_flow")
 def run(cfg: ModulusConfig) -> None:
     # make list of nodes to unroll graph on

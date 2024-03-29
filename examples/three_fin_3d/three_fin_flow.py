@@ -46,6 +46,10 @@ from modulus.sym.models.fully_connected import FullyConnectedArch
 from three_fin_geometry import *
 
 
+import paddle
+paddle.framework.core.set_prim_eager_enabled(True)
+paddle.framework.core._set_prim_all_enabled(True)
+
 @modulus.sym.main(config_path="conf", config_name="conf_flow")
 def run(cfg: ModulusConfig) -> None:
     # make navier stokes equations

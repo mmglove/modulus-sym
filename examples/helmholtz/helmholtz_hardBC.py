@@ -96,11 +96,12 @@ class HardBC(ADF):
         return outvar
 
 
+import paddle
+paddle.framework.core.set_prim_eager_enabled(True)
+paddle.framework.core._set_prim_all_enabled(True)
+
 @modulus.sym.main(config_path="conf", config_name="config_hardBC")
 def run(cfg: ModulusConfig) -> None:
-    paddle.framework.core.set_prim_eager_enabled(True)
-    paddle.framework.core._set_prim_all_enabled(True)
-
     # make list of nodes to unroll graph on
     wave = HelmholtzEquation(u="u", k=1.0, dim=2, mixed_form=True)
     hard_bc = HardBC()

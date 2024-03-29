@@ -37,6 +37,10 @@ from modulus.sym.eq.pdes.navier_stokes import GradNormal
 x, y = Symbol("x"), Symbol("y")
 
 
+import paddle
+paddle.framework.core.set_prim_eager_enabled(True)
+paddle.framework.core._set_prim_all_enabled(True)
+
 @modulus.sym.main(config_path="conf", config_name="config")
 def run(cfg: ModulusConfig) -> None:
     # params for domain
