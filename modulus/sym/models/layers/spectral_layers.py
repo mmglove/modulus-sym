@@ -64,7 +64,7 @@ class SpectralConv1d(nn.Layer):
     def forward(self, x: Tensor) -> Tensor:
         bsize = x.shape[0]
         # Compute Fourier coeffcients up to factor of e^(- something constant)
-        print("SpectralConv1d")
+        # print("SpectralConv1d")
         x_ft = paddle.fft.rfft(x)
 
         # Multiply relevant Fourier modes
@@ -136,7 +136,7 @@ class SpectralConv2d(nn.Layer):
     def forward(self, x: Tensor) -> Tensor:
         batchsize = x.shape[0]
         # Compute Fourier coeffcients up to factor of e^(- something constant)
-        print("SpectralConv2d")
+        # print("SpectralConv2d")
         x_ft = paddle.fft.rfft2(x)
 
         # Multiply relevant Fourier modes
@@ -261,7 +261,7 @@ class SpectralConv3d(nn.Layer):
 
     def forward(self, x: Tensor) -> Tensor:
         batchsize = x.shape[0]
-        print("SpectralConv3d")
+        # print("SpectralConv3d")
         x_ft = paddle.fft.rfftn(x, axes=[-3, -2, -1])
         out_ft = paddle.zeros(
             [
@@ -299,7 +299,7 @@ class SpectralConv3d(nn.Layer):
 # Utils for PINO exact gradients
 # ==========================================
 def fourier_derivatives(x: Tensor, l: List[float]) -> Tuple[Tensor, Tensor]:
-    print("fourier_derivatives")
+    # print("fourier_derivatives")
     # check that input shape maches domain length
     assert len(x.shape) - 2 == len(l), "input shape doesn't match domain dims"
 
@@ -402,7 +402,7 @@ def first_order_pino_grads(
     weights_2: Tensor,
     bias_1: Tensor,
 ) -> Tuple[Tensor]:
-    print("first_order_pino_grads")
+    # print("first_order_pino_grads")
     # dim for einsum
     dim = len(u.shape) - 2
     dim_str = "xyz"[:dim]
@@ -474,7 +474,7 @@ def second_order_pino_grads(
     weights_2: Tensor,
     bias_1: Tensor,
 ) -> Tuple[Tensor]:
-    print("second_order_pino_grads")
+    # print("second_order_pino_grads")
     # dim for einsum
     dim = len(u.shape) - 2
     dim_str = "xyz"[:dim]
