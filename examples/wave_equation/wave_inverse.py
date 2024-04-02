@@ -30,10 +30,6 @@ from modulus.sym.node import Node
 from wave_equation import WaveEquation1D
 
 
-import paddle
-paddle.framework.core.set_prim_eager_enabled(True)
-paddle.framework.core._set_prim_all_enabled(True)
-
 @modulus.sym.main(config_path="conf", config_name="config_inverse")
 def run(cfg: ModulusConfig) -> None:
     # make list of nodes to unroll graph on

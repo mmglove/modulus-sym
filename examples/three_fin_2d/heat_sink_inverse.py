@@ -43,10 +43,6 @@ from modulus.sym.key import Key
 from modulus.sym.node import Node
 
 
-import paddle
-paddle.framework.core.set_prim_eager_enabled(True)
-paddle.framework.core._set_prim_all_enabled(True)
-
 @modulus.sym.main(config_path="conf_inverse", config_name="config")
 def run(cfg: ModulusConfig) -> None:
     nu, D = Symbol("nu"), Symbol("D")

@@ -28,10 +28,6 @@ from modulus.sym.utils.io.plotter import GridValidatorPlotter
 from utilities import download_FNO_dataset, load_FNO_dataset
 
 
-import paddle
-paddle.framework.core.set_prim_eager_enabled(True)
-paddle.framework.core._set_prim_all_enabled(True)
-
 @modulus.sym.main(config_path="conf", config_name="config_AFNO")
 def run(cfg: ModulusConfig) -> None:
     # load training/ test data

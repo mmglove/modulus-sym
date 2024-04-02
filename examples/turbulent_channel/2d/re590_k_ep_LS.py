@@ -35,10 +35,6 @@ from modulus.sym.node import Node
 from custom_k_ep_ls import kEpsilonInit, kEpsilon, kEpsilonLSWF
 
 
-import paddle
-paddle.framework.core.set_prim_eager_enabled(True)
-paddle.framework.core._set_prim_all_enabled(True)
-
 @modulus.sym.main(config_path="conf_re590_k_ep_LS", config_name="config")
 def run(cfg: ModulusConfig) -> None:
     # simulation parameters

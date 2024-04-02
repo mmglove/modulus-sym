@@ -39,10 +39,6 @@ from modulus.sym.node import Node
 from modulus.sym.models.fourier_net import FourierNetArch
 
 
-import paddle
-paddle.framework.core.set_prim_eager_enabled(True)
-paddle.framework.core._set_prim_all_enabled(True)
-
 @modulus.sym.main(config_path="conf_2d_solid_fluid", config_name="config_flow")
 def run(cfg: ModulusConfig) -> None:
     #############

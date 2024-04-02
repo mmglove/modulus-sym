@@ -35,10 +35,6 @@ from modulus.sym.key import Key
 from modulus.sym.node import Node
 
 
-import paddle
-paddle.framework.core.set_prim_eager_enabled(True)
-paddle.framework.core._set_prim_all_enabled(True)
-
 @modulus.sym.main(config_path="conf_u_tau_lookup", config_name="config")
 def run(cfg: ModulusConfig) -> None:
     u = np.linspace(1e-3, 50, num=100)
