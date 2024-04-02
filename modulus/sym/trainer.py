@@ -36,6 +36,7 @@ from collections import Counter
 from typing import Dict, List, Optional
 import logging
 from contextlib import ExitStack
+from contextlib import nullcontext
 
 from .domain.constraint import Constraint
 from .domain import Domain
@@ -96,7 +97,7 @@ class AdamMixin:
     ):
         loss, losses = 0, Counter({})
         for agg_step in range(self.grad_agg_freq):
-            with paddle.amp.auto_cast(enable=self.amp, dtype=self.amp_dtype):
+            with self.auto_cast_ctx:
                 paddle.framework.core.nvprof_nvtx_push("Loss computation")
                 # fwd_tic = time.perf_counter()
                 losses_minibatch = self.compute_losses(step)
@@ -479,6 +480,11 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         enable_scaler = self.amp and self.amp_dtype == "float16"
         self.scaler = GradScaler(
             enable=enable_scaler, incr_every_n_steps=2000, init_loss_scaling=2**16
+        )
+        self.auto_cast_ctx = (
+            paddle.amp.auto_cast(enable=self.amp, dtype=self.amp_dtype)
+            if self.amp
+            else nullcontext()
         )
 
         self.enable_scaler = enable_scaler
