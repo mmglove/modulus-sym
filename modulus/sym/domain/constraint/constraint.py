@@ -81,13 +81,13 @@ class Constraint:
         if self.manager.distributed:
             # https://pytorch.org/docs/master/notes/cuda.html#id5
             s = paddle.device.cuda.Stream()
-            s.wait_stream(paddle.device.cuda.current_stream())
+            s.wait_stream(paddle.device.current_stream())
             with paddle.device.cuda.stream_guard(s):
                 self.model = DataParallel(
                     self.model,
                     find_unused_parameters=self.manager.find_unused_parameters,
                 )
-            paddle.device.cuda.current_stream().wait_stream(s)
+            paddle.device.current_stream().wait_stream(s)
         self._input_names = Key.convert_list(dataset.invar_keys)
         self._output_names = Key.convert_list(dataset.outvar_keys)
 
@@ -99,12 +99,15 @@ class Constraint:
         self._loss = loss
 
         # enable dy2st
-        from paddle import jit
-        from paddle import static
-        build_strategy = static.BuildStrategy()
-        build_strategy.build_cinn_pass = False
-        self.model.forward = jit.to_static(build_strategy=build_strategy, full_graph=True)(self.model.forward)
-        logger.info(f"Using jit.to_static in Constraint.__init__ in {__file__}")
+        import os
+        enable_jit = bool(int(os.getenv("jit", True))) # Jit is enabled by default
+        if enable_jit:
+            from paddle import jit
+            from paddle import static
+            build_strategy = static.BuildStrategy()
+            build_strategy.build_cinn_pass = False
+            self.model.forward = jit.to_static(build_strategy=build_strategy, full_graph=True)(self.model.forward)
+            logger.info(f"🍰 🍰 Using jit.to_static in Constraint.__init__ in {__file__}, jit can be disabled by set 'jit=0 python example.py'")
 
 
     @property

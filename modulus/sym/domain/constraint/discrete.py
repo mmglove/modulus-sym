@@ -219,14 +219,14 @@ class _DeepONetConstraint(Constraint):
         self.model.to(self.place)
         if self.manager.distributed:
             s = paddle.device.cuda.Stream()
-            s.wait_stream(paddle.device.cuda.current_stream())
+            s.wait_stream(paddle.device.current_stream())
             with paddle.device.cuda.stream_guard(s):
                 self.model = paddle.DataParallel(
                     self.model,
                     device_ids=[self.manager.local_rank],
                     find_unused_parameters=self.manager.find_unused_parameters,
                 )
-            paddle.device.cuda.current_stream().wait_stream(s)
+            paddle.device.current_stream().wait_stream(s)
         self._input_names = Key.convert_list(self.dataset.invar_keys)
         self._output_names = Key.convert_list(self.dataset.outvar_keys)
 

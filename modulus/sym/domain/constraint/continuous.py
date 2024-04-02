@@ -837,13 +837,13 @@ class VariationalConstraint(Constraint):
         self.model.to(self.place)
         if self.manager.distributed:
             s = paddle.device.cuda.Stream()
-            s.wait_stream(paddle.device.cuda.current_stream())
+            s.wait_stream(paddle.device.current_stream())
             with paddle.device.cuda.stream_guard(s):
                 self.model = paddle.DataParallel(
                     self.model,
                     find_unused_parameters=self.manager.find_unused_parameters,
                 )
-            paddle.device.cuda.current_stream().wait_stream(s)
+            paddle.device.current_stream().wait_stream(s)
 
         self._input_names = Key.convert_list(list(set(invar_keys)))
         self._output_names = Key.convert_list(list(set(outvar_keys)))
