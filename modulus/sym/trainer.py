@@ -101,10 +101,11 @@ class AdamMixin:
                 # fwd_tic = time.perf_counter()
                 losses_minibatch = self.compute_losses(step)
                 paddle.framework.core.nvprof_nvtx_pop()
-                losses_minibatch = {
-                    key: value / self.grad_agg_freq
-                    for key, value in losses_minibatch.items()
-                }
+                if self.grad_agg_freq > 1:
+                    losses_minibatch = {
+                        key: value / self.grad_agg_freq
+                        for key, value in losses_minibatch.items()
+                    }
                 paddle.framework.core.nvprof_nvtx_push("Loss aggregator")
                 loss_minibatch = aggregator(losses_minibatch, step)
                 paddle.framework.core.nvprof_nvtx_pop()
