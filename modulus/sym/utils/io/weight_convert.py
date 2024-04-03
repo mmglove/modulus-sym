@@ -40,8 +40,9 @@ def torch_to_paddle(torch_state_dict: Dict[str, "torch.Tensor"], output_dir: str
             assert v_numpy.ndim == 2, (
                 f"ndim of v_numpy should be 2, but got {v_numpy.ndim}."
             )
-            if 'final_layer' not in k:
+            if 'final_layer' in k:
                 paddle_state_dict[k] = v_numpy.T
+                print("✨ ✨ tranpose weight created by nn.Linear.")
             else:
                 paddle_state_dict[k] = v_numpy
         else:
