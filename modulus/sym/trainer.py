@@ -48,6 +48,7 @@ from .hydra import (
     instantiate_agg,
     add_hydra_run_path,
 )
+import sys
 from .distributed.manager import DistributedManager
 
 from contextlib import ContextDecorator
@@ -506,6 +507,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         if debug_flag:
             self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
             self.initial_step = 0
+            for model in self.saveable_models:
+                model.set_state_dict(
+                    paddle.load(f"init_ckpt/{model.checkpoint_filename}")
+                )
         else:
             self.initial_step = self.load_network()
 
@@ -620,6 +625,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 #     break
 
                 self.step_str = f"[step: {step:10d}]"
+                if debug_flag:
+                    self.log.info(f"Step [{step}] Loss {loss.item():.10f} lr {self.optimizer.get_lr():.10f}")
 
                 # write train loss / learning rate tensorboard summaries
                 if step % self.summary_freq == 0:
@@ -759,6 +766,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
                 paddle.framework.core.nvprof_nvtx_pop()
                     # pd_prof.step()
+            if debug_flag:
+                self.log.info("✨ ✨ Training is finished, now exit when debug_flag is enabled.")
+                sys.exit(0)
 
     def _cuda_graph_training_step(self, step: int):
         raise NotImplementedError("CUDA graph training is not implemented yet")
