@@ -74,12 +74,14 @@ class PointwiseLossNorm(Loss):
         Order of the loss. For example, `ord=2` would be the L2 loss.
     """
 
-    def __init__(self, ord: int = 2):
+    def __init__(self, ord: int = 2, name=""):
         super().__init__()
         self.ord: int = ord
+        self.name = name
 
-    @staticmethod
+    # @staticmethod
     def _loss(
+        self,
         invar: Dict[str, Tensor],
         pred_outvar: Dict[str, Tensor],
         true_outvar: Dict[str, Tensor],
@@ -92,6 +94,8 @@ class PointwiseLossNorm(Loss):
             l = lambda_weighting[key] * paddle.abs(
                 pred_outvar[key] - true_outvar[key]
             ).pow(ord)
+            # os.makedirs(self.name, exist_ok=True)
+            # np.save(os.path.join(self.name, key) + f"_torch_{step}.npy", pred_outvar[key].detach().cpu().numpy())
             if "area" in invar.keys():
                 l *= invar["area"]
             losses[key] = l.sum()
@@ -105,7 +109,7 @@ class PointwiseLossNorm(Loss):
         lambda_weighting: Dict[str, Tensor],
         step: int,
     ) -> Dict[str, Tensor]:
-        return PointwiseLossNorm._loss(
+        return self._loss(
             invar, pred_outvar, true_outvar, lambda_weighting, step, self.ord
         )
 
