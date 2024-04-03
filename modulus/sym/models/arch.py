@@ -137,7 +137,7 @@ class Arch(nn.Layer):
         # set checkpoint filename for model
         # append model parallel rank since each process in the first model
         # parallel group will save a separate checkpoint
-        self.checkpoint_filename = name + f".{model_parallel_rank}.pth"
+        self.checkpoint_filename = name + f".{model_parallel_rank}.pdparams"
 
         if jit:
             raise NotImplementedError("jit is not supported in paddle backend now")
@@ -723,7 +723,7 @@ class FuncArch(nn.Layer):
 
         # set name for loading and saving model
         self.name = name
-        self.checkpoint_filename = name + ".pth"
+        self.checkpoint_filename = name + ".pdparams"
         node_name = "Functional " + ("Arch" if name is None else str(name))
         ft_arch = self
 
