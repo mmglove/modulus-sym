@@ -167,16 +167,17 @@ class Constraint:
         assert isinstance(dataset, Dataset) or isinstance(
             dataset, IterableDataset
         ), "error, dataset must be a subclass of Dataset or IterableDataset"
+        debug_flag = bool(int(os.getenv("debug")))
+        if debug_flag:
+            shuffle = False
+            num_workers = 0
+            logger.info("Set shuffle to False and num_workers=0, as debug=1 in os.getenv")
 
         manager = DistributedManager()
 
         # use persistent workers
         # this is important for small datasets - torch would otherwise spend a lot of CPU overhead spawning workers each epoch
         persistent_workers = True if num_workers > 0 else False
-        debug_flag = bool(int(os.getenv("debug")))
-        if debug_flag:
-            shuffle = False
-            logger.info("Set shuffle to False as debug=1 in os.getenv")
 
         # map-style
         if isinstance(dataset, Dataset):
@@ -209,7 +210,7 @@ class Constraint:
                     batch_sampler=BatchSampler(sampler=batch_sampler, batch_size=1),
                     num_workers=num_workers,
                     worker_init_fn=dataset.worker_init_fn,
-                    persistent_workers=persistent_workers,
+                    # persistent_workers=persistent_workers,
                     collate_fn=lambda batch: batch[0],
                 )
 
