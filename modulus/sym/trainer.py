@@ -502,7 +502,12 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             )
 
         # load network
-        self.initial_step = self.load_network()
+        debug_flag = bool(int(os.getenv("debug", False)))
+        if debug_flag:
+            self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
+            self.initial_step = 0
+        else:
+            self.initial_step = self.load_network()
 
         # # make summary writer
         self.writer = SummaryWriter(
@@ -877,7 +882,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # attempt to restore optimizer
         optimizer_checkpoint_file = (
-            network_dir + f"/optim_checkpoint.{model_parallel_rank}.pth"
+            network_dir + f"/optim_checkpoint.{model_parallel_rank}.pdparamss"
         )
         log.info("attempting to restore from: " + add_hydra_run_path(network_dir))
         if os.path.exists(optimizer_checkpoint_file):
@@ -894,7 +899,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 fail = colored("Fail loading optimizer: ", "red")
                 step = 0
                 log.info(
-                    fail + add_hydra_run_path(network_dir + "/optim_checkpoint.pth")
+                    fail + add_hydra_run_path(network_dir + "/optim_checkpoint.pdparamss")
                 )
         else:
             log.warning("optimizer checkpoint not found")
@@ -976,11 +981,11 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             manager.group_rank("model_parallel") if manager.distributed else 0
         )
 
-        if os.path.exists(network_dir + f"/optim_checkpoint.{model_parallel_rank}.pth"):
+        if os.path.exists(network_dir + f"/optim_checkpoint.{model_parallel_rank}.pdparamss"):
             try:
                 checkpoint = paddle.load(
                     os.path.join(
-                        network_dir, f"optim_checkpoint.{model_parallel_rank}.pth"
+                        network_dir, f"optim_checkpoint.{model_parallel_rank}.pdparamss"
                     )
                 )
                 step = checkpoint["step"]
@@ -1023,6 +1028,6 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 "scaler_state_dict": scaler.state_dict(),
             },
             os.path.join(
-                network_dir, f"{step}_optim_checkpoint.{model_parallel_rank}.pth"
+                network_dir, f"{step}_optim_checkpoint.{model_parallel_rank}.pdparamss"
             ),
         )
