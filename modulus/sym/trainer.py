@@ -19,6 +19,7 @@ import os
 import time
 import numpy as np
 import torch
+import sys
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -422,7 +423,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.optimizer = instantiate_optim(self.cfg, model=self.global_optimizer_model)
 
         # initialize scheduler from hydra
-        self.scheduler = instantiate_sched(self.cfg, optimizer=self.optimizer)
+        self.scheduler: torch.optim.lr_scheduler.LRScheduler = instantiate_sched(self.cfg, optimizer=self.optimizer)
 
         # initialize aggregator from hydra
         self.aggregator = instantiate_agg(
@@ -470,7 +471,12 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             )
 
         # load network
-        self.initial_step = self.load_network()
+        debug_flag = bool(int(os.getenv("debug", False)))
+        if debug_flag:
+            self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
+            self.initial_step = 0
+        else:
+            self.initial_step = self.load_network()
 
         # # make summary writer
         self.writer = SummaryWriter(
@@ -528,6 +534,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         #     # with_stack=True,
         #     use_cuda=True,
         # ) as prof:
+
         with ExitStack() as stack:
             if self.profile:
                 # Add NVTX context if in profile mode
@@ -582,8 +589,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     loss, losses = self.compute_gradients(
                         self.aggregator, self.global_optimizer_model, step
                     )
-                    if step == self.max_steps - 10:
-                        self.log.info(f"==> max_memory_allocated = {torch.cuda.max_memory_allocated() // (1<<20)} MB")
+                    # if step == self.max_steps - 10:
+                    #     self.log.info(f"==> max_memory_allocated = {torch.cuda.max_memory_allocated() // (1<<20)} MB")
 
                     # opt_tic = time.perf_counter()
                     # take optimizer step
@@ -600,6 +607,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 #     break
 
                 self.step_str = f"[step: {step:10d}]"
+                if debug_flag:
+                    self.log.info(f"Step [{step}] Loss {loss.item():.10f} lr {self.scheduler.get_last_lr()[0]:.10f}")
 
                 # write train loss / learning rate tensorboard summaries
                 if step % self.summary_freq == 0:
@@ -748,6 +757,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
                 torch.cuda.nvtx.range_pop()
             # prof.stop()
+            if debug_flag:
+                self.log.info("✨ ✨ Training is finished, now exit when debug_flag is enabled.")
+                sys.exit(0)
         # print(prof.key_averages(group_by_input_shape=True).table(sort_by="cuda_time_total", row_limit=10))
 
 
