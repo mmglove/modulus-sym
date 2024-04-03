@@ -14,6 +14,8 @@
 
 import os
 import warnings
+import numpy as np
+import random
 
 from sympy import Symbol, Eq, Abs
 
@@ -70,6 +72,10 @@ def run(cfg: ModulusConfig) -> None:
     ldc_domain.add_constraint(top_wall, "top_wall")
 
     # no slip
+    if bool(os.getenv("debug", False)):
+        np.random.seed(42)
+        random.seed(42)
+
     no_slip = PointwiseBoundaryConstraint(
         nodes=nodes,
         geometry=rec,
