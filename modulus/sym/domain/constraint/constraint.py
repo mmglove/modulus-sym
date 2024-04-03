@@ -30,7 +30,7 @@ from typing import Union, List
 from modulus.sym.node import Node
 from modulus.sym.constants import tf_dt
 from modulus.sym.distributed.manager import DistributedManager
-from modulus.sym.dataset import Dataset, IterableDataset
+from modulus.sym.dataset import Dataset, IterableDataset, DictImportanceSampledPointwiseIterableDataset
 from modulus.sym.loss import Loss
 from modulus.sym.graph import Graph
 from modulus.sym.key import Key
@@ -141,14 +141,16 @@ class Constraint:
 
         # convert np to torch if needed
         tensor_dict = {
-            key: paddle.to_tensor(value, dtype=tf_dt, place=device)
+            key: paddle.to_tensor(
+                value, dtype=tf_dt, place=device, stop_gradient=not requires_grad
+            )
             for key, value in tensor_dict.items()
         }
 
-        # set requires_grad if needed
-        if requires_grad:
-            for k, v in tensor_dict.items():
-                v.stop_gradient = not requires_grad
+        # # set requires_grad if needed
+        # if requires_grad:
+        #     for k, v in tensor_dict.items():
+        #         v.stop_gradient = not requires_grad
 
         return tensor_dict
 
@@ -228,16 +230,32 @@ class Constraint:
 
         # iterable-style
         elif isinstance(dataset, IterableDataset):
-
-            # for iterable datasets, must do batching/sampling within dataset
-            # dataloader = DataLoader(
-            #     dataset,
-            #     batch_size=None,
-            #     num_workers=0,
-            #     worker_init_fn=dataset.worker_init_fn,
-            #     persistent_workers=persistent_workers,
-            # )
-            dataloader = dataset
+            if isinstance(dataset, DictImportanceSampledPointwiseIterableDataset):
+                # do not wrap with DataLoader for CUDA computation is not supported in
+                # current paddle's DataLoader
+                # dataloader = dataset
+                if num_workers > 0:
+                    logger.warning(
+                        f"num_workers({num_workers}) > 0 may cause CUDA error for CUDA"
+                        " operation is not supported in current paddle's DataLoader."
+                        " Please set num_workers=0 to avoid this error."
+                    )
+                dataloader = DataLoader(
+                    dataset,
+                    batch_size=None,
+                    num_workers=num_workers,
+                    worker_init_fn=dataset.worker_init_fn,
+                    # persistent_workers=persistent_workers,
+                )
+            else:
+                # for iterable datasets, must do batching/sampling within dataset
+                dataloader = DataLoader(
+                    dataset,
+                    batch_size=None,
+                    num_workers=num_workers,
+                    worker_init_fn=dataset.worker_init_fn,
+                    persistent_workers=persistent_workers,
+                )
 
         # make dataloader infinite
         if infinite:
