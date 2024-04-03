@@ -69,6 +69,7 @@ def main(config_path: str, config_name: str = "config"):
             torch.manual_seed(GLOBAL_RANDOM_SEED)
             torch.cuda.manual_seed(GLOBAL_RANDOM_SEED) # Paddle random.
             torch.cuda.manual_seed_all(GLOBAL_RANDOM_SEED) # Paddle random.
+            # torch.backends.cudnn.deterministic = True
             print(f"✨ ✨ Set global random seed to {GLOBAL_RANDOM_SEED}")
             # os.environ['PYTHONHASHSEED'] = str(GLOBAL_RANDOM_SEED)
 
