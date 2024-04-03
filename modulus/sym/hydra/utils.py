@@ -19,6 +19,8 @@ import torch
 import logging
 import copy
 import pprint
+import numpy as np
+import random
 
 from termcolor import colored
 from pathlib import Path
@@ -59,6 +61,16 @@ def main(config_path: str, config_name: str = "config"):
     def register_decorator(func):
         @functools.wraps(func)
         def func_decorated(cfg_passthrough: Optional[DictConfig] = None) -> Any:
+
+            # Fix all random seed
+            GLOBAL_RANDOM_SEED = 42
+            random.seed(GLOBAL_RANDOM_SEED)  # Python random module.
+            np.random.seed(GLOBAL_RANDOM_SEED)  # Numpy module.
+            torch.manual_seed(GLOBAL_RANDOM_SEED)
+            torch.cuda.manual_seed(GLOBAL_RANDOM_SEED) # Paddle random.
+            torch.cuda.manual_seed_all(GLOBAL_RANDOM_SEED) # Paddle random.
+            print(f"✨ ✨ Set global random seed to {GLOBAL_RANDOM_SEED}")
+            # os.environ['PYTHONHASHSEED'] = str(GLOBAL_RANDOM_SEED)
 
             # Register all modulus groups before calling hydra main
             register_hydra_configs()
