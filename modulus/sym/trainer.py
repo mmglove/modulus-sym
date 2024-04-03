@@ -23,6 +23,7 @@ from tensorboardX import SummaryWriter
 from paddle.optimizer import Optimizer
 from paddle.optimizer.lr import LRScheduler
 from paddle.amp import GradScaler
+import datetime
 from paddle import nn
 from paddle import profiler
 import paddle.distributed as dist
@@ -737,8 +738,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         # f'{self.step_str} loss: {float(loss):.10f}'
                         f"{self.step_str} lr: {self.optimizer.get_lr():.10f}, loss: {float(loss):.10f}"
                     )
+                    eta_sec = (self.max_steps - step) * (elapsed_time / self.print_stats_freq) / 1000
+                    eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
                     if step >= self.initial_step + self.print_stats_freq:
-                        print_statement += f", time/iteration: {elapsed_time/self.print_stats_freq:10.3e} ms"
+                        print_statement += f", time/iteration: {elapsed_time / self.print_stats_freq:10.3e} ms, ETA: {eta_str}"
                     if self.manager.rank == 0:
                         self.log.info(print_statement)
 
