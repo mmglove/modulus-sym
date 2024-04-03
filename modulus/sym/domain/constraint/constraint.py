@@ -34,6 +34,7 @@ from modulus.sym.dataset import Dataset, IterableDataset
 from modulus.sym.loss import Loss
 from modulus.sym.graph import Graph
 from modulus.sym.key import Key
+import os
 
 logger = logging.getLogger(__name__)
 Tensor = paddle.Tensor
@@ -172,6 +173,10 @@ class Constraint:
         # use persistent workers
         # this is important for small datasets - torch would otherwise spend a lot of CPU overhead spawning workers each epoch
         persistent_workers = True if num_workers > 0 else False
+        debug_flag = bool(int(os.getenv("debug")))
+        if debug_flag:
+            shuffle = False
+            logger.info("Set shuffle to False as debug=1 in os.getenv")
 
         # map-style
         if isinstance(dataset, Dataset):
