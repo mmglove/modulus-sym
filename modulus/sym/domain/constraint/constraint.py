@@ -159,7 +159,7 @@ class Constraint:
         # use persistent workers
         # this is important for small datasets - torch would otherwise spend a lot of CPU overhead spawning workers each epoch
         persistent_workers = True if num_workers > 0 else False
-        debug_flag = bool(int(os.getenv("debug")))
+        debug_flag = bool(int(os.getenv("debug", False)))
         if debug_flag:
             shuffle = False
             logger.info("✨ ✨ Set shuffle to False as debug=1 in os.getenv")
