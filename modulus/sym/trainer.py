@@ -42,6 +42,7 @@ from .domain.constraint import Constraint
 from .domain import Domain
 from .loss.aggregator import Sum
 from .utils.training.stop_criterion import StopCriterion
+from modulus.sym.utils.io import torch_to_paddle
 from .constants import TF_SUMMARY, JIT_PYTORCH_VERSION
 from .hydra import (
     instantiate_optim,
@@ -475,6 +476,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         if debug_flag:
             self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
             self.initial_step = 0
+            for model in self.saveable_models:
+                torch_to_paddle(model.state_dict(), "init_ckpt", f"{model.checkpoint_filename.replace('.pth', '.pdparams')}")
         else:
             self.initial_step = self.load_network()
 

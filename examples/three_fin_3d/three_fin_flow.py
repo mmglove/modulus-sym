@@ -23,7 +23,7 @@ import itertools
 
 import modulus.sym
 from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
-from modulus.sym.utils.io import csv_to_dict, torch_to_paddle
+from modulus.sym.utils.io import csv_to_dict
 import os
 from modulus.sym.solver import Solver
 from modulus.sym.domain import Domain
@@ -84,8 +84,6 @@ def run(cfg: ModulusConfig) -> None:
         + normal_dot_vel.make_nodes()
         + [flow_net.make_node(name="flow_network")]
     )
-    if bool(int(os.getenv("debug"))):
-        torch_to_paddle(flow_net.state_dict(), "./init_ckpt", "flow_net.pdparams")
 
     geo = ThreeFin(parameterized=cfg.custom.parameterized)
 
