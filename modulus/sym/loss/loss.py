@@ -16,7 +16,8 @@ import paddle
 import pathlib
 import paddle.nn as nn
 from paddle import Tensor
-
+import os
+import numpy as np
 from typing import Dict, Tuple, List, Union
 from paddle.autograd import PyLayer
 
@@ -95,7 +96,7 @@ class PointwiseLossNorm(Loss):
                 pred_outvar[key] - true_outvar[key]
             ).pow(ord)
             # os.makedirs(self.name, exist_ok=True)
-            # np.save(os.path.join(self.name, key) + f"_torch_{step}.npy", pred_outvar[key].detach().cpu().numpy())
+            # np.save(os.path.join(self.name, key) + f"_{step}.npy", pred_outvar[key].numpy())
             if "area" in invar.keys():
                 l *= invar["area"]
             losses[key] = l.sum()
@@ -125,12 +126,14 @@ class IntegralLossNorm(Loss):
         Order of the loss. For example, `ord=2` would be the L2 loss.
     """
 
-    def __init__(self, ord: int = 2):
+    def __init__(self, ord: int = 2, name=""):
         super().__init__()
         self.ord: int = ord
+        self.name: str = name
 
-    @staticmethod
+    # @staticmethod
     def _loss(
+        self,
         list_invar: List[Dict[str, Tensor]],
         list_pred_outvar: List[Dict[str, Tensor]],
         list_true_outvar: List[Dict[str, Tensor]],
@@ -171,7 +174,7 @@ class IntegralLossNorm(Loss):
         list_lambda_weighting: List[Dict[str, Tensor]],
         step: int,
     ) -> Dict[str, Tensor]:
-        return IntegralLossNorm._loss(
+        return self._loss(
             list_invar,
             list_pred_outvar,
             list_true_outvar,
