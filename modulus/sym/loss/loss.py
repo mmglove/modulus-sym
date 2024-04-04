@@ -127,12 +127,14 @@ class IntegralLossNorm(Loss):
         Order of the loss. For example, `ord=2` would be the L2 loss.
     """
 
-    def __init__(self, ord: int = 2):
+    def __init__(self, ord: int = 2, name=""):
         super().__init__()
         self.ord: int = ord
+        self.name = name
 
-    @staticmethod
+    # @staticmethod
     def _loss(
+        self,
         list_invar: List[Dict[str, Tensor]],
         list_pred_outvar: List[Dict[str, Tensor]],
         list_true_outvar: List[Dict[str, Tensor]],
@@ -173,7 +175,7 @@ class IntegralLossNorm(Loss):
         list_lambda_weighting: List[Dict[str, Tensor]],
         step: int,
     ) -> Dict[str, Tensor]:
-        return IntegralLossNorm._loss(
+        return self._loss(
             list_invar,
             list_pred_outvar,
             list_true_outvar,
