@@ -37,6 +37,7 @@ from collections import Counter
 from typing import Dict, List, Optional
 import logging
 from contextlib import ExitStack
+import datetime
 
 from .domain.constraint import Constraint
 from .domain import Domain
@@ -662,23 +663,23 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 #     barrier_flag = True
                 #     self._record_constraints()
 
-                # if (step % self.cfg.training.rec_validation_freq == 0) and (
-                #     self.has_validators
-                # ):
-                #     barrier_flag = True
-                #     self._record_validators(step)
+                if (step % self.cfg.training.rec_validation_freq == 0) and (
+                    self.has_validators
+                ):
+                    barrier_flag = True
+                    self._record_validators(step)
 
-                # if (step % self.cfg.training.rec_inference_freq == 0) and (
-                #     self.has_inferencers
-                # ):
-                #     barrier_flag = True
-                #     self._record_inferencers(step)
+                if (step % self.cfg.training.rec_inference_freq == 0) and (
+                    self.has_inferencers
+                ):
+                    barrier_flag = True
+                    self._record_inferencers(step)
 
-                # if (step % self.cfg.training.rec_monitor_freq == 0) and (
-                #     self.has_monitors
-                # ):
-                #     barrier_flag = True
-                #     self._record_monitors(step)
+                if (step % self.cfg.training.rec_monitor_freq == 0) and (
+                    self.has_monitors
+                ):
+                    barrier_flag = True
+                    self._record_monitors(step)
 
                 # save checkpoint
                 if step % self.save_network_freq == 0:
@@ -712,8 +713,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                             end_event
                         )  # in milliseconds
                         torch.cuda.synchronize()
-                        end_time = time.perf_counter()
-                        timetime = (end_time - t) * 1.0e3  # in milliseconds
+                        # end_time = time.perf_counter()
+                        # timetime = (end_time - t) * 1.0e3  # in milliseconds
                     else:
                         t_end = time.time()
                         elapsed_time = (t_end - t) * 1.0e3  # in milliseconds
@@ -729,8 +730,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     print_statement = (
                         f"{self.step_str} loss: {loss.cpu().detach().numpy():10.3e}"
                     )
+                    eta_sec = (self.max_steps - step) * (elapsed_time / self.print_stats_freq) / 1000
+                    eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
                     if step >= self.initial_step + self.print_stats_freq:
-                        print_statement += f", time/iteration: {elapsed_time/self.print_stats_freq:10.3e} ms, timetime: {timetime/self.print_stats_freq:10.3e} ms"
+                        print_statement += f", time/iteration: {elapsed_time / self.print_stats_freq:10.3e} ms, ETA: {eta_str}"
                     if self.manager.rank == 0:
                         self.log.info(print_statement)
 
