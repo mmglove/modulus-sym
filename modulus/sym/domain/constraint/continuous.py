@@ -22,6 +22,7 @@ from typing import Dict, List, Union, Tuple, Callable
 import sympy as sp
 import logging
 import torch
+import os
 
 from .constraint import Constraint
 from .utils import _compute_outvar, _compute_lambda_weighting
@@ -302,6 +303,13 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
                 invar, outvar, lambda_weighting
             )
 
+            if bool(os.getenv("debug", False)):
+                os.makedirs(loss.name, exist_ok=True)
+                np.savez(f"{loss.name}/invar_torch", **invar)
+                np.savez(f"{loss.name}/outvar_torch", **outvar)
+                np.savez(f"{loss.name}/lambda_weighting_torch", **lambda_weighting)
+                logger.info(f"✨ ✨ PointwiseBoundaryConstraint data saved to: {loss.name}/*.npz")
+
             # make point dataset
             if importance_measure is None:
                 invar["area"] *= batch_per_epoch  # TODO find better way to do this
@@ -459,6 +467,14 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
             lambda_weighting = _compute_lambda_weighting(
                 invar, outvar, lambda_weighting
             )
+
+            if bool(os.getenv("debug", False)):
+                os.makedirs(loss.name, exist_ok=True)
+                np.savez(f"{loss.name}/invar_torch", **invar)
+                np.savez(f"{loss.name}/outvar_torch", **outvar)
+                np.savez(f"{loss.name}/lambda_weighting_torch", **lambda_weighting)
+                logger.info(f"✨ ✨ PointwiseInteriorConstraint data saved to: {loss.name}/*.npz")
+
 
             # make point dataset
             if importance_measure is None:
@@ -739,6 +755,13 @@ class IntegralBoundaryConstraint(IntegralConstraint):
                 list_invar.append(invar)
                 list_outvar.append(outvar_star)
                 list_lambda_weighting.append(lambda_weighting_star)
+
+            if bool(os.getenv("debug", False)):
+                os.makedirs(loss.name, exist_ok=True)
+                np.savez(f"{loss.name}/list_invar_torch", **{f"list_invar[{i}]": list_invar[i] for i in range(len(list_invar))})
+                np.savez(f"{loss.name}/list_outvar_torch", **{f"list_outvar[{i}]": list_outvar[i] for i in range(len(list_outvar))})
+                np.savez(f"{loss.name}/list_lambda_weighting_torch", **{f"list_lambda_weighting[{i}]": list_lambda_weighting[i] for i in range(len(list_lambda_weighting))})
+                logger.info(f"✨ ✨ IntegralBoundaryConstraint data saved to: {loss.name}/*.npz")
 
             # make dataset of integral planes
             dataset = ListIntegralDataset(
