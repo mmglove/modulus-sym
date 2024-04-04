@@ -169,7 +169,7 @@ class Constraint:
         assert isinstance(dataset, Dataset) or isinstance(
             dataset, IterableDataset
         ), "error, dataset must be a subclass of Dataset or IterableDataset"
-        debug_flag = bool(int(os.getenv("debug")))
+        debug_flag = bool(int(os.getenv("debug", False)))
         if debug_flag:
             shuffle = False
             num_workers = 0
