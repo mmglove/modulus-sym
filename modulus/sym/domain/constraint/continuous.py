@@ -758,9 +758,12 @@ class IntegralBoundaryConstraint(IntegralConstraint):
 
             if bool(os.getenv("debug", False)):
                 os.makedirs(loss.name, exist_ok=True)
-                np.savez(f"{loss.name}/list_invar_torch", **{f"list_invar[{i}]": list_invar[i] for i in range(len(list_invar))})
-                np.savez(f"{loss.name}/list_outvar_torch", **{f"list_outvar[{i}]": list_outvar[i] for i in range(len(list_outvar))})
-                np.savez(f"{loss.name}/list_lambda_weighting_torch", **{f"list_lambda_weighting[{i}]": list_lambda_weighting[i] for i in range(len(list_lambda_weighting))})
+                for i in range(len(list_invar)):
+                    np.savez(f"{loss.name}/list_invar_torch[{i}]", **list_invar[i])
+                for i in range(len(list_outvar)):
+                    np.savez(f"{loss.name}/list_outvar_torch[{i}]", **list_outvar[i])
+                for i in range(len(list_lambda_weighting)):
+                    np.savez(f"{loss.name}/list_lambda_weighting_torch[{i}]", **list_lambda_weighting[i])
                 logger.info(f"✨ ✨ IntegralBoundaryConstraint data saved to: {loss.name}/*.npz")
 
             # make dataset of integral planes
