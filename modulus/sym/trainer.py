@@ -507,7 +507,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.initial_step = 0
         for model in self.saveable_models:
             model.set_state_dict(
-                paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/re590_k_om_LS/init_ckpt/{model.checkpoint_filename}")
+                paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/chip_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false_torch_solid_solid全量训练版/chip_2d_solid_solid_heat_transfer/init_ckpt/{model.checkpoint_filename}")
             )
         debug_flag = bool(int(os.getenv("debug", False)))
         if debug_flag:
@@ -515,7 +515,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.initial_step = 0
             for model in self.saveable_models:
                 model.set_state_dict(
-                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/re590_k_om_LS/init_ckpt/{model.checkpoint_filename}")
+                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/chip_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false_torch_solid_solid全量训练版/chip_2d_solid_solid_heat_transfer/init_ckpt/{model.checkpoint_filename}")
                 )
         else:
             self.initial_step = self.load_network()
