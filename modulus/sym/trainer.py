@@ -508,7 +508,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         for model in self.saveable_models:
             try:
                 model.set_state_dict(
-                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/u_tau_lookup/init_ckpt/{model.checkpoint_filename}")
+                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/three_fin_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/heat_sink/init_ckpt/{model.checkpoint_filename}")
                 )
             except Exception as e:
                 self.log.info(f"Skip load pytorch weight for \n{e}\n")
@@ -519,7 +519,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.initial_step = 0
             for model in self.saveable_models:
                 model.set_state_dict(
-                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/u_tau_lookup/init_ckpt/{model.checkpoint_filename}")
+                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/three_fin_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/heat_sink/init_ckpt/{model.checkpoint_filename}")
                 )
         else:
             self.initial_step = self.load_network()

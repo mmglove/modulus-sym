@@ -140,6 +140,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=inlet,
         outvar={"u": inlet_parabola, "v": 0, "c": 0},
         batch_size=cfg.batch_size.inlet,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="inlet")
     )
     domain.add_constraint(inlet, "inlet")
 
@@ -149,6 +150,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=outlet,
         outvar={"p": 0},
         batch_size=cfg.batch_size.outlet,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="outlet")
     )
     domain.add_constraint(outlet, "outlet")
 
@@ -158,6 +160,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=heat_sink,
         outvar={"u": 0, "v": 0, "c": (heat_sink_temp - base_temp) / 273.15},
         batch_size=cfg.batch_size.hs_wall,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="heat_sink_wall")
     )
     domain.add_constraint(hs_wall, "heat_sink_wall")
 
@@ -167,6 +170,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=channel,
         outvar={"u": 0, "v": 0, "normal_gradient_c": 0},
         batch_size=cfg.batch_size.channel_wall,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="channel_wall")
     )
     domain.add_constraint(channel_wall, "channel_wall")
 
@@ -182,6 +186,7 @@ def run(cfg: ModulusConfig) -> None:
             "momentum_x": Symbol("sdf"),
             "momentum_y": Symbol("sdf"),
         },
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior_flow")
     )
     domain.add_constraint(interior_flow, "interior_flow")
 
@@ -194,6 +199,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={
             "advection_diffusion_c": 1.0,
         },
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior_heat")
     )
     domain.add_constraint(interior_heat, "interior_heat")
 
@@ -210,6 +216,7 @@ def run(cfg: ModulusConfig) -> None:
         integral_batch_size=cfg.batch_size.integral_continuity,
         lambda_weighting={"normal_dot_vel": 0.1},
         criteria=integral_criteria,
+        loss=modulus.sym.loss.IntegralLossNorm(name="integral_continuity")
     )
     domain.add_constraint(integral_continuity, "integral_continuity")
 
