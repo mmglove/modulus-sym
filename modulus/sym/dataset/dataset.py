@@ -111,6 +111,15 @@ class _DictDatasetMixin:
         self.invar = invar
         self.outvar = outvar
         self.lambda_weighting = lambda_weighting
+        for k, v in self.invar.items():
+            if isinstance(self.invar[k], np.ndarray):
+                self.invar[k] = v.astype(tf_dt)
+        for k, v in self.outvar.items():
+            if isinstance(self.outvar[k], np.ndarray):
+                self.outvar[k] = v.astype(tf_dt)
+        for k, v in self.lambda_weighting.items():
+            if isinstance(self.lambda_weighting[k], np.ndarray):
+                self.lambda_weighting[k] = v.astype(tf_dt)
 
         # get length
         self.length = len(next(iter(self.invar.values())))

@@ -344,14 +344,6 @@ class Arch(nn.Layer):
             for col, keep_col in enumerate(slice_index.numpy()):
                 right_mul_mat[keep_col, col] = 1.0
         return paddle.matmul(input_tensor, right_mul_mat)
-        # if slice_index.max() >= input_tensor.shape[dim]:
-        #     raise ValueError(
-        #         f">>> slice_input: {input_tensor.shape} {slice_index.shape} {slice_index.min().item()} {slice_index.max().item()} dim={dim}"
-        #     )
-        # print(input_tensor.shape, slice_index.max().item())
-        # print("input_tensor.shape = ", input_tensor.shape)
-        # print("slice_index = ", slice_index.item())
-        # print("axis = ", input_tensor.ndim - 1)
         # return paddle.gather(input_tensor, slice_index, axis=input_tensor.ndim - 1)
 
     @staticmethod

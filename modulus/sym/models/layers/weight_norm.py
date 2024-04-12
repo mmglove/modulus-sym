@@ -44,7 +44,7 @@ class WeightNormLinear(nn.Layer):
             nn.initializer.Constant(0.0)(self.bias)
 
     def forward(self, input: Tensor) -> Tensor:
-        norm = self.weight.norm(axis=1, p=2, keepdim=True)
+        norm = self.weight.norm(p=2, axis=1, keepdim=True)
         weight = self.weight_g * self.weight / norm
         return F.linear(input, weight.T, self.bias)
 

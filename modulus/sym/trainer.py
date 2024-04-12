@@ -54,6 +54,7 @@ from .distributed.manager import DistributedManager
 
 from contextlib import ContextDecorator
 
+
 class PaddleProfiler(ContextDecorator):
     """
     Profiler list how many kinds of C++ API is called.
@@ -589,12 +590,13 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 if self.profile and step == self.profiler_start_step:
                     # Start profiling
                     self.log.info("Starting profiler at step {}".format(step))
-                    paddle.profiler.start()
+                    paddle.framework.core.nvprof_start()
+                    paddle.framework.core.nvprof_enable_record_event()
 
                 if self.profile and step == self.profiler_end_step:
                     # Stop profiling
                     self.log.info("Stopping profiler at step {}".format(step))
-                    paddle.profiler.stop()
+                    paddle.framework.core.nvprof_stop()
 
                 paddle.framework.core.nvprof_nvtx_push("Training iteration")
 
@@ -619,8 +621,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     # opt_tic = time.perf_counter()
                     # take optimizer step
                     self.apply_gradients()
-                    # if step == 5:
-                    #     self.log.info(f"Mem = {paddle.device.cuda.max_memory_allocated() / (1<<30):.3f} GB")
+                    if step == 5:
+                        self.log.info(f"Mem = {paddle.device.cuda.max_memory_allocated() / (1<<30):.3f} GB")
 
                     # opt_cost = time.perf_counter() - opt_tic
 

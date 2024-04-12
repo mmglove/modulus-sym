@@ -235,11 +235,11 @@ class AFNO2D(nn.Layer):
             )
             + self.b2[1]
         )
-        x = paddle.stack(x=[o2_real, o2_imag], axis=-1)
-        x = F.softshrink(x=x, threshold=self.sparsity_threshold)
-        x = paddle.as_complex(x=x)
+        x = paddle.stack([o2_real, o2_imag], axis=-1)
+        x = F.softshrink(x, threshold=self.sparsity_threshold)
+        x = paddle.as_complex(x)
         x = x.reshape([B, H, W // 2 + 1, C])
-        x = paddle.fft.irfft2(x=x, s=(H, W), axes=(1, 2), norm="ortho")
+        x = paddle.fft.irfft2(x, s=(H, W), axes=(1, 2), norm="ortho")
         x = x.astype(dtype)
         return x + bias
 
@@ -374,20 +374,12 @@ class AFNONet(nn.Layer):
 
     def forward(self, x: paddle.Tensor) -> paddle.Tensor:
         x = self.forward_features(x)
-        # print(f"1 {x.shape}")
         x = self.head(x)
-        # print(f"2 {x.shape}")
         out = x.reshape(
             list(x.shape[:-1]) + [self.patch_size[0], self.patch_size[1], -1]
         )
-        # print(f"3 {out.shape}")
         out = paddle.transpose(x=out, perm=(0, 5, 1, 3, 2, 4))
-        # print(f"4 {out.shape}")
         out = out.reshape(list(out.shape[:2]) + [self.img_size[0], self.img_size[1]])
-        # print(f"5 {out.shape}")
-        # print("==> start BWD")
-        # print("==> END BWD")
-        # exit()
         return out
 
 

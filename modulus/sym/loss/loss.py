@@ -322,7 +322,7 @@ class CausalLossNorm(Loss):
                     "The batch size must be divided by the number of chunks"
                 )
             # divide the loss values into chunks
-            l = l.reshape(n_chunks, -1)
+            l = l.reshape([n_chunks, -1])
             l = l.sum(axis=-1)
             # compute causal temporal weights
             with paddle.no_grad():
