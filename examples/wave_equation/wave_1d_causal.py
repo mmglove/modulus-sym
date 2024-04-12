@@ -69,6 +69,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.IC,
         lambda_weighting={"u": 100.0, "u__t": 1.0},
         parameterization={t_symbol: 0.0},
+        num_workers=4,
     )
     domain.add_constraint(IC, "IC")
 
@@ -79,6 +80,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"u": 0},
         batch_size=cfg.batch_size.BC,
         lambda_weighting={"u": 100.0},
+        num_workers=4,
     )
     domain.add_constraint(BC, "BC")
 
@@ -91,6 +93,7 @@ def run(cfg: ModulusConfig) -> None:
         loss=CausalLossNorm(eps=1.0),
         fixed_dataset=False,
         shuffle=False,
+        num_workers=1,
     )
     domain.add_constraint(interior, "interior")
 

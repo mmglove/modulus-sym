@@ -203,6 +203,7 @@ def run(cfg: ModulusConfig) -> None:
     # add velocity constraint
     velocity = PointwiseConstraint.from_numpy(
         nodes=nodes, invar=wave_speed_invar, outvar=wave_speed_outvar, batch_size=1024
+        num_workers=0,
     )
     domain.add_constraint(velocity, "Velocity")
 
@@ -218,6 +219,7 @@ def run(cfg: ModulusConfig) -> None:
             timestep_outvar,
             batch_size,
             lambda_weighting=lambda_weighting,
+            num_workers=0,
         )
         domain.add_constraint(timestep, f"BC{i:04d}")
 
@@ -230,6 +232,7 @@ def run(cfg: ModulusConfig) -> None:
         bounds={x: (0, dLen), y: (0, dLen)},
         lambda_weighting={"wave_equation": 0.0001},
         parameterization=time_range,
+        num_workers=0,
     )
     domain.add_constraint(interior, "Interior")
 
@@ -241,6 +244,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=1024,
         lambda_weighting={"open_boundary": 0.01 * time_length},
         parameterization=time_range,
+        num_workers=0,
     )
     domain.add_constraint(edges, "Edges")
 

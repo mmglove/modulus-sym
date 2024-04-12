@@ -142,6 +142,7 @@ def run(cfg: ModulusConfig) -> None:
         invar=openfoam_invar_numpy,
         outvar=openfoam_outvar_numpy,
         batch_size=cfg.batch_size.data,
+        num_workers=0,
     )
     domain.add_constraint(data, "interior_data")
 

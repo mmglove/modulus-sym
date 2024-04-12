@@ -91,8 +91,9 @@ class hFTBArch(Arch):
         for param, param_prev_step in zip(
             self.arch.parameters(), self.arch_prev_step.parameters()
         ):
-            param_prev_step.data = param.detach().clone().data
-            param_prev_step.requires_grad = False
+            with paddle.no_grad():
+                paddle.assign(param, param_prev_step)
+            param_prev_step.stop_gradient = False
 
 
 @modulus.sym.main(config_path="conf", config_name="conf_thermal")
@@ -182,6 +183,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.inlet,
         batch_per_epoch=50,
         lambda_weighting={"theta_f": 1000.0},
+        num_workers=0,
     )
     cycle_1_domain.add_constraint(inlet, "inlet")
 
@@ -192,6 +194,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"normal_gradient_theta_f": 0},
         batch_size=cfg.batch_size.outlet,
         lambda_weighting={"normal_gradient_theta_f": 1.0},
+        num_workers=0,
     )
     cycle_1_domain.add_constraint(outlet, "outlet")
 
@@ -210,6 +213,7 @@ def run(cfg: ModulusConfig) -> None:
             ),
         ),
         lambda_weighting={"normal_gradient_theta_f": 1.0},
+        num_workers=0,
     )
     cycle_1_domain.add_constraint(walls, name="ChannelWalls")
 
@@ -223,6 +227,7 @@ def run(cfg: ModulusConfig) -> None:
             (x < limerock.heat_sink_bounds[0]), (x > limerock.heat_sink_bounds[1])
         ),
         lambda_weighting={"advection_diffusion_theta_f": 1000.0},
+        num_workers=0,
     )
     cycle_1_domain.add_constraint(lr_interior_f, "lr_interior_f")
 
@@ -236,6 +241,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=And(
             (x > limerock.heat_sink_bounds[0]), (x < limerock.heat_sink_bounds[1])
         ),
+        num_workers=0,
     )
     cycle_1_domain.add_constraint(hr_interior_f, "hr_interior_f")
 
@@ -247,6 +253,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interface,
         criteria=z > limerock.geo_bounds_lower[2],
         lambda_weighting={"theta_f": 100.0},
+        num_workers=0,
     )
     cycle_1_domain.add_constraint(interface, "interface")
 
@@ -318,6 +325,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar=diff_outvar,
         batch_size=cfg.batch_size.interior_s,
         lambda_weighting=diff_lambda,
+        num_workers=0,
     )
     cycle_n_domain.add_constraint(interior_s, "interior_s")
 
@@ -345,6 +353,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.base,
         criteria=Eq(z, limerock.geo_bounds_lower[2]),
         lambda_weighting={"normal_gradient_flux_theta_s": 10.0},
+        num_workers=0,
     )
     cycle_n_domain.add_constraint(base, "base")
 
@@ -356,6 +365,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interface,
         criteria=z > limerock.geo_bounds_lower[2],
         lambda_weighting={"dirichlet_theta_s_theta_f": 100.0, "robin_theta_s": 1.0},
+        num_workers=0,
     )
     cycle_n_domain.add_constraint(interface, "interface")
 

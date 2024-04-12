@@ -78,6 +78,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.PEC,
         lambda_weighting={"PEC_x": 100.0, "PEC_y": 100.0, "PEC_z": 100.0},
         criteria=And(~Eq(x, 0), ~Eq(x, width)),
+        num_workers=0,
     )
 
     waveguide_domain.add_constraint(wall_PEC, "PEC")
@@ -89,6 +90,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.Waveguide_port,
         lambda_weighting={"uz": 100.0},
         criteria=Eq(x, 0),
+        num_workers=0,
     )
     waveguide_domain.add_constraint(Waveguide_port, "Waveguide_port")
 
@@ -107,6 +109,7 @@ def run(cfg: ModulusConfig) -> None:
             "SommerfeldBC_real_z": 10.0,
         },
         criteria=Eq(x, width),
+        num_workers=0,
     )
     waveguide_domain.add_constraint(ABC, "ABC")
 
@@ -126,6 +129,7 @@ def run(cfg: ModulusConfig) -> None:
             "Maxwell_Freq_real_z": 1.0 / wave_number**2,
         },
         fixed_dataset=False,
+        num_workers=0,
     )
     waveguide_domain.add_constraint(Interior, "Interior")
 
