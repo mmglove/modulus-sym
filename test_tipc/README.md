@@ -4,14 +4,16 @@
 
 ## 1. 目录说明
 
-> [!NOTE] paddle 后端的非符号化相关代码暂时未从 models/modulus-sym 分离到 models/modulus，因此只需要克隆 models/modulus-sym 即可
-> models/modulus-sym 文件夹为基本只包含符号计算相关的代码库
+> [!NOTE]
+> 与 pytorch 需要安装 **modulus-sym** 和 **modulus** 两个库不同，paddle 后端的非符号化相关代码暂时未从 models/modulus-sym 分离到 models/modulus，因此只需要克隆 models/modulus-sym 即可。
 
 ## 2. Docker 运行环境
 
+``` sh
 docker image: registry.baidubce.com/paddlepaddle/paddle:latest-dev-cuda11.8-cudnn8.6-trt8.5-gcc82
 paddle = 0.0.0
 python >= 3.9
+```
 
 ## 3. 运行 benchmark 测试步骤
 
