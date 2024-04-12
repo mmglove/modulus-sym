@@ -377,14 +377,12 @@ def gen_end_to_end_shells():
 
         ## generate benchmark_common/run_benchmark.sh
         with open(osp.join(example_name, "benchmark_common", "run_benchmark.sh"), "w") as f:
-            # print(osp.join(example_name, "benchmark_common", "run_benchmark.sh"), train_cmd)
             f.write(RUN_CMD_TEMPLATES.format(train_cmd=train_cmd))
 
         # generate files in N1C1
         os.makedirs(osp.join(example_name, "N1C1"), exist_ok=True)
         ## generate N1C1/{example_name}_bs1_fp32_DP_dynamic.sh
         with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dynamic.sh"), "w") as f:
-            # install modulus-sym
             f.write(f"model_item={example_name}_bs1_fp32_DP_dynamic.sh\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
@@ -398,12 +396,11 @@ def gen_end_to_end_shells():
             f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
             f.write(f"\\cp {osp.join('test_tipc', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_dynamic.sh')} ./\n")
             f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
-            f.write("jit=0 prim=0 cinn=0 FLAGS_enable_pir_in_executor=true FLAGS_enable_pir_api=True FLAGS_cinn_bucket_compile=True FLAGS_group_schedule_tiling_first=1 FLAGS_cinn_new_group_scheduler=1 FLAGS_nvrtc_compile_to_cubin=True bash run_benchmark.sh ${model_item} ${bs_item} ${fp_item} ${run_mode} ${device_num} 2>&1;\n")
+            f.write("jit=0 prim=0 cinn=0 bash run_benchmark.sh ${model_item} ${bs_item} ${fp_item} ${run_mode} ${device_num} 2>&1;\n")
             f.write("sleep 10;\n")
 
         ## generate N1C1/{example_name}_bs1_fp32_DP_dy2st_pir.sh
         with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dy2st_pir.sh"), "w") as f:
-            # install modulus-sym
             f.write(f"model_item={example_name}_bs1_fp32_DP_dy2st_pir\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
@@ -422,7 +419,6 @@ def gen_end_to_end_shells():
 
         ## generate N1C1/{example_name}_bs1_fp32_DP_dy2st_pir_prim.sh
         with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dy2st_pir_prim.sh"), "w") as f:
-            # install modulus-sym
             f.write(f"model_item={example_name}_bs1_fp32_DP_dy2st_pir_prim\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
@@ -441,7 +437,6 @@ def gen_end_to_end_shells():
 
         ## generate N1C1/{example_name}_bs1_fp32_DP_dy2st_pir_prim_cinn.sh
         with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dy2st_pir_prim_cinn.sh"), "w") as f:
-            # install modulus-sym
             f.write(f"model_item={example_name}_bs1_fp32_DP_dy2st_pir_prim_cinn\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
