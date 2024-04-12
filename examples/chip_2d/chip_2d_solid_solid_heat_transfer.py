@@ -165,6 +165,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={"theta_I": 10.0},
         batch_size=cfg.batch_size.inlet,
         loss=modulus.sym.loss.PointwiseLossNorm(name="inlet")
+        num_workers=0,
     )
     domain.add_constraint(inlet, "inlet")
 
@@ -175,6 +176,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"normal_gradient_theta_I": 0},
         batch_size=cfg.batch_size.outlet,
         loss=modulus.sym.loss.PointwiseLossNorm(name="outlet")
+        num_workers=0,
     )
     domain.add_constraint(outlet, "outlet")
 
@@ -190,6 +192,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.walls,
         criteria=walls_criteria,
         loss=modulus.sym.loss.PointwiseLossNorm(name="channel_walls")
+        num_workers=0,
     )
     domain.add_constraint(walls, "channel_walls")
 
@@ -201,6 +204,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interior_lr,
         lambda_weighting={"diffusion_theta_I": 1.0},
         loss=modulus.sym.loss.PointwiseLossNorm(name="solid_I_interior_lr")
+        num_workers=0,
     )
     domain.add_constraint(interior, "solid_I_interior_lr")
 
@@ -212,6 +216,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interior_hr,
         lambda_weighting={"diffusion_theta_I": 1.0},
         loss=modulus.sym.loss.PointwiseLossNorm(name="solid_I_interior_hr")
+        num_workers=0,
     )
     domain.add_constraint(interior, "solid_I_interior_hr")
 
@@ -223,6 +228,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interiorS,
         lambda_weighting={"diffusion_theta_II": 1.0},
         loss=modulus.sym.loss.PointwiseLossNorm(name="solid_II_interior")
+        num_workers=0,
     )
     domain.add_constraint(interiorS, "solid_II_interior")
 
@@ -245,6 +251,7 @@ def run(cfg: ModulusConfig) -> None:
         },
         criteria=interface_criteria,
         loss=modulus.sym.loss.PointwiseLossNorm(name="interface")
+        num_workers=0,
     )
     domain.add_constraint(interface, name="interface")
 
@@ -261,6 +268,7 @@ def run(cfg: ModulusConfig) -> None:
             & (x <= (source_origin[0] + source_dim[0]))
         ),
         loss=modulus.sym.loss.PointwiseLossNorm(name="heat_source")
+        num_workers=0,
     )
     domain.add_constraint(heat_source, name="heat_source")
 
@@ -276,6 +284,7 @@ def run(cfg: ModulusConfig) -> None:
             & ((x < source_origin[0]) | (x > (source_origin[0] + source_dim[0])))
         ),
         loss=modulus.sym.loss.PointwiseLossNorm(name="chip_walls")
+        num_workers=0,
     )
     domain.add_constraint(chip_walls, name="chip_walls")
 
