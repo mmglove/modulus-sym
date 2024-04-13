@@ -214,7 +214,7 @@ def run(cfg: ModulusConfig) -> None:
     thermal_domain.add_constraint(solid_interior, "solid_interior")
 
     # flow validation data
-    file_path = "../openfoam/"
+    file_path = "./openfoam/"
     if os.path.exists(to_absolute_path(file_path)):
         mapping = {
             "Points:0": "x",

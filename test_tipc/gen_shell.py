@@ -367,7 +367,16 @@ def gen_end_to_end_shells():
         ## generate benchmark_common/prepare.sh
         with open(osp.join(example_name, "benchmark_common", "prepare.sh"), "w") as f:
             # install modulus-sym
-            f.write("pip install -e .\n")
+            f.write("pip install -e .\n\n")
+            # download dataset for all examples if not exist
+            f.write("if [ ! -f './examples_sym.zip' ]; then\n")
+            f.write("    wget https://paddle-org.bj.bcebos.com/paddlescience/datasets/modulus/examples_sym.zip\n")
+            f.write("fi\n\n")
+            # unzip dataset and move to each example directory if not exist
+            f.write("if [ ! -d './examples_sym' ]; then\n")
+            f.write("    unzip examples_sym.zip\n")
+            f.write("    \\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
+            f.write("fi\n")
 
         ## generate benchmark_common/analysis_log.py
         shutil.copy(

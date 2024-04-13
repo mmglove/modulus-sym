@@ -16,6 +16,7 @@ import os
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
+from modulus.sym.hydra import to_absolute_path
 from modulus.sym.utils.io import csv_to_dict
 
 # path for checkpoint
