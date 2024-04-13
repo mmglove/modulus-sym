@@ -312,7 +312,7 @@ def fourier_derivatives(x: Tensor, l: List[float]) -> Tuple[Tensor, Tensor]:
     dim = len(l)
 
     # get device
-    device = x.place
+    # device = x.place
 
     # compute fourier transform
     x_h = paddle.fft.fftn(x, axes=list(range(2, dim + 2)))
@@ -332,8 +332,8 @@ def fourier_derivatives(x: Tensor, l: List[float]) -> Tuple[Tensor, Tensor]:
 
     # compute laplacian in fourier space
     j = paddle.complex(
-        real=paddle.to_tensor([0.0], place=device),
-        imag=paddle.to_tensor([1.0], place=device),
+        real=paddle.to_tensor([0.0]),
+        imag=paddle.to_tensor([1.0]),
     )  # Cuda graphs does not work here
     wx_h = [j * k_x_i * x_h * (2 * pi / l[i]) for i, k_x_i in enumerate(k_x)]
     wxx_h = [
