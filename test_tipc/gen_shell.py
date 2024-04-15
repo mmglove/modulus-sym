@@ -1,3 +1,8 @@
+"""
+Generate shell scripts for test_tipc running examples.
+
+NOTE: Please execute this python file in 'modulus-sym/test_tipc/' via 'python gen_shell.py'
+"""
 import os
 import os.path as osp
 import shutil
@@ -359,13 +364,17 @@ def gen_end_to_end_shells():
         assert example_name not in sset, f"{example_name} already exists!"
         sset.add(example_name)
 
-        os.makedirs(osp.join(example_name, "N1C1"), exist_ok=True)
+        # generate dynamic and dynamic/${example_name} direcotry
+        os.makedirs("dynamic", exist_ok=True)
+        os.makedirs(osp.join("dynamic", example_name), exist_ok=True)
+        # generate dynamicTostatic and dynamicTostatic/${example_name} direcotry
+        os.makedirs("dynamicTostatic", exist_ok=True)
+        os.makedirs(osp.join("dynamicTostatic", example_name), exist_ok=True)
 
         # generate files in benchmark_common
-        os.makedirs(example_name, exist_ok=True)
-        os.makedirs(osp.join(example_name, "benchmark_common"), exist_ok=True)
-        ## generate benchmark_common/prepare.sh
-        with open(osp.join(example_name, "benchmark_common", "prepare.sh"), "w") as f:
+        os.makedirs(osp.join("dynamic", example_name, "benchmark_common"), exist_ok=True)
+        ## generate dynamic/${example_name}/benchmark_common/prepare.sh
+        with open(osp.join("dynamic", example_name, "benchmark_common", "prepare.sh"), "w") as f:
             # install modulus-sym
             f.write("pip install -e .\n\n")
             # download dataset for all examples if not exist
@@ -381,18 +390,18 @@ def gen_end_to_end_shells():
         ## generate benchmark_common/analysis_log.py
         shutil.copy(
             "./analysis_log.py",
-            osp.join(example_name, "benchmark_common", "analysis_log.py"),
+            osp.join("dynamic", example_name, "benchmark_common", "analysis_log.py"),
         )
 
         ## generate benchmark_common/run_benchmark.sh
-        with open(osp.join(example_name, "benchmark_common", "run_benchmark.sh"), "w") as f:
+        with open(osp.join("dynamic", example_name, "benchmark_common", "run_benchmark.sh"), "w") as f:
             f.write(RUN_CMD_TEMPLATES.format(train_cmd=train_cmd))
 
         # generate files in N1C1
-        os.makedirs(osp.join(example_name, "N1C1"), exist_ok=True)
-        ## generate N1C1/{example_name}_bs1_fp32_DP_dynamic.sh
-        with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dynamic.sh"), "w") as f:
-            f.write(f"model_item={example_name}_bs1_fp32_DP_dynamic.sh\n")
+        os.makedirs(osp.join("dynamic", example_name, "N1C1"), exist_ok=True)
+        ## generate N1C1/{example_name}_bs1_fp32_DP.sh
+        with open(osp.join("dynamic", example_name, "N1C1", f"{example_name}_bs1_fp32_DP.sh"), "w") as f:
+            f.write(f"model_item={example_name}_bs1_fp32_DP\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
             f.write("run_mode=DP\n")
@@ -401,16 +410,43 @@ def gen_end_to_end_shells():
             f.write("# prepare\n")
             f.write("bash prepare.sh\n")
             f.write("# run\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_dynamic.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamic', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamic', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamic', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamic', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
             f.write("jit=0 prim=0 cinn=0 bash run_benchmark.sh ${model_item} ${bs_item} ${fp_item} ${run_mode} ${device_num} 2>&1;\n")
             f.write("sleep 10;\n")
 
-        ## generate N1C1/{example_name}_bs1_fp32_DP_dy2st_pir.sh
-        with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dy2st_pir.sh"), "w") as f:
-            f.write(f"model_item={example_name}_bs1_fp32_DP_dy2st_pir\n")
+        # generate files in benchmark_common
+        os.makedirs(osp.join("dynamicTostatic", example_name, "benchmark_common"), exist_ok=True)
+        ## generate dynamicTostatic/${example_name}/benchmark_common/prepare.sh
+        with open(osp.join("dynamicTostatic", example_name, "benchmark_common", "prepare.sh"), "w") as f:
+            # install modulus-sym
+            f.write("pip install -e .\n\n")
+            # download dataset for all examples if not exist
+            f.write("if [ ! -f './examples_sym.zip' ]; then\n")
+            f.write("    wget https://paddle-org.bj.bcebos.com/paddlescience/datasets/modulus/examples_sym.zip\n")
+            f.write("fi\n\n")
+            # unzip dataset and move to each example directory if not exist
+            f.write("if [ ! -d './examples_sym' ]; then\n")
+            f.write("    unzip examples_sym.zip\n")
+            f.write("    \\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
+            f.write("fi\n")
+
+        ## generate benchmark_common/analysis_log.py
+        shutil.copy(
+            "./analysis_log.py",
+            osp.join("dynamicTostatic", example_name, "benchmark_common", "analysis_log.py"),
+        )
+
+        ## generate benchmark_common/run_benchmark.sh
+        with open(osp.join("dynamicTostatic", example_name, "benchmark_common", "run_benchmark.sh"), "w") as f:
+            f.write(RUN_CMD_TEMPLATES.format(train_cmd=train_cmd))
+
+        os.makedirs(osp.join("dynamicTostatic", example_name, "N1C1"), exist_ok=True)
+        ## generate N1C1/{example_name}_bs1_fp32_DP_pir.sh
+        with open(osp.join("dynamicTostatic", example_name, "N1C1", f"{example_name}_bs1_fp32_DP_pir.sh"), "w") as f:
+            f.write(f"model_item={example_name}_bs1_fp32_DP\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
             f.write("run_mode=DP\n")
@@ -419,16 +455,16 @@ def gen_end_to_end_shells():
             f.write("# prepare\n")
             f.write("bash prepare.sh\n")
             f.write("# run\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_dy2st_pir.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_pir.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
             f.write("jit=1 prim=0 cinn=0 FLAGS_enable_pir_in_executor=true FLAGS_enable_pir_api=True FLAGS_cinn_bucket_compile=True FLAGS_group_schedule_tiling_first=1 FLAGS_cinn_new_group_scheduler=1 FLAGS_nvrtc_compile_to_cubin=True bash run_benchmark.sh ${model_item} ${bs_item} ${fp_item} ${run_mode} ${device_num} 2>&1;\n")
             f.write("sleep 10;\n")
 
-        ## generate N1C1/{example_name}_bs1_fp32_DP_dy2st_pir_prim.sh
-        with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dy2st_pir_prim.sh"), "w") as f:
-            f.write(f"model_item={example_name}_bs1_fp32_DP_dy2st_pir_prim\n")
+        ## generate N1C1/{example_name}_bs1_fp32_DP_pir_prim.sh
+        with open(osp.join("dynamicTostatic", example_name, "N1C1", f"{example_name}_bs1_fp32_DP_pir_prim.sh"), "w") as f:
+            f.write(f"model_item={example_name}_bs1_fp32_DP\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
             f.write("run_mode=DP\n")
@@ -437,16 +473,16 @@ def gen_end_to_end_shells():
             f.write("# prepare\n")
             f.write("bash prepare.sh\n")
             f.write("# run\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_dy2st_pir_prim.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_pir_prim.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
             f.write("jit=1 prim=1 cinn=0 FLAGS_enable_pir_in_executor=true FLAGS_enable_pir_api=True FLAGS_cinn_bucket_compile=True FLAGS_group_schedule_tiling_first=1 FLAGS_cinn_new_group_scheduler=1 FLAGS_nvrtc_compile_to_cubin=True bash run_benchmark.sh ${model_item} ${bs_item} ${fp_item} ${run_mode} ${device_num} 2>&1;\n")
             f.write("sleep 10;\n")
 
-        ## generate N1C1/{example_name}_bs1_fp32_DP_dy2st_pir_prim_cinn.sh
-        with open(osp.join(example_name, "N1C1", f"{example_name}_bs1_fp32_DP_dy2st_pir_prim_cinn.sh"), "w") as f:
-            f.write(f"model_item={example_name}_bs1_fp32_DP_dy2st_pir_prim_cinn\n")
+        ## generate N1C1/{example_name}_bs1_fp32_DP_pir_prim_cinn.sh
+        with open(osp.join("dynamicTostatic", example_name, "N1C1", f"{example_name}_bs1_fp32_DP_pir_prim_cinn.sh"), "w") as f:
+            f.write(f"model_item={example_name}_bs1_fp32_DP\n")
             f.write("bs_item=1\n")
             f.write("fp_item=fp32\n")
             f.write("run_mode=DP\n")
@@ -455,10 +491,10 @@ def gen_end_to_end_shells():
             f.write("# prepare\n")
             f.write("bash prepare.sh\n")
             f.write("# run\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_dy2st_pir_prim_cinn.sh')} ./\n")
-            f.write(f"\\cp {osp.join('test_tipc', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'prepare.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'run_benchmark.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'N1C1', f'{example_name}_bs1_fp32_DP_pir_prim_cinn.sh')} ./\n")
+            # f.write(f"\\cp {osp.join('test_tipc', 'dynamicTostatic', example_name, 'benchmark_common', 'analysis_log.py')} ./\n")
             f.write("jit=1 prim=1 cinn=1 FLAGS_enable_pir_in_executor=true FLAGS_enable_pir_api=True FLAGS_cinn_bucket_compile=True FLAGS_group_schedule_tiling_first=1 FLAGS_cinn_new_group_scheduler=1 FLAGS_nvrtc_compile_to_cubin=True bash run_benchmark.sh ${model_item} ${bs_item} ${fp_item} ${run_mode} ${device_num} 2>&1;\n")
             f.write("sleep 10;\n")
 
