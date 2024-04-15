@@ -163,7 +163,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=Or(x < -1.1, x > 0.5),
         loss=modulus.sym.loss.PointwiseLossNorm(name="lr_interior"),
     )
-    flow_domain.add_constraint(lr_interior, "lr_interior")
+    # flow_domain.add_constraint(lr_interior, "lr_interior")
 
     # flow interiror high res near three fin
     hr_interior = PointwiseInteriorConstraint(
@@ -183,7 +183,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=And(x > -1.1, x < 0.5),
         loss=modulus.sym.loss.PointwiseLossNorm(name="hr_interior"),
     )
-    flow_domain.add_constraint(hr_interior, "hr_interior")
+    # flow_domain.add_constraint(hr_interior, "hr_interior")
 
     # integral continuity
     def integral_criteria(invar, params):
@@ -203,7 +203,7 @@ def run(cfg: ModulusConfig) -> None:
         num_workers=4,
         loss=modulus.sym.loss.IntegralLossNorm(name="integral_continuity"),
     )
-    flow_domain.add_constraint(integral_continuity, "integral_continuity")
+    # flow_domain.add_constraint(integral_continuity, "integral_continuity")
 
     # flow data
     file_path = "../openfoam/"
