@@ -101,7 +101,7 @@ class Constraint:
 
         # enable dy2st
         import os
-        enable_jit = bool(int(os.getenv("jit", True))) # Jit is enabled by default
+        enable_jit = bool(int(os.getenv("to_static", True))) # Jit is enabled by default
         enable_cinn = bool(int(os.getenv("cinn", False))) # CINN is disabled by default
         if enable_jit:
             from paddle import jit
@@ -109,10 +109,10 @@ class Constraint:
             build_strategy = static.BuildStrategy()
             build_strategy.build_cinn_pass = enable_cinn
             self.model.forward = jit.to_static(build_strategy=build_strategy, full_graph=True)(self.model.forward)
-            logger.info(f"🍰 🍰 Using jit.to_static with CINN={enable_cinn} in Constraint.__init__ in {__file__}, jit can be disabled by set 'jit=0 python example.py'")
+            logger.info(f"🍰 🍰 Using jit.to_static with CINN={enable_cinn} in Constraint.__init__ in {__file__}, to_static can be disabled by set 'to_static=0 python example.py'")
         elif enable_cinn:
             raise RuntimeError(
-                f"Please set cinn=0 when jit is set to 0"
+                f"Please set cinn=0 when 'to_static' is set to 0"
             )
 
 
