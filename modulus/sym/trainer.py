@@ -509,7 +509,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         for model in self.saveable_models:
             try:
                 model.set_state_dict(
-                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/three_fin_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/heat_sink/init_ckpt/{model.checkpoint_filename}")
+                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/chip_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/chip_2d_solid_fluid_heat_transfer_heat/init_ckpt/{model.checkpoint_filename}")
                 )
             except Exception as e:
                 self.log.info(f"Skip load pytorch weight for \n{e}\n")
@@ -520,7 +520,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.initial_step = 0
             for model in self.saveable_models:
                 model.set_state_dict(
-                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/three_fin_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false/heat_sink/init_ckpt/{model.checkpoint_filename}")
+                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/chip_2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/chip_2d_solid_fluid_heat_transfer_heat/init_ckpt/{model.checkpoint_filename}")
                 )
         else:
             self.initial_step = self.load_network()
@@ -686,20 +686,23 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 if (step % self.cfg.training.rec_validation_freq == 0) and (
                     self.has_validators
                 ):
-                    barrier_flag = True
-                    self._record_validators(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_validators(step)
 
                 if (step % self.cfg.training.rec_inference_freq == 0) and (
                     self.has_inferencers
                 ):
-                    barrier_flag = True
-                    self._record_inferencers(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_inferencers(step)
 
                 if (step % self.cfg.training.rec_monitor_freq == 0) and (
                     self.has_monitors
                 ):
-                    barrier_flag = True
-                    self._record_monitors(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_monitors(step)
 
                 # save checkpoint
                 if step % self.save_network_freq == 0:
