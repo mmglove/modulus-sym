@@ -79,7 +79,7 @@ def main(config_path: str, config_name: str = "config"):
             #     paddle.framework.core._set_prim_all_enabled(True)
             # else:
             #     print(f"✨ ✨ Prim = False, prim can be disabled by set 'prim=0 python example.py'")
-            print(f"✨ ✨ FLAGS_prim_all = {os.getenv('FLAGS_prim_all', False)}")
+            print(f"✨ ✨ FLAGS_prim_all = {os.getenv('FLAGS_prim_all', 'False') == 'True'}")
 
             # Register all modulus groups before calling hydra main
             register_hydra_configs()
