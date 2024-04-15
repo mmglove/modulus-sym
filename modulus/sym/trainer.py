@@ -666,20 +666,23 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 if (step % self.cfg.training.rec_validation_freq == 0) and (
                     self.has_validators
                 ):
-                    barrier_flag = True
-                    self._record_validators(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_validators(step)
 
                 if (step % self.cfg.training.rec_inference_freq == 0) and (
                     self.has_inferencers
                 ):
-                    barrier_flag = True
-                    self._record_inferencers(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_inferencers(step)
 
                 if (step % self.cfg.training.rec_monitor_freq == 0) and (
                     self.has_monitors
                 ):
-                    barrier_flag = True
-                    self._record_monitors(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_monitors(step)
 
                 # save checkpoint
                 if step % self.save_network_freq == 0:
