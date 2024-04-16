@@ -61,6 +61,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=rec,
         outvar={"u": 0},
         batch_size=cfg.batch_size.wall,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="wall"),
     )
     domain.add_constraint(wall, "wall")
 
@@ -80,6 +81,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={
             "helmholtz": Symbol("sdf"),
         },
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior"),
     )
     domain.add_constraint(interior, "interior")
 
