@@ -23,8 +23,8 @@ function _set_params(){
     run_log_path=${TRAIN_LOG_DIR:-$(pwd)}  # （必填） TRAIN_LOG_DIR  benchmark框架设置该参数为全局变量
     speed_log_path=${LOG_PATH_INDEX_DIR:-$(pwd)}
     # deepxde_Eular_beam_bs1_fp32_DP_N1C1_log
-    train_log_file=${run_log_path}/${model_repo}_${model_name}_${device_num}_log
-    speed_log_file=${speed_log_path}/${model_repo}_${model_name}_${device_num}_speed
+    train_log_file=${run_log_path}/${model_repo}_${model_name}_${device_num}_d2sT_log
+    speed_log_file=${speed_log_path}/${model_repo}_${model_name}_${device_num}_d2sT_speed
 }
 
 function _analysis_log(){

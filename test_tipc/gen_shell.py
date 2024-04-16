@@ -292,8 +292,8 @@ function _set_params(){{
     run_log_path=${{TRAIN_LOG_DIR:-$(pwd)}}  # （必填） TRAIN_LOG_DIR  benchmark框架设置该参数为全局变量
     speed_log_path=${{LOG_PATH_INDEX_DIR:-$(pwd)}}
     # deepxde_Eular_beam_bs1_fp32_DP_N1C1_log
-    train_log_file=${{run_log_path}}/${{model_repo}}_${{model_name}}_${{device_num}}_log
-    speed_log_file=${{speed_log_path}}/${{model_repo}}_${{model_name}}_${{device_num}}_speed
+    train_log_file=${{run_log_path}}/${{model_repo}}_${{model_name}}_${{device_num}}{dy2st_prefix}_log
+    speed_log_file=${{speed_log_path}}/${{model_repo}}_${{model_name}}_${{device_num}}{dy2st_prefix}_speed
 }}
 
 function _analysis_log(){{
@@ -387,15 +387,15 @@ def gen_end_to_end_shells():
             f.write("    \\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
             f.write("fi\n")
 
-        ## generate benchmark_common/analysis_log.py
+        ## generate dynamic/benchmark_common/analysis_log.py
         shutil.copy(
             "./analysis_log.py",
             osp.join("dynamic", example_name, "benchmark_common", "analysis_log.py"),
         )
 
-        ## generate benchmark_common/run_benchmark.sh
+        ## generate dynamic/benchmark_common/run_benchmark.sh
         with open(osp.join("dynamic", example_name, "benchmark_common", "run_benchmark.sh"), "w") as f:
-            f.write(RUN_CMD_TEMPLATES.format(train_cmd=train_cmd))
+            f.write(RUN_CMD_TEMPLATES.format(train_cmd=train_cmd, dy2st_prefix=""))
 
         # generate files in N1C1
         os.makedirs(osp.join("dynamic", example_name, "N1C1"), exist_ok=True)
@@ -434,15 +434,15 @@ def gen_end_to_end_shells():
             f.write("    \\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
             f.write("fi\n")
 
-        ## generate benchmark_common/analysis_log.py
+        ## generate dynamicTostatic/benchmark_common/analysis_log.py
         shutil.copy(
             "./analysis_log.py",
             osp.join("dynamicTostatic", example_name, "benchmark_common", "analysis_log.py"),
         )
 
-        ## generate benchmark_common/run_benchmark.sh
+        ## generate dynamicTostatic/benchmark_common/run_benchmark.sh
         with open(osp.join("dynamicTostatic", example_name, "benchmark_common", "run_benchmark.sh"), "w") as f:
-            f.write(RUN_CMD_TEMPLATES.format(train_cmd=train_cmd))
+            f.write(RUN_CMD_TEMPLATES.format(train_cmd=train_cmd, dy2st_prefix="_d2sT"))
 
         os.makedirs(osp.join("dynamicTostatic", example_name, "N1C1"), exist_ok=True)
         ## generate dynamicTostatic/N1C1/{example_name}_bs1_fp32_DP.sh
