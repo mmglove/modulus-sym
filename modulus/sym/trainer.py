@@ -515,13 +515,15 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 self.log.info(f"Skip load pytorch weight for \n{e}\n")
 
         debug_flag = bool(int(os.getenv("debug", False)))
+        loss_monitor = bool(int(os.getenv("loss_monitor", False)))
         if debug_flag:
             self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
             self.initial_step = 0
-            for model in self.saveable_models:
-                model.set_state_dict(
-                    paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep_LS/init_ckpt/{model.checkpoint_filename}")
-                )
+            if not loss_monitor:
+                for model in self.saveable_models:
+                    model.set_state_dict(
+                        paddle.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep_LS/init_ckpt/{model.checkpoint_filename}")
+                    )
         else:
             self.initial_step = self.load_network()
 
