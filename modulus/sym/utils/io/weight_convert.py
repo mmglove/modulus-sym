@@ -1,5 +1,9 @@
 import paddle
-import torch
+try:
+    import torch
+except ModuleNotFoundError:
+    pass
+
 import numpy as np
 
 from typing import Dict

@@ -102,7 +102,6 @@ class Constraint:
         # enable dy2st
         import os
         enable_jit = bool(os.getenv("to_static", "True") == "True") # Jit is enabled by default
-        print(f"enable_jit: {enable_jit}")
         enable_cinn = bool(os.getenv("FLAGS_use_cinn", "False") == "True") # CINN is disabled by default
         if enable_jit:
             from paddle import jit
