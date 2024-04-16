@@ -63,6 +63,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"u": 0},
         batch_size=cfg.batch_size.wall,
         lambda_weighting={"u": 1.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="wall"),
     )
     domain.add_constraint(wall, "wall")
 
@@ -82,6 +83,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={
             "helmholtz": 1.0,
         },
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior"),
     )
     domain.add_constraint(interior, "interior")
 
