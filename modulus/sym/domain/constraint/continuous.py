@@ -298,9 +298,9 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
                 invar, outvar, lambda_weighting
             )
 
-            # invar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/invar_torch.npz"))
-            # outvar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/outvar_torch.npz"))
-            # lambda_weighting = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/lambda_weighting_torch.npz"))
+            # invar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/invar_torch.npz"))
+            # outvar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/outvar_torch.npz"))
+            # lambda_weighting = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/lambda_weighting_torch.npz"))
             # make point dataset
             if importance_measure is None:
                 invar["area"] *= batch_per_epoch  # TODO find better way to do this
@@ -456,9 +456,9 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
             lambda_weighting = _compute_lambda_weighting(
                 invar, outvar, lambda_weighting
             )
-            # invar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/invar_torch.npz"))
-            # outvar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/outvar_torch.npz"))
-            # lambda_weighting = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/lambda_weighting_torch.npz"))
+            # invar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/invar_torch.npz"))
+            # outvar = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/outvar_torch.npz"))
+            # lambda_weighting = dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/lambda_weighting_torch.npz"))
 
             # make point dataset
             if importance_measure is None:
@@ -735,15 +735,15 @@ class IntegralBoundaryConstraint(IntegralConstraint):
                 list_lambda_weighting.append(lambda_weighting_star)
 
             # list_invar = [
-                # dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/list_invar_torch[{i}].npz"))
+                # dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/list_invar_torch[{i}].npz"))
                 # for i in range(len(list_invar))
             # ]
             # list_outvar = [
-                # dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/list_outvar_torch[{i}].npz"))
+                # dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/list_outvar_torch[{i}].npz"))
                 # for i in range(len(list_outvar))
             # ]
             # list_lambda_weighting = [
-                # dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_ep/{loss.name}/list_lambda_weighting_torch[{i}].npz"))
+                # dict(np.load(f"/workspace/hesensen/modulus_pd_th_bkd_compare/modulus-sym/examples/turbulent_channel/2d_std_wf/outputs/cuda_graphs=false,graph.func_arch=false,graph.func_arch_allow_partial_hessian=false,jit=false,jit_use_nvfuser=false,training.max_steps=100/re590_k_om/{loss.name}/list_lambda_weighting_torch[{i}].npz"))
                 # for i in range(len(list_lambda_weighting))
             # ]
 
