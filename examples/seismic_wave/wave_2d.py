@@ -202,7 +202,7 @@ def run(cfg: ModulusConfig) -> None:
 
     # add velocity constraint
     velocity = PointwiseConstraint.from_numpy(
-        nodes=nodes, invar=wave_speed_invar, outvar=wave_speed_outvar, batch_size=1024
+        nodes=nodes, invar=wave_speed_invar, outvar=wave_speed_outvar, batch_size=1024,
         num_workers=0,
     )
     domain.add_constraint(velocity, "Velocity")
