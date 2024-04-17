@@ -1,4 +1,4 @@
-model_item=ldc-ldc_2d_importance_sampling_bs1_fp32_DP
+model_item=ldc-ldc_2d_importance_sampling
 bs_item=1
 fp_item=fp32
 run_mode=DP

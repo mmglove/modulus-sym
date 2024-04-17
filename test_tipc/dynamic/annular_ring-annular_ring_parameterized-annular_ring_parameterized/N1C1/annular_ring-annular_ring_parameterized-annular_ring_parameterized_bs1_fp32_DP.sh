@@ -1,4 +1,4 @@
-model_item=annular_ring-annular_ring_parameterized-annular_ring_parameterized_bs1_fp32_DP
+model_item=annular_ring-annular_ring_parameterized-annular_ring_parameterized
 bs_item=1
 fp_item=fp32
 run_mode=DP

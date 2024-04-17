@@ -1,4 +1,4 @@
-model_item=darcy-darcy_FNO_lazy_bs1_fp32_DP
+model_item=darcy-darcy_FNO_lazy
 bs_item=1
 fp_item=fp32
 run_mode=DP

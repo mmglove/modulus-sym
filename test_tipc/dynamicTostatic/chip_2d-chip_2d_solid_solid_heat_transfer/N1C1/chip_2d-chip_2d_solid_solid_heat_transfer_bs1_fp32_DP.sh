@@ -1,4 +1,4 @@
-model_item=chip_2d-chip_2d_solid_solid_heat_transfer_bs1_fp32_DP
+model_item=chip_2d-chip_2d_solid_solid_heat_transfer
 bs_item=1
 fp_item=fp32
 run_mode=DP

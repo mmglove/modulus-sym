@@ -1,4 +1,4 @@
-model_item=limerock-limerock_hFTB-limerock_flow_bs1_fp32_DP
+model_item=limerock-limerock_hFTB-limerock_flow
 bs_item=1
 fp_item=fp32
 run_mode=DP

@@ -1,4 +1,4 @@
-model_item=helmholtz-helmholtz_bs1_fp32_DP
+model_item=helmholtz-helmholtz
 bs_item=1
 fp_item=fp32
 run_mode=DP

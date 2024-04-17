@@ -1,4 +1,4 @@
-model_item=seismic_wave-wave_2d_bs1_fp32_DP
+model_item=seismic_wave-wave_2d
 bs_item=1
 fp_item=fp32
 run_mode=DP

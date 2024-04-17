@@ -1,4 +1,4 @@
-model_item=waveguide-slab_3D-slab_3D_bs1_fp32_DP
+model_item=waveguide-slab_3D-slab_3D
 bs_item=1
 fp_item=fp32
 run_mode=DP

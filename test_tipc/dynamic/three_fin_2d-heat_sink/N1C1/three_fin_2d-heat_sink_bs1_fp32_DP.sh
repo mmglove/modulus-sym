@@ -1,4 +1,4 @@
-model_item=three_fin_2d-heat_sink_bs1_fp32_DP
+model_item=three_fin_2d-heat_sink
 bs_item=1
 fp_item=fp32
 run_mode=DP
