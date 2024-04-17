@@ -166,6 +166,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.backBC,
         lambda_weighting={"u": 10, "v": 10, "w": 10},
         criteria=Eq(x, support_origin[0]),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="backBC"),
     )
     domain.add_constraint(backBC, "backBC")
 
@@ -176,6 +177,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"traction_x": 0, "traction_y": 0, "traction_z": T},
         batch_size=cfg.batch_size.frontBC,
         criteria=Eq(x, bracket_origin[0] + bracket_dim[0]),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="frontBC"),
     )
     domain.add_constraint(frontBC, "frontBC")
 
@@ -186,6 +188,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"traction_x": 0, "traction_y": 0, "traction_z": 0},
         batch_size=cfg.batch_size.surfaceBC,
         criteria=And((x > support_origin[0]), (x < bracket_origin[0] + bracket_dim[0])),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="surfaceBC"),
     )
     domain.add_constraint(surfaceBC, "surfaceBC")
 
@@ -217,6 +220,7 @@ def run(cfg: ModulusConfig) -> None:
             "stress_disp_xz": Symbol("sdf"),
             "stress_disp_yz": Symbol("sdf"),
         },
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior_support"),
     )
     domain.add_constraint(interior, "interior_support")
 
@@ -248,6 +252,7 @@ def run(cfg: ModulusConfig) -> None:
             "stress_disp_xz": Symbol("sdf"),
             "stress_disp_yz": Symbol("sdf"),
         },
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior_bracket"),
     )
     domain.add_constraint(interior, "interior_bracket")
 
