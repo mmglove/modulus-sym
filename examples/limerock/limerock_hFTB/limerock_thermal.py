@@ -182,6 +182,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.inlet,
         batch_per_epoch=50,
         lambda_weighting={"theta_f": 1000.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="inlet"),
     )
     cycle_1_domain.add_constraint(inlet, "inlet")
 
@@ -192,6 +193,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"normal_gradient_theta_f": 0},
         batch_size=cfg.batch_size.outlet,
         lambda_weighting={"normal_gradient_theta_f": 1.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="outlet"),
     )
     cycle_1_domain.add_constraint(outlet, "outlet")
 
@@ -210,6 +212,7 @@ def run(cfg: ModulusConfig) -> None:
             ),
         ),
         lambda_weighting={"normal_gradient_theta_f": 1.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="ChannelWalls"),
     )
     cycle_1_domain.add_constraint(walls, name="ChannelWalls")
 
@@ -223,6 +226,7 @@ def run(cfg: ModulusConfig) -> None:
             (x < limerock.heat_sink_bounds[0]), (x > limerock.heat_sink_bounds[1])
         ),
         lambda_weighting={"advection_diffusion_theta_f": 1000.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="lr_interior_f"),
     )
     cycle_1_domain.add_constraint(lr_interior_f, "lr_interior_f")
 
@@ -236,6 +240,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=And(
             (x > limerock.heat_sink_bounds[0]), (x < limerock.heat_sink_bounds[1])
         ),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="hr_interior_f"),
     )
     cycle_1_domain.add_constraint(hr_interior_f, "hr_interior_f")
 
@@ -247,6 +252,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interface,
         criteria=z > limerock.geo_bounds_lower[2],
         lambda_weighting={"theta_f": 100.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interface"),
     )
     cycle_1_domain.add_constraint(interface, "interface")
 
@@ -318,6 +324,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar=diff_outvar,
         batch_size=cfg.batch_size.interior_s,
         lambda_weighting=diff_lambda,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior_s"),
     )
     cycle_n_domain.add_constraint(interior_s, "interior_s")
 
@@ -345,6 +352,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.base,
         criteria=Eq(z, limerock.geo_bounds_lower[2]),
         lambda_weighting={"normal_gradient_flux_theta_s": 10.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="base"),
     )
     cycle_n_domain.add_constraint(base, "base")
 
@@ -356,6 +364,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interface,
         criteria=z > limerock.geo_bounds_lower[2],
         lambda_weighting={"dirichlet_theta_s_theta_f": 100.0, "robin_theta_s": 1.0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interface"),
     )
     cycle_n_domain.add_constraint(interface, "interface")
 
