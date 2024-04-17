@@ -99,6 +99,7 @@ def run(cfg: ModulusConfig) -> None:
         bounds=box_bounds,
         lambda_weighting={"u": 100, "v": 100, "w": 100, "p": 100},
         parameterization={t_symbol: 0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="ic"),
     )
     ic_domain.add_constraint(ic, name="ic")
 
@@ -115,6 +116,7 @@ def run(cfg: ModulusConfig) -> None:
             "w_prev_step_diff": 100,
         },
         parameterization={t_symbol: 0},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="ic"),
     )
     window_domain.add_constraint(ic, name="ic")
 
@@ -126,6 +128,7 @@ def run(cfg: ModulusConfig) -> None:
         bounds=box_bounds,
         batch_size=4094,
         parameterization=time_range,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior"),
     )
     ic_domain.add_constraint(interior, name="interior")
     window_domain.add_constraint(interior, name="interior")
