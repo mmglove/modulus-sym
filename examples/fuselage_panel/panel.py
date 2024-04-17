@@ -136,6 +136,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.panel_left,
         criteria=Eq(x, panel_origin[0]),
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="panel_left"),
     )
     domain.add_constraint(panel_left, "panel_left")
 
@@ -147,6 +148,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.panel_right,
         criteria=Eq(x, panel_origin[0] + panel_dim[0]),
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="panel_right"),
     )
     domain.add_constraint(panel_right, "panel_right")
 
@@ -158,6 +160,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.panel_bottom,
         criteria=Eq(y, panel_origin[1]),
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="panel_bottom"),
     )
     domain.add_constraint(panel_bottom, "panel_bottom")
 
@@ -171,6 +174,7 @@ def run(cfg: ModulusConfig) -> None:
         & (y > panel_origin[1])
         & (y < panel_origin[1] + 1e-3),
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="panel_corner"),
     )
     domain.add_constraint(panel_corner, "panel_corner")
 
@@ -182,6 +186,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.panel_top,
         criteria=Eq(y, panel_origin[1] + panel_dim[1]),
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="panel_top"),
     )
     domain.add_constraint(panel_top, "panel_top")
 
@@ -192,6 +197,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"traction_x": 0.0, "traction_y": 0.0},
         batch_size=cfg.batch_size.panel_window,
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="panel_window"),
     )
     domain.add_constraint(panel_window, "panel_window")
 
@@ -216,6 +222,7 @@ def run(cfg: ModulusConfig) -> None:
             "stress_disp_xy": Symbol("sdf"),
         },
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="lr_interior"),
     )
     domain.add_constraint(lr_interior, "lr_interior")
 
@@ -240,6 +247,7 @@ def run(cfg: ModulusConfig) -> None:
             "stress_disp_xy": Symbol("sdf"),
         },
         parameterization=param_ranges,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="hr_interior"),
     )
     domain.add_constraint(hr_interior, "hr_interior")
 
