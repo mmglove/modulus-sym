@@ -74,12 +74,11 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.inlet,
         outvar={"u": inlet_velocity_normalized, "v": 0, "w": 0},
         batch_size=cfg.batch_size.inlet,
-        batch_per_epoch=5000,
+        batch_per_epoch=50,
         lambda_weighting={"u": channel_sdf, "v": 1.0, "w": 1.0},
         num_workers=2,
     )
     flow_domain.add_constraint(inlet, "inlet")
-    print("finished inlet")
 
     # outlet
     outlet = PointwiseBoundaryConstraint(
@@ -87,11 +86,10 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.outlet,
         outvar={"p": 0},
         batch_size=cfg.batch_size.outlet,
-        batch_per_epoch=5000,
+        batch_per_epoch=50,
         num_workers=2,
     )
     flow_domain.add_constraint(outlet, "outlet")
-    print("finished outlet")
 
     # no slip
     no_slip = PointwiseBoundaryConstraint(
@@ -99,11 +97,10 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"u": 0, "v": 0, "w": 0},
         batch_size=cfg.batch_size.no_slip,
-        batch_per_epoch=15000,
+        batch_per_epoch=50,
         num_workers=2,
     )
     flow_domain.add_constraint(no_slip, "no_slip")
-    print("finished no_slip")
 
     # flow interior low res away from limerock
     lr_interior = PointwiseInteriorConstraint(
@@ -111,7 +108,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"continuity": 0, "momentum_x": 0, "momentum_y": 0, "momentum_z": 0},
         batch_size=cfg.batch_size.lr_interior,
-        batch_per_epoch=5000,
+        batch_per_epoch=50,
         compute_sdf_derivatives=True,
         lambda_weighting={
             "continuity": 3 * Symbol("sdf"),
@@ -125,7 +122,6 @@ def run(cfg: ModulusConfig) -> None:
         num_workers=2,
     )
     flow_domain.add_constraint(lr_interior, "lr_interior")
-    print("finished lr_interior")
 
     # flow interior high res near limerock
     hr_interior = PointwiseInteriorConstraint(
@@ -133,7 +129,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"continuity": 0, "momentum_x": 0, "momentum_y": 0, "momentum_z": 0},
         batch_size=cfg.batch_size.hr_interior,
-        # batch_per_epoch=5000,
+        batch_per_epoch=50,
         compute_sdf_derivatives=True,
         lambda_weighting={
             "continuity": 3 * Symbol("sdf"),
@@ -147,7 +143,6 @@ def run(cfg: ModulusConfig) -> None:
         num_workers=2,
     )
     flow_domain.add_constraint(hr_interior, "hr_interior")
-    print("finished hr_interior")
 
     # integral continuity
     def integral_criteria(invar, params):
@@ -165,9 +160,6 @@ def run(cfg: ModulusConfig) -> None:
         num_workers=2,
     )
     flow_domain.add_constraint(integral_continuity, "integral_continuity")
-    print("finished integral_continuity")
-
-    print("finished generating points")
 
     """# add inferencer data
     invar_flow_numpy = limerock.geo.sample_interior(10000, bounds=limerock.geo_bounds)
