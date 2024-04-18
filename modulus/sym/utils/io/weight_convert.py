@@ -40,17 +40,25 @@ def torch_to_paddle(torch_state_dict: Dict[str, "torch.Tensor"], output_dir: str
     for k, v in torch_state_dict.items():
         v_numpy: np.ndarray = v.detach().cpu().numpy()
 
-        if k.endswith("linear.weight"):
+        if k.endswith(".linear.weight"):
             assert v_numpy.ndim == 2, (
                 f"ndim of v_numpy should be 2, but got {v_numpy.ndim}."
             )
             if 'final_layer' in k or 'output_linear' in k:
                 paddle_state_dict[k] = v_numpy.T
-                print("✨ ✨ tranpose weight created by nn.Linear.")
+                print(f"✨ ✨  created [{k}]' by nn.Linear.")
             else:
                 paddle_state_dict[k] = v_numpy
         elif 'impl' in k and 'fc' in k and 'weight' in k:
             paddle_state_dict[k] = v_numpy.T
+            print(f"✨ ✨ tranpose [{k}]' weight created by nn.Linear.")
+        elif '_mean' in k:
+            paddle_state_dict[k.replace('running_mean', "_mean")] = v_numpy
+        elif '_var' in k:
+            paddle_state_dict[k.replace('running_var', "_variance")] = v_numpy
+        elif "_linear.weight" in k:
+            paddle_state_dict[k] = v_numpy.T
+            print(f"✨ ✨  created [{k}]' by nn.Linear.")
         else:
             paddle_state_dict[k] = v_numpy
 
