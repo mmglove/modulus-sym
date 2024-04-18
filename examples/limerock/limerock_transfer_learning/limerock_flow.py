@@ -97,7 +97,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"u": 0, "v": 0, "w": 0},
         batch_size=cfg.batch_size.no_slip,
-        batch_per_epoch=150,
+        batch_per_epoch=50,
         loss=modulus.sym.loss.PointwiseLossNorm(name="no_slip"),
     )
     flow_domain.add_constraint(no_slip, "no_slip")
