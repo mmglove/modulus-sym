@@ -352,8 +352,6 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
                 outvar_fn=outvar_fn,
                 lambda_weighting_fn=lambda_weighting_fn,
             )
-        # for k, v in invar.items():
-        #     print(f"{k} {v.min():.10f} {v.max():.10f} {v.std():.10f}")
 
         # initialize constraint
         super().__init__(
@@ -520,12 +518,6 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
                 outvar_fn=outvar_fn,
                 lambda_weighting_fn=lambda_weighting_fn,
             )
-        # for k, v in invar.items():
-        #     print(f"{k} {v.min():.10f} {v.max():.10f} {v.std():.10f}")
-        # for k, v in outvar.items():
-        #     print(f"{k} {v.min():.10f} {v.max():.10f} {v.std():.10f}")
-        # for k, v in lambda_weighting.items():
-        #     print(f"{k} {v.min():.10f} {v.max():.10f} {v.std():.10f}")
 
         # initialize constraint
         super().__init__(

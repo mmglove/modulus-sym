@@ -96,8 +96,6 @@ class PointwiseLossNorm(Loss):
             l = lambda_weighting[key] * torch.abs(
                 pred_outvar[key] - true_outvar[key]
             ).pow(ord)
-            # os.makedirs(self.name, exist_ok=True)
-            # np.save(os.path.join(self.name, key) + f"_torch_{step}.npy", pred_outvar[key].detach().cpu().numpy())
             if "area" in invar.keys():
                 l *= invar["area"]
             losses[key] = l.sum()

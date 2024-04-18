@@ -152,12 +152,11 @@ class Graph(torch.nn.Module):
                         )
                         if len(computable_derivatives):
                             node_name = necessary_nodes[i].name
-                            tmp = FuncArch(
+                            necessary_nodes[i] = FuncArch(
                                 node.evaluate, computable_derivatives
-                            )
-                            necessary_nodes[i] = tmp.make_node(node_name)
+                            ).make_node(node_name)
                             logger.info(
-                                f"{node_name} has been converted to a FuncArch node. node.evaluate:{node.evaluate.input_keys}, {node.evaluate.output_keys}, {tmp.max_order}, {tmp.deriv_keys}"
+                                f"{node_name} has been converted to a FuncArch node."
                             )
                     else:
                         logger.warning(

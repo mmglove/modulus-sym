@@ -666,20 +666,23 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 if (step % self.cfg.training.rec_validation_freq == 0) and (
                     self.has_validators
                 ):
-                    barrier_flag = True
-                    self._record_validators(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_validators(step)
 
                 if (step % self.cfg.training.rec_inference_freq == 0) and (
                     self.has_inferencers
                 ):
-                    barrier_flag = True
-                    self._record_inferencers(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_inferencers(step)
 
                 if (step % self.cfg.training.rec_monitor_freq == 0) and (
                     self.has_monitors
                 ):
-                    barrier_flag = True
-                    self._record_monitors(step)
+                    if not debug_flag:
+                        barrier_flag = True
+                        self._record_monitors(step)
 
                 # save checkpoint
                 if step % self.save_network_freq == 0:
@@ -713,8 +716,6 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                             end_event
                         )  # in milliseconds
                         torch.cuda.synchronize()
-                        # end_time = time.perf_counter()
-                        # timetime = (end_time - t) * 1.0e3  # in milliseconds
                     else:
                         t_end = time.time()
                         elapsed_time = (t_end - t) * 1.0e3  # in milliseconds
@@ -739,7 +740,6 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
                     if self.manager.cuda:
                         start_event.record()
-                        t = time.perf_counter()
                     else:
                         t = time.time()
 
@@ -766,7 +766,6 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             if debug_flag:
                 self.log.info("✨ ✨ Training is finished, now exit when debug_flag is enabled.")
                 sys.exit(0)
-        # print(prof.key_averages(group_by_input_shape=True).table(sort_by="cuda_time_total", row_limit=10))
 
 
     def _cuda_graph_training_step(self, step: int):
