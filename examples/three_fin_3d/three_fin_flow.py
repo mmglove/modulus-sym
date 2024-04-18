@@ -109,6 +109,7 @@ def run(cfg: ModulusConfig) -> None:
         },  # weight zero on edges
         parameterization=geo.pr,
         batch_per_epoch=5000,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="inlet"),
     )
     flow_domain.add_constraint(constraint_inlet, "inlet")
 
@@ -122,6 +123,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={"p": 1.0},
         parameterization=geo.pr,
         batch_per_epoch=5000,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="outlet"),
     )
     flow_domain.add_constraint(constraint_outlet, "outlet")
 
@@ -138,6 +140,7 @@ def run(cfg: ModulusConfig) -> None:
         },  # weight zero on edges
         parameterization=geo.pr,
         batch_per_epoch=5000,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="no_slip"),
     )
     flow_domain.add_constraint(no_slip, "no_slip")
 
@@ -157,6 +160,7 @@ def run(cfg: ModulusConfig) -> None:
         parameterization=geo.pr,
         batch_per_epoch=5000,
         criteria=Or(x < -1.1, x > 0.5),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="lr_interior"),
     )
     flow_domain.add_constraint(lr_interior, "lr_interior")
 
@@ -176,6 +180,7 @@ def run(cfg: ModulusConfig) -> None:
         parameterization=geo.pr,
         batch_per_epoch=5000,
         criteria=And(x > -1.1, x < 0.5),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="hr_interior"),
     )
     flow_domain.add_constraint(hr_interior, "hr_interior")
 
@@ -195,6 +200,7 @@ def run(cfg: ModulusConfig) -> None:
         parameterization={**geo.pr, **{x_pos: (-1.1, 0.1)}},
         fixed_dataset=False,
         num_workers=4,
+        loss=modulus.sym.loss.IntegralLossNorm(name="integral_continuity"),
     )
     flow_domain.add_constraint(integral_continuity, "integral_continuity")
 

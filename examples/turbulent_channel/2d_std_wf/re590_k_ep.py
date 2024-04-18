@@ -119,8 +119,6 @@ def run(cfg: ModulusConfig) -> None:
         ]
         + [Node.from_sympy(Min(log(1 + exp(Symbol("k_star"))) + 1e-4, 20), "k")]
         + [Node.from_sympy(Min(log(1 + exp(Symbol("ep_star"))) + 1e-4, 180), "ep")]
-        # + [Node.from_sympy(Symbol("k_star"), "k")]
-        # + [Node.from_sympy(Symbol("ep_star"), "ep")]
         + [flow_net.make_node(name="flow_network")]
         + [p_net.make_node(name="p_network")]
         + [k_net.make_node(name="k_network")]
@@ -190,6 +188,7 @@ def run(cfg: ModulusConfig) -> None:
         },
         batch_size=cfg.batch_size.wf_pt,
         parameterization={"normal_distance": resolved_y_start},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="WF"),
     )
     domain.add_constraint(wf_pt, "WF")
 
@@ -213,6 +212,7 @@ def run(cfg: ModulusConfig) -> None:
         },
         batch_size=cfg.batch_size.interior,
         bounds={x: channel_length, y: channel_width},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="Interior"),
     )
     domain.add_constraint(interior, "Interior")
 
@@ -223,6 +223,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"p": p_grad * (channel_length[1] - channel_length[0])},
         lambda_weighting={"p": 10},
         batch_size=cfg.batch_size.inlet,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="Inlet"),
     )
     domain.add_constraint(inlet, "Inlet")
 
@@ -233,6 +234,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"p": 0},
         lambda_weighting={"p": 10},
         batch_size=cfg.batch_size.outlet,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="Outlet"),
     )
     domain.add_constraint(outlet, "Outlet")
 
@@ -243,6 +245,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"u_init": 0, "v_init": 0, "k_init": 0, "p_init": 0, "ep_init": 0},
         batch_size=cfg.batch_size.interior_init,
         bounds={x: channel_length, y: channel_width},
+        loss=modulus.sym.loss.PointwiseLossNorm(name="InteriorInit"),
     )
     domain.add_constraint(interior, "InteriorInit")
 

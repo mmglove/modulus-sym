@@ -76,7 +76,8 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.inlet,
         batch_per_epoch=50,
         lambda_weighting={"u": channel_sdf, "v": 1.0, "w": 1.0},
-        num_workers=2,
+        num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="inlet"),
     )
     flow_domain.add_constraint(inlet, "inlet")
 
@@ -87,7 +88,8 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"p": 0},
         batch_size=cfg.batch_size.outlet,
         batch_per_epoch=50,
-        num_workers=2,
+        num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="outlet"),
     )
     flow_domain.add_constraint(outlet, "outlet")
 
@@ -98,7 +100,8 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"u": 0, "v": 0, "w": 0},
         batch_size=cfg.batch_size.no_slip,
         batch_per_epoch=50,
-        num_workers=2,
+        num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="no_slip"),
     )
     flow_domain.add_constraint(no_slip, "no_slip")
 
@@ -119,7 +122,8 @@ def run(cfg: ModulusConfig) -> None:
         criteria=Or(
             (x < limerock.heat_sink_bounds[0]), (x > limerock.heat_sink_bounds[1])
         ),
-        num_workers=2,
+        num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="lr_interior"),
     )
     flow_domain.add_constraint(lr_interior, "lr_interior")
 
@@ -140,7 +144,8 @@ def run(cfg: ModulusConfig) -> None:
         criteria=And(
             (x > limerock.heat_sink_bounds[0]), (x < limerock.heat_sink_bounds[1])
         ),
-        num_workers=2,
+        num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="hr_interior"),
     )
     flow_domain.add_constraint(hr_interior, "hr_interior")
 
@@ -157,9 +162,11 @@ def run(cfg: ModulusConfig) -> None:
         integral_batch_size=cfg.batch_size.integral_continuity,
         lambda_weighting={"normal_dot_vel": 0.1},
         criteria=integral_criteria,
-        num_workers=2,
+        num_workers=0,
+        loss=modulus.sym.loss.IntegralLossNorm(name="integral_continuity"),
     )
     flow_domain.add_constraint(integral_continuity, "integral_continuity")
+
 
     """# add inferencer data
     invar_flow_numpy = limerock.geo.sample_interior(10000, bounds=limerock.geo_bounds)

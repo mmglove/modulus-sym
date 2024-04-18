@@ -94,6 +94,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=Eq(y, height / 2),
         importance_measure=importance_measure,
         num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="top_wall")
     )
     ldc_domain.add_constraint(top_wall, "top_wall")
 
@@ -106,6 +107,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=y < height / 2,
         importance_measure=importance_measure,
         num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="no_slip")
     )
     ldc_domain.add_constraint(no_slip, "no_slip")
 
@@ -122,6 +124,7 @@ def run(cfg: ModulusConfig) -> None:
         },
         importance_measure=importance_measure,
         num_workers=0,
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior")
     )
     ldc_domain.add_constraint(interior, "interior")
 

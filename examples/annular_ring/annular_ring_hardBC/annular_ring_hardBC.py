@@ -246,6 +246,7 @@ def run(cfg: ModulusConfig) -> None:
             "compatibility_v_x": 0.1 * Symbol("sdf"),
             "compatibility_v_y": 0.1 * Symbol("sdf"),
         },
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interior"),
     )
     domain.add_constraint(interior, "interior")
 
@@ -258,6 +259,7 @@ def run(cfg: ModulusConfig) -> None:
         integral_batch_size=cfg.batch_size.integral_continuity,
         lambda_weighting={"normal_dot_vel": 0.1},
         criteria=Eq(x, channel_length[1]),
+        loss=modulus.sym.loss.IntegralLossNorm(name="integral_continuity"),
     )
     domain.add_constraint(integral_continuity, "integral_continuity")
 
