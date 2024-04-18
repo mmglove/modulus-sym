@@ -1,4 +1,4 @@
-model_item=surface_pde-sphere-sphere_bs1_fp32_DP
+model_item=surface_pde-sphere-sphere
 bs_item=1
 fp_item=fp32
 run_mode=DP

@@ -1,4 +1,4 @@
-model_item=ode_spring_mass-spring_mass_solver_bs1_fp32_DP
+model_item=ode_spring_mass-spring_mass_solver
 bs_item=1
 fp_item=fp32
 run_mode=DP

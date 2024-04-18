@@ -1,4 +1,4 @@
-model_item=fuselage_panel-panel_bs1_fp32_DP
+model_item=fuselage_panel-panel
 bs_item=1
 fp_item=fp32
 run_mode=DP

@@ -1,4 +1,4 @@
-model_item=wave_equation-wave_inverse_bs1_fp32_DP
+model_item=wave_equation-wave_inverse
 bs_item=1
 fp_item=fp32
 run_mode=DP

@@ -1,4 +1,4 @@
-model_item=wave_equation-wave_1d_causal_bs1_fp32_DP
+model_item=wave_equation-wave_1d_causal
 bs_item=1
 fp_item=fp32
 run_mode=DP

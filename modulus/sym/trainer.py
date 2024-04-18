@@ -515,6 +515,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 self.log.info(f"Skip load pytorch weight for \n{e}\n")
 
         debug_flag = bool(int(os.getenv("debug", False)))
+        loss_monitor = bool(int(os.getenv("loss_monitor", False)))
+        loss_monitor_pytorch_paddle = bool(int(os.getenv("loss_monitor_pytorch_paddle", False)))
         if debug_flag:
             self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
             self.initial_step = 0
@@ -522,10 +524,20 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 model.set_state_dict(
                     paddle.load(f"./init_ckpt/{model.checkpoint_filename}")
                 )
+            if not loss_monitor:
+                for model in self.saveable_models:
+                    model.set_state_dict(
+                        paddle.load(f"./init_ckpt/{model.checkpoint_filename}")
+                    )
+            if loss_monitor_pytorch_paddle:
+                for model in self.saveable_models:
+                    model.set_state_dict(
+                        paddle.load(f"./init_ckpt/{model.checkpoint_filename}")
+                    )
         else:
             self.initial_step = self.load_network()
 
-        # # make summary writer
+        # make summary writer
         self.writer = SummaryWriter(
             log_dir=self.network_dir, purge_step=self.summary_freq + 1
         )

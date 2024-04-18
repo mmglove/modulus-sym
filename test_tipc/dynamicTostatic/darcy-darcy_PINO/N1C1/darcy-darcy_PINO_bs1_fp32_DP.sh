@@ -1,4 +1,4 @@
-model_item=darcy-darcy_PINO_bs1_fp32_DP
+model_item=darcy-darcy_PINO
 bs_item=1
 fp_item=fp32
 run_mode=DP

@@ -1,4 +1,4 @@
-model_item=waveguide-cavity_3D-waveguide3D_bs1_fp32_DP
+model_item=waveguide-cavity_3D-waveguide3D
 bs_item=1
 fp_item=fp32
 run_mode=DP

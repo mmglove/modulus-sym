@@ -34,6 +34,8 @@ dependencies = [
     "vtk>=9.2.6",
     "h5py>=3.7.0",
     "tensorboardX==2.6.2.2",
+    "gdown~=5.1.0",
+    "pandas",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

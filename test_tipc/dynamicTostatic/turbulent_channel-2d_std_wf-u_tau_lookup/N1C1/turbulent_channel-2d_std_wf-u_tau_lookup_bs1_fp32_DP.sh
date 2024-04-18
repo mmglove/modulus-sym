@@ -1,4 +1,4 @@
-model_item=turbulent_channel-2d_std_wf-u_tau_lookup_bs1_fp32_DP
+model_item=turbulent_channel-2d_std_wf-u_tau_lookup
 bs_item=1
 fp_item=fp32
 run_mode=DP

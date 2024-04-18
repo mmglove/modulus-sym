@@ -1,4 +1,4 @@
-model_item=turbulent_channel-2d-re590_k_ep_LS_bs1_fp32_DP
+model_item=turbulent_channel-2d-re590_k_ep_LS
 bs_item=1
 fp_item=fp32
 run_mode=DP
