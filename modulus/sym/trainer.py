@@ -520,10 +520,6 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         if debug_flag:
             self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
             self.initial_step = 0
-            for model in self.saveable_models:
-                model.set_state_dict(
-                    paddle.load(f"./init_ckpt/{model.checkpoint_filename}")
-                )
             if not loss_monitor:
                 for model in self.saveable_models:
                     model.set_state_dict(
