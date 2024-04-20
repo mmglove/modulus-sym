@@ -289,7 +289,7 @@ class ContinuousIntegralIterableDataset(IterableDataset):
         self.param_ranges_fn = param_ranges_fn
 
         self.batch_size = batch_size
-
+        self.iter_step = 0
         # TODO: re-write iterable function so that for loop not needed - to improve performance
 
         def iterable_function():
@@ -309,12 +309,24 @@ class ContinuousIntegralIterableDataset(IterableDataset):
                     list_lambda_weighting.append(
                         self.lambda_weighting_fn(param_range, list_outvar[-1])
                     )
+                import os
+                debug_flag = bool(int(os.getenv("debug", 0)))
+                if debug_flag:
+                    os.makedirs("contiguous_integral_data", exist_ok=True)
+                    for i in range(len(list_invar)):
+                        np.savez(f"contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}]", **list_invar[i])
+                    for i in range(len(list_outvar)):
+                        np.savez(f"contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}]", **list_outvar[i])
+                    for i in range(len(list_lambda_weighting)):
+                        np.savez(f"contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}]", **list_lambda_weighting[i])
+                    print("✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_integral_data/*.npz")
                 invar = Dataset._to_tensor_dict(_stack_list_numpy_dict(list_invar))
                 outvar = Dataset._to_tensor_dict(_stack_list_numpy_dict(list_outvar))
                 lambda_weighting = Dataset._to_tensor_dict(
                     _stack_list_numpy_dict(list_lambda_weighting)
                 )
                 yield (invar, outvar, lambda_weighting)
+                self.iter_step += 1
 
         self.iterable_function = iterable_function
 
