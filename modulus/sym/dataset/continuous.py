@@ -289,32 +289,41 @@ class ContinuousIntegralIterableDataset(IterableDataset):
         self.param_ranges_fn = param_ranges_fn
 
         self.batch_size = batch_size
+        self.iter_step = 0
 
         # TODO: re-write iterable function so that for loop not needed - to improve performance
 
         def iterable_function():
             while True:
-                list_invar = []
-                list_outvar = []
-                list_lambda_weighting = []
-                for _ in range(self.batch_size):
-                    param_range = self.param_ranges_fn()
-                    list_invar.append(self.invar_fn(param_range))
-                    if (
-                        not param_range
-                    ):  # TODO this can be removed after a np_lambdify rewrite
-                        param_range = {"_": next(iter(list_invar[-1].values()))[0:1]}
+                import os
+                debug_flag = bool(int(os.getenv("debug", 0)))
+                if debug_flag:
+                    list_invar = [dict(np.load(f"./contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
+                    list_outvar = [dict(np.load(f"./contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
+                    list_lambda_weighting = [dict(np.load(f"./contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
+                else:
+                    list_invar = []
+                    list_outvar = []
+                    list_lambda_weighting = []
+                    for _ in range(self.batch_size):
+                        param_range = self.param_ranges_fn()
+                        list_invar.append(self.invar_fn(param_range))
+                        if (
+                            not param_range
+                        ):  # TODO this can be removed after a np_lambdify rewrite
+                            param_range = {"_": next(iter(list_invar[-1].values()))[0:1]}
 
-                    list_outvar.append(self.outvar_fn(param_range))
-                    list_lambda_weighting.append(
-                        self.lambda_weighting_fn(param_range, list_outvar[-1])
-                    )
+                        list_outvar.append(self.outvar_fn(param_range))
+                        list_lambda_weighting.append(
+                            self.lambda_weighting_fn(param_range, list_outvar[-1])
+                        )
                 invar = Dataset._to_tensor_dict(_stack_list_numpy_dict(list_invar))
                 outvar = Dataset._to_tensor_dict(_stack_list_numpy_dict(list_outvar))
                 lambda_weighting = Dataset._to_tensor_dict(
                     _stack_list_numpy_dict(list_lambda_weighting)
                 )
                 yield (invar, outvar, lambda_weighting)
+                self.iter_step += 1
 
         self.iterable_function = iterable_function
 
