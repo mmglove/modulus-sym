@@ -160,7 +160,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=heat_sink,
         outvar={"u": 0, "v": 0, "c": (heat_sink_temp - base_temp) / 273.15},
         batch_size=cfg.batch_size.hs_wall,
-        loss=modulus.sym.loss.PointwiseLossNorm(name="hs_wall")
+        loss=modulus.sym.loss.PointwiseLossNorm(name="heat_sink_wall")
     )
     domain.add_constraint(hs_wall, "heat_sink_wall")
 
