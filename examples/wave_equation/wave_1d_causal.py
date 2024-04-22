@@ -96,7 +96,6 @@ def run(cfg: ModulusConfig) -> None:
         fixed_dataset=False,
         shuffle=False,
         num_workers=1,
-        loss=modulus.sym.loss.PointwiseLossNorm(name="interior"),
     )
     domain.add_constraint(interior, "interior")
 
