@@ -199,7 +199,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={"normal_dot_vel": 1.0},
         parameterization={**geo.pr, **{x_pos: (-1.1, 0.1)}},
         fixed_dataset=False,
-        num_workers=0,
+        num_workers=4,
         loss=modulus.sym.loss.IntegralLossNorm(name="integral_continuity"),
     )
     flow_domain.add_constraint(integral_continuity, "integral_continuity")
