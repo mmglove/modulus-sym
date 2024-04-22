@@ -111,6 +111,7 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
             lambda_weighting_fn = lambda _, outvar: {
                 key: np.ones_like(x) for key, x in outvar.items()
             }
+        self.iter_step = 0
 
         def iterable_function():
             while True:
@@ -119,7 +120,17 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
                 lambda_weighting = Dataset._to_tensor_dict(
                     self.lambda_weighting_fn(invar, outvar)
                 )
+                import os
+                debug_flag = bool(int(os.getenv("debug", 0)))
+                if debug_flag:
+                    os.makedirs("contiguous_pointwise_data", exist_ok=True)
+                    np.savez(f"contiguous_pointwise_data/invar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in invar.items()})
+                    np.savez(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in outvar.items()})
+                    np.savez(f"contiguous_pointwise_data/lambda_weighting_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in lambda_weighting.items()})
+                    print("✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_pointwise_data/*.npz")
+
                 yield (invar, outvar, lambda_weighting)
+                self.iter_step += 1
 
         self.iterable_function = iterable_function
 
