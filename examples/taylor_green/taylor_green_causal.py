@@ -135,7 +135,6 @@ def run(cfg: ModulusConfig) -> None:
         loss=CausalLossNorm(eps=1.0),
         fixed_dataset=False,
         shuffle=False,
-        loss=modulus.sym.loss.PointwiseLossNorm(name="interior"),
     )
     ic_domain.add_constraint(interior, name="interior")
     window_domain.add_constraint(interior, name="interior")
