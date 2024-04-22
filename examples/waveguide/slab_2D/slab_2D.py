@@ -150,7 +150,7 @@ def run(cfg: ModulusConfig) -> None:
         lambda_weighting={
             "helmholtz": 1.0 / wave_number**2,
         },
-        loss=modulus.sym.loss.PointwiseLossNorm(name="interior"),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="Interior"),
     )
     waveguide_domain.add_constraint(Interior, "Interior")
 
