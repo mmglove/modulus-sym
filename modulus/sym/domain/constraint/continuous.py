@@ -297,10 +297,12 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
             lambda_weighting = _compute_lambda_weighting(
                 invar, outvar, lambda_weighting
             )
-
-            # invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
-            # outvar = dict(np.load(f"./{loss.name}/outvar_torch.npz"))
-            # lambda_weighting = dict(np.load(f"./{loss.name}/lambda_weighting_torch.npz"))
+            import os
+            load_data_flag = os.getenv("load_data", "False") == "True"
+            if load_data_flag:
+                invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
+                outvar = dict(np.load(f"./{loss.name}/outvar_torch.npz"))
+                lambda_weighting = dict(np.load(f"./{loss.name}/lambda_weighting_torch.npz"))
             # make point dataset
             if importance_measure is None:
                 invar["area"] *= batch_per_epoch  # TODO find better way to do this
@@ -456,9 +458,12 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
             lambda_weighting = _compute_lambda_weighting(
                 invar, outvar, lambda_weighting
             )
-            # invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
-            # outvar = dict(np.load(f"./{loss.name}/outvar_torch.npz"))
-            # lambda_weighting = dict(np.load(f"./{loss.name}/lambda_weighting_torch.npz"))
+            import os
+            load_data_flag = os.getenv("load_data", "False") == "True"
+            if load_data_flag:
+                invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
+                outvar = dict(np.load(f"./{loss.name}/outvar_torch.npz"))
+                lambda_weighting = dict(np.load(f"./{loss.name}/lambda_weighting_torch.npz"))
 
             # make point dataset
             if importance_measure is None:
@@ -733,10 +738,12 @@ class IntegralBoundaryConstraint(IntegralConstraint):
                 list_invar.append(invar)
                 list_outvar.append(outvar_star)
                 list_lambda_weighting.append(lambda_weighting_star)
-
-            # list_invar = [dict(np.load(f"./{loss.name}/list_invar_torch[{i}].npz")) for i in range(len(list_invar))]
-            # list_outvar = [dict(np.load(f"./{loss.name}/list_outvar_torch[{i}].npz")) for i in range(len(list_outvar))]
-            # list_lambda_weighting = [dict(np.load(f"./{loss.name}/list_lambda_weighting_torch[{i}].npz")) for i in range(len(list_lambda_weighting))]
+            import os
+            load_data_flag = os.getenv("load_data", "False") == "True"
+            if load_data_flag:
+                list_invar = [dict(np.load(f"./{loss.name}/list_invar_torch[{i}].npz")) for i in range(len(list_invar))]
+                list_outvar = [dict(np.load(f"./{loss.name}/list_outvar_torch[{i}].npz")) for i in range(len(list_outvar))]
+                list_lambda_weighting = [dict(np.load(f"./{loss.name}/list_lambda_weighting_torch[{i}].npz")) for i in range(len(list_lambda_weighting))]
 
             # make dataset of integral planes
             dataset = ListIntegralDataset(

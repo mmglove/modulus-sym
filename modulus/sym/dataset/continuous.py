@@ -116,8 +116,8 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
         def iterable_function():
             while True:
                 import os
-                debug_flag = bool(int(os.getenv("debug", 0)))
-                if debug_flag:
+                load_data_flag = os.getenv("load_data", "False") == "True"
+                if load_data_flag:
                     invar = np.load(f"contiguous_pointwise_data/invar_torch_{self.iter_step}.npz")
                     outvar = np.load(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}.npz")
                     lambda_weighting = np.load(f"contiguous_pointwise_data/lambda_weighting_torch_{self.iter_step}.npz")
@@ -308,8 +308,8 @@ class ContinuousIntegralIterableDataset(IterableDataset):
         def iterable_function():
             while True:
                 import os
-                debug_flag = bool(int(os.getenv("debug", 0)))
-                if debug_flag:
+                load_data_flag = os.getenv("load_data", "False") == "True"
+                if load_data_flag:
                     list_invar = [dict(np.load(f"./contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
                     list_outvar = [dict(np.load(f"./contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
                     list_lambda_weighting = [dict(np.load(f"./contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
