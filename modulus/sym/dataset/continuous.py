@@ -310,6 +310,7 @@ class ContinuousIntegralIterableDataset(IterableDataset):
                 import os
                 load_data_flag = os.getenv("load_data", "False") == "True"
                 if load_data_flag:
+                    print("✨ ✨ load data for ContinuousIntegralIterableDataset")
                     list_invar = [dict(np.load(f"./contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
                     list_outvar = [dict(np.load(f"./contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
                     list_lambda_weighting = [dict(np.load(f"./contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
