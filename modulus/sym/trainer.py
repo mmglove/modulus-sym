@@ -538,7 +538,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         #     # with_stack=True,
         #     use_cuda=True,
         # ) as prof:
-
+        auto_exit = os.getenv("auto_exit", "False") == "True"
         with ExitStack() as stack:
             if self.profile:
                 # Add NVTX context if in profile mode
@@ -546,6 +546,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 stack.enter_context(torch.autograd.profiler.emit_nvtx())
 
             for step in range(self.initial_step, self.max_steps + 1):
+                if step >= 5 and auto_exit:
+                    self.log.info("Auto exit after 5 steps when auto_exit=True")
+                    sys.exit()
                 # profiler step id between 10~20
                 # if step == 10:
                 #     torch.cuda.cudart().cudaProfilerStart()
