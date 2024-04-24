@@ -724,10 +724,16 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         else 0
                     )
                     if data_parallel_rank == 0:
-                        self.save_checkpoint(step)
-                        self.log.info(
-                            f"{self.step_str} saved checkpoint to {add_hydra_run_path(self.network_dir)}"
-                        )
+                        if not debug_flag:
+                            self.save_checkpoint(step)
+                            self.log.info(
+                                f"{self.step_str} saved checkpoint to {add_hydra_run_path(self.network_dir)}"
+                            )
+                        else:
+                            self.log.info(
+                                f"Skip save checkpoint for debug=1"
+                            )
+
                     if self.manager.distributed:
                         barrier_flag = True
 
