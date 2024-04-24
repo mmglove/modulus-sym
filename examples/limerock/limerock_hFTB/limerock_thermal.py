@@ -78,7 +78,7 @@ class hFTBArch(Arch):
         for param, param_prev_step in zip(
             self.arch.parameters(), self.arch_prev_step.parameters()
         ):
-            param_prev_step.requires_grad = False
+            param_prev_step.stop_gradient = True
 
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
         y_prev_step = self.arch_prev_step.forward(in_vars)
@@ -93,7 +93,7 @@ class hFTBArch(Arch):
         ):
             with paddle.no_grad():
                 paddle.assign(param, param_prev_step)
-            param_prev_step.stop_gradient = False
+            param_prev_step.stop_gradient = True
 
 
 @modulus.sym.main(config_path="conf", config_name="conf_thermal")
