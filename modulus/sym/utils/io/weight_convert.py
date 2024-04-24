@@ -1,5 +1,8 @@
-import paddle
+from __future__ import annotations
+
+
 try:
+    import paddle
     import torch
 except ModuleNotFoundError:
     pass
