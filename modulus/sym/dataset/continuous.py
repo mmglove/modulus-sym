@@ -122,7 +122,8 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
                 )
                 import os
                 debug_flag = bool(int(os.getenv("debug", 0)))
-                if debug_flag:
+                save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
+                if debug_flag or save_init_weight_data_flag:
                     os.makedirs("contiguous_pointwise_data", exist_ok=True)
                     np.savez(f"contiguous_pointwise_data/invar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in invar.items()})
                     np.savez(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in outvar.items()})
@@ -322,7 +323,8 @@ class ContinuousIntegralIterableDataset(IterableDataset):
                     )
                 import os
                 debug_flag = bool(int(os.getenv("debug", 0)))
-                if debug_flag:
+                save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
+                if debug_flag or save_init_weight_data_flag:
                     os.makedirs("contiguous_integral_data", exist_ok=True)
                     for i in range(len(list_invar)):
                         np.savez(f"contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}]", **list_invar[i])

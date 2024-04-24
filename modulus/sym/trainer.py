@@ -474,6 +474,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # load network
         debug_flag = bool(int(os.getenv("debug", False)))
+        save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
         if debug_flag:
             self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
             self.initial_step = 0
@@ -481,6 +482,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 torch_to_paddle(model.state_dict(), "init_ckpt", f"{model.checkpoint_filename.replace('.pth', '.pdparams')}")
         else:
             self.initial_step = self.load_network()
+            if save_init_weight_data_flag:
+                for model in self.saveable_models:
+                    torch_to_paddle(model.state_dict(), "init_ckpt", f"{model.checkpoint_filename.replace('.pth', '.pdparams')}")
 
         # # make summary writer
         self.writer = SummaryWriter(
@@ -538,7 +542,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         #     # with_stack=True,
         #     use_cuda=True,
         # ) as prof:
-        auto_exit = os.getenv("auto_exit", "False") == "True"
+
         with ExitStack() as stack:
             if self.profile:
                 # Add NVTX context if in profile mode
@@ -546,9 +550,6 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 stack.enter_context(torch.autograd.profiler.emit_nvtx())
 
             for step in range(self.initial_step, self.max_steps + 1):
-                if step >= 5 and auto_exit:
-                    self.log.info("Auto exit after 5 steps when auto_exit=True")
-                    sys.exit()
                 # profiler step id between 10~20
                 # if step == 10:
                 #     torch.cuda.cudart().cudaProfilerStart()

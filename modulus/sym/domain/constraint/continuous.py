@@ -303,7 +303,9 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
                 invar, outvar, lambda_weighting
             )
 
-            if bool(os.getenv("debug", False)):
+            debug_flag = bool(int(os.getenv("debug", 0)))
+            save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
+            if debug_flag or save_init_weight_data_flag:
                 os.makedirs(loss.name, exist_ok=True)
                 np.savez(f"{loss.name}/invar_torch", **invar)
                 np.savez(f"{loss.name}/outvar_torch", **outvar)
@@ -466,7 +468,9 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
                 invar, outvar, lambda_weighting
             )
 
-            if bool(os.getenv("debug", False)):
+            debug_flag = bool(int(os.getenv("debug", 0)))
+            save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
+            if debug_flag or save_init_weight_data_flag:
                 os.makedirs(loss.name, exist_ok=True)
                 np.savez(f"{loss.name}/invar_torch", **invar)
                 np.savez(f"{loss.name}/outvar_torch", **outvar)
@@ -748,7 +752,9 @@ class IntegralBoundaryConstraint(IntegralConstraint):
                 list_outvar.append(outvar_star)
                 list_lambda_weighting.append(lambda_weighting_star)
 
-            if bool(os.getenv("debug", False)):
+            debug_flag = bool(int(os.getenv("debug", 0)))
+            save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
+            if debug_flag or save_init_weight_data_flag:
                 os.makedirs(loss.name, exist_ok=True)
                 for i in range(len(list_invar)):
                     np.savez(f"{loss.name}/list_invar_torch[{i}]", **list_invar[i])
