@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import enum
 from typing import Callable
 from typing import Union
@@ -23,6 +24,13 @@ import paddle.nn.functional as F
 from paddle import Tensor
 from modulus.sym.manager import JitManager, JitArchMode
 
+use_silu_forward_composite = os.getenv("silu_comp", "False") == "True"
+if use_silu_forward_composite:
+    silu_func = lambda x: x * F.sigmoid(x)
+    print(f"✨ ✨ Using silu(x) = x * sigmoid(x)")
+else:
+    silu_func = F.silu
+    print(f"✨ ✨ Using silu(x) = F.silu(x)")
 
 class ActivationMeta(enum.EnumMeta):
     def __getitem__(self, name):
@@ -68,7 +76,7 @@ def gelu(x: paddle.Tensor) -> paddle.Tensor:
 
 def custom_silu(x: paddle.Tensor) -> paddle.Tensor:
     # return paddle.nn.functional.silu(x)
-    return x * paddle.nn.functional.sigmoid(x)
+    return silu_func(x)
 
 
 class CustomSilu(nn.Layer):
