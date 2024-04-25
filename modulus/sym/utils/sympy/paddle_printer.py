@@ -72,10 +72,8 @@ def _where_paddle(conditions, x, y):
     return paddle.where(conditions, x, y)
 
 
-def _heaviside_paddle(x, y=paddle.zeros([1])):
-    if isinstance(y, float):
-        y = paddle.full_like(x, y)
-    return paddle.maximum(paddle.sign(x), y)
+def _heaviside_paddle(x, values=0):
+    return paddle.maximum(paddle.sign(x), paddle.zeros([1, ]))
 
 
 def _sqrt_paddle(x):
