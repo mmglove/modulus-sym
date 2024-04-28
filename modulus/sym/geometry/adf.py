@@ -90,7 +90,7 @@ class ADF(paddle.nn.Layer):
         for j in range(len(bases)):
             denom_term = [bases[i] for i in range(len(bases)) if i != j]
             denominator += paddle.prod(paddle.stack(denom_term), axis=0)
-        w = paddle.divide(numerator, paddle.to_tensor(denominator + eps))
+        w = paddle.divide(numerator, denominator)
         return w
 
     @staticmethod
