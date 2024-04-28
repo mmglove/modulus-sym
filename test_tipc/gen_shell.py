@@ -383,8 +383,9 @@ def gen_end_to_end_shells():
             # unzip dataset and move to each example directory if not exist
             f.write("if [ ! -d './examples_sym' ]; then\n")
             f.write("    unzip examples_sym.zip\n")
-            f.write("    \\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
             f.write("fi\n")
+            f.write("unalias cp 2>/dev/null\n")
+            f.write("\\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
 
         ## generate dynamic/benchmark_common/analysis_log.py
         shutil.copy(
@@ -430,8 +431,9 @@ def gen_end_to_end_shells():
             # unzip dataset and move to each example directory if not exist
             f.write("if [ ! -d './examples_sym' ]; then\n")
             f.write("    unzip examples_sym.zip\n")
-            f.write("    \\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
             f.write("fi\n")
+            f.write("unalias cp 2>/dev/null\n")
+            f.write("\\cp -r -f -v ./examples_sym/examples/* ./examples/\n")
 
         ## generate dynamicTostatic/benchmark_common/analysis_log.py
         shutil.copy(
