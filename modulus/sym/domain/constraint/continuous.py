@@ -151,7 +151,7 @@ class PointwiseConstraint(Constraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
         """
         Create custom pointwise constraint from numpy arrays.
@@ -270,7 +270,7 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
         importance_measure: Union[Callable, None] = None,
         batch_per_epoch: int = 1000,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
     ):
@@ -434,7 +434,7 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
         importance_measure: Union[Callable, None] = None,
         batch_per_epoch: int = 1000,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
     ):
@@ -695,7 +695,7 @@ class IntegralBoundaryConstraint(IntegralConstraint):
         fixed_dataset: bool = True,
         batch_per_epoch: int = 100,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = IntegralLossNorm(),
         shuffle: bool = True,
     ):
@@ -839,7 +839,7 @@ class VariationalConstraint(Constraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
 
         # Get DDP manager
@@ -986,7 +986,7 @@ class VariationalDomainConstraint(VariationalConstraint):
         parameterization: Union[Parameterization, None] = None,
         batch_per_epoch: int = 1000,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
     ):
@@ -1087,7 +1087,7 @@ class DeepONetConstraint(PointwiseConstraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
         """
         Create custom DeepONet constraint from numpy arrays.
