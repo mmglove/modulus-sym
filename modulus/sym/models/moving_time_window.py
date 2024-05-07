@@ -67,7 +67,7 @@ class MovingTimeWindowArch(Arch):
 
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
         with paddle.no_grad():
-            in_vars["t"].add_(self.window_location)
+            in_vars["t"] = in_vars["t"] + self.window_location
 
         y_prev_step = self.arch_prev_step.forward(in_vars)
         y = self.arch.forward(in_vars)
@@ -79,11 +79,13 @@ class MovingTimeWindowArch(Arch):
         return y
 
     def move_window(self):
-        self.window_location.data += self.window_size
+        with paddle.no_grad():
+            self.window_location = self.window_location + self.window_size
         for param, param_prev_step in zip(
             self.arch.parameters(), self.arch_prev_step.parameters()
         ):
-            param_prev_step.data = param.detach().clone().data
+            with paddle.no_grad():
+                paddle.assign(param, param_prev_step)
             param_prev_step.stop_gradient = True
 
     def reset_parameters(self) -> None:
