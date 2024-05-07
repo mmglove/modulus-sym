@@ -6,5 +6,6 @@ fi
 
 if [ ! -d './examples_sym' ]; then
     unzip examples_sym.zip
-    \cp -r -f -v ./examples_sym/examples/* ./examples/
 fi
+unalias cp 2>/dev/null
+\cp -r -f -v ./examples_sym/examples/* ./examples/
