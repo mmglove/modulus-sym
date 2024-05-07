@@ -65,7 +65,7 @@ class SupervisedGridConstraint(Constraint):
         batch_size: int = None,
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
 
         super().__init__(
@@ -330,7 +330,7 @@ class DeepONetConstraint_Data(_DeepONetConstraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
 
         super().__init__(
@@ -375,7 +375,7 @@ class DeepONetConstraint_Physics(_DeepONetConstraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
         tile_trunk_input: bool = True,
     ):
 
