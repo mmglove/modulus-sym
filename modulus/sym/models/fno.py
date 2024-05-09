@@ -92,7 +92,7 @@ class FNO1DEncoder(nn.Layer):
 
         x = self.lift_layer(x)
         # (left, right)
-        x = F.pad(x, (0, self.pad[0]), mode=self.padding_type)
+        x = F.pad(x, (0, self.pad[0]), mode=self.padding_type, data_format='NCL')
         # Spectral layers
         for k, conv_w in enumerate(zip(self.conv_layers, self.spconv_layers)):
             conv, w = conv_w
@@ -266,6 +266,7 @@ class FNO3DEncoder(nn.Layer):
             x,
             (0, self.pad[0], 0, self.pad[1], 0, self.pad[2]),
             mode=self.padding_type,
+            data_format="NCDHW",
         )
         # Spectral layers
         for k, conv_w in enumerate(zip(self.conv_layers, self.spconv_layers)):

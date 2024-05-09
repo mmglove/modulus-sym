@@ -20,7 +20,9 @@ import paddle.nn as nn
 from paddle import Tensor
 
 
+from modulus.sym.models.activation import Activation
 import modulus.sym.models.layers as layers
+from modulus.sym.models.layers import FCLayer, FourierFilter, GaborFilter
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -72,10 +74,10 @@ class RadialBasisArch(Arch):
             for idx, bound in enumerate(bounds.values()):
                 self.centers[:, idx].uniform_(bound[0], bound[1])
 
-        self.fc_layer = layers.FCLayer(
+        self.fc_layer = FCLayer(
             nr_centers,
             out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=Activation.IDENTITY,
         )
 
     def _tensor_forward(self, x: paddle.Tensor) -> paddle.Tensor:

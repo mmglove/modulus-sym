@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import paddle
 import itertools
+import paddle
+
 from modulus.sym.key import Key
 from modulus.sym.models.fno import FNOArch
 from modulus.sym.models.fully_connected import FullyConnectedArch
 
-
+########################
+# load & verify
+########################
 def test_fno_1d():
+    # Construct FNO model
     decoder = FullyConnectedArch(
         input_keys=[Key("z", size=32)],
         output_keys=[Key("u", size=2), Key("p")],
@@ -33,15 +39,22 @@ def test_fno_1d():
         fno_modes=4,
         padding=0,
     )
-    model.make_node(name="FNO1d", jit=True)
+    # Testing JIT
+    model.make_node(name="FNO1d", jit=False)
+
     bsize = 5
-    invar = {"x": paddle.randn(shape=[bsize, 2, 64])}
+    invar = {
+        "x": paddle.randn([bsize, 2, 64])
+    }
+    # Model forward
     outvar = model(invar)
-    assert outvar["u"].shape == (bsize, 2, 64)
-    assert outvar["p"].shape == (bsize, 1, 64)
+    # Check output size
+    assert outvar["u"].shape == [bsize, 2, 64]
+    assert outvar["p"].shape == [bsize, 1, 64]
 
 
 def test_fno_2d():
+    # Construct FNO model
     decoder = FullyConnectedArch(
         input_keys=[Key("z", size=32)],
         output_keys=[Key("u", size=2), Key("p")],
@@ -54,19 +67,25 @@ def test_fno_2d():
         dimension=2,
         fno_modes=16,
     )
-    model.make_node(name="FNO2d", jit=True)
+
+    # Testing JIT
+    model.make_node(name="FNO2d", jit=False)
+
     bsize = 5
     invar = {
-        "x": paddle.randn(shape=[bsize, 1, 32, 32]),
-        "y": paddle.randn(shape=[bsize, 1, 32, 32]),
-        "rho": paddle.randn(shape=[bsize, 2, 32, 32]),
+        "x": paddle.randn([bsize, 1, 32, 32]),
+        "y": paddle.randn([bsize, 1, 32, 32]),
+        "rho": paddle.randn([bsize, 2, 32, 32]),
     }
+    # Model forward
     outvar = model(invar)
-    assert outvar["u"].shape == (bsize, 2, 32, 32)
-    assert outvar["p"].shape == (bsize, 1, 32, 32)
+    # Check output size
+    assert outvar["u"].shape == [bsize, 2, 32, 32]
+    assert outvar["p"].shape == [bsize, 1, 32, 32]
 
 
 def test_fno_3d():
+    # Construct FNO model
     decoder = FullyConnectedArch(
         input_keys=[Key("z", size=32)],
         output_keys=[Key("u"), Key("v")],
@@ -79,15 +98,20 @@ def test_fno_3d():
         dimension=3,
         fno_modes=16,
     )
-    model.make_node(name="FNO3d", jit=True)
+
+    # Testing JIT
+    model.make_node(name="FNO3d", jit=False)
+
     bsize = 5
     invar = {
-        "x": paddle.randn(shape=[bsize, 3, 32, 32, 32]),
-        "y": paddle.randn(shape=[bsize, 1, 32, 32, 32]),
+        "x": paddle.randn([bsize, 3, 32, 32, 32]),
+        "y": paddle.randn([bsize, 1, 32, 32, 32]),
     }
+    # Model forward
     outvar = model(invar)
-    assert outvar["u"].shape == (bsize, 1, 32, 32, 32)
-    assert outvar["v"].shape == (bsize, 1, 32, 32, 32)
+    # Check output size
+    assert outvar["u"].shape == [bsize, 1, 32, 32, 32]
+    assert outvar["v"].shape == [bsize, 1, 32, 32, 32]
 
 
 def test_fno():

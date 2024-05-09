@@ -125,7 +125,7 @@ class MixedSecondDerivO2(paddle.nn.Layer):
             str(derivative_key.derivatives[0]),
             str(derivative_key.derivatives[1]),
         ]
-        paddle.sort(self.indep_vars)
+        self.indep_vars.sort()
         self.out_name = str(derivative_key)
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
@@ -328,9 +328,7 @@ class SecondDeriv(DerivBase):
             else:
                 if order == 2:
                     indep_vars = [str(var) for var in indep_vars]
-                    paddle.sort(
-                        indep_vars
-                    )  # Avoid redundent points like (z::-1&&y::1 and y::1&&z::-1)
+                    indep_vars.sort()  # Avoid redundent points like (z::-1&&y::1 and y::1&&z::-1)
                     self._stencil = self._stencil.union(
                         {
                             f"{indep_vars[0]}::-1&&{indep_vars[1]}::-1",

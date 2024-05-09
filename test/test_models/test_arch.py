@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,10 +93,10 @@ def test_process_input_output():
     validate_process_input_output(input_variables, arch)
     assert paddle.allclose(
         x=arch.input_scales_tensor,
-        y=paddle.to_tensor(data=[[0.0, 0.0, 0.0, 0.0], [1.0, 2.0, 2.0, 3.0]]),
+        y=paddle.to_tensor([[0.0, 0.0, 0.0, 0.0], [1.0, 2.0, 2.0, 3.0]]),
     ).item()
     assert paddle.allclose(
-        x=arch.output_scales_tensor, y=paddle.to_tensor(data=[[1.0, 0.0], [2.0, 1.0]])
+        x=arch.output_scales_tensor, y=paddle.to_tensor([[1.0, 0.0], [2.0, 1.0]])
     ).item()
     arch = Arch(
         input_keys,

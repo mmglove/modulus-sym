@@ -104,9 +104,9 @@ def _min_jit(x: List[paddle.Tensor]):
 
 def _min_paddle(*x):
     # method 1
-    assert isinstance(x[0], (int, float))
-    result = paddle.clip(x[1], max=x[0])
-    return result
+    # assert isinstance(x[0], (int, float))
+    # result = paddle.clip(x[1], max=x[0])
+    # return result
 
     # method 2
     # get tensor shape
@@ -118,7 +118,7 @@ def _min_paddle(*x):
     x_only_tensors = []
     for value in x:
         if isinstance(value, (int, float)):
-            value = paddle.zeros(tensor_shape) + value
+            value = paddle.full(tensor_shape, value)
         x_only_tensors.append(value)
 
     min_tensor = x_only_tensors[0]
@@ -144,7 +144,7 @@ def _max_jit(x: List[paddle.Tensor]):
 
 def _max_paddle(*x):
     # method 1
-    return paddle.clip(x[1], min=x[0])
+    # return paddle.clip(x[1], min=x[0])
 
     # method 2
     # get tensor shape
@@ -156,7 +156,7 @@ def _max_paddle(*x):
     x_only_tensors = []
     for value in x:
         if isinstance(value, (int, float)):
-            value = paddle.zeros(tensor_shape) + value
+            value = paddle.full(tensor_shape, value)
         x_only_tensors.append(value)
 
     max_tensor = x_only_tensors[0]

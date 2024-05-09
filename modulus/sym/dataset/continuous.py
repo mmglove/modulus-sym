@@ -200,7 +200,9 @@ class DictImportanceSampledPointwiseIterableDataset(
                     for i in range(len(next(iter(list_invar.values())))):
                         importance = self.importance_measure(
                             {key: value[i] for key, value in list_invar.items()}
-                        ).numpy()
+                        )
+                        if not isinstance(importance, np.ndarray):
+                            importance = importance.numpy()
                         list_importance.append(importance)
                     importance = np.concatenate(list_importance, axis=0)
                     prob = importance / np.sum(self.invar["area"] * importance)

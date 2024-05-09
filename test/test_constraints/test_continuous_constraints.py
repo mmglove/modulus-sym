@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,16 +28,25 @@ from modulus.sym.domain.constraint import (
 from modulus.sym.loss import Loss
 from modulus.sym.geometry.parameterization import Parameterization, Bounds
 
+# TODO: Add some more complex geometery that is the union of multiple shapes to check boundary sampling
+
 
 def test_PointwiseBoundaryConstraint():
-    """define a sinusodial node, create pointwise boundary constraints over it and check their losses are zero"""
+    "define a sinusodial node, create pointwise boundary constraints over it and check their losses are zero"
+
     ntests = 10
     for fixed_dataset in [True, False]:
+
+        # define sinusodial node
         x, y = Symbol("x"), Symbol("y")
         node = Node.from_sympy(cos(x) + sin(y), "u")
+
+        # make geometry
         height = pi
         width = pi
         rec = Rectangle((0, 0), (width, height))
+
+        # top wall
         top_wall = PointwiseBoundaryConstraint(
             nodes=[node],
             geometry=rec,
@@ -45,6 +56,8 @@ def test_PointwiseBoundaryConstraint():
             fixed_dataset=fixed_dataset,
             batch_per_epoch=2 * ntests,
         )
+
+        # right wall
         right_wall = PointwiseBoundaryConstraint(
             nodes=[node],
             geometry=rec,
@@ -54,6 +67,8 @@ def test_PointwiseBoundaryConstraint():
             fixed_dataset=fixed_dataset,
             batch_per_epoch=2 * ntests,
         )
+
+        # bottom wall
         bottom_wall = PointwiseBoundaryConstraint(
             nodes=[node],
             geometry=rec,
@@ -63,6 +78,8 @@ def test_PointwiseBoundaryConstraint():
             fixed_dataset=fixed_dataset,
             batch_per_epoch=2 * ntests,
         )
+
+        # left wall
         left_wall = PointwiseBoundaryConstraint(
             nodes=[node],
             geometry=rec,
@@ -72,39 +89,44 @@ def test_PointwiseBoundaryConstraint():
             fixed_dataset=fixed_dataset,
             batch_per_epoch=2 * ntests,
         )
+
         height = float(height)
         width = float(width)
         for _ in range(ntests):
+
+            # check losses are zero
             top_wall.load_data()
             top_wall.forward()
             loss = top_wall.loss(step=0)
             assert paddle.isclose(
-                x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=1e-05, atol=1e-05
+                x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-5, atol=1e-5
             )
             right_wall.load_data()
             right_wall.forward()
             loss = right_wall.loss(step=0)
             assert paddle.isclose(
-                x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=1e-05, atol=1e-05
+                x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-5, atol=1e-5
             )
             bottom_wall.load_data()
             bottom_wall.forward()
             loss = bottom_wall.loss(step=0)
             assert paddle.isclose(
-                x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=1e-05, atol=1e-05
+                x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-5, atol=1e-5
             )
             left_wall.load_data()
             left_wall.forward()
             loss = left_wall.loss(step=0)
             assert paddle.isclose(
-                x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=1e-05, atol=1e-05
+                x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-5, atol=1e-5
             )
+
+            # check invars correct
             invar, _, _ = next(top_wall.dataloader)
             assert paddle.allclose(
                 x=invar["y"],
                 y=height * paddle.ones_like(x=invar["y"]),
-                rtol=1e-05,
-                atol=1e-05,
+                rtol=1e-5,
+                atol=1e-5,
             ).item()
             assert paddle.all(
                 x=paddle.logical_and(x=invar["x"] <= width, y=invar["x"] >= 0)
@@ -113,22 +135,22 @@ def test_PointwiseBoundaryConstraint():
             assert paddle.allclose(
                 x=invar["x"],
                 y=width * paddle.ones_like(x=invar["x"]),
-                rtol=1e-05,
-                atol=1e-05,
+                rtol=1e-5,
+                atol=1e-5,
             ).item()
             assert paddle.all(
                 x=paddle.logical_and(x=invar["y"] <= height, y=invar["y"] >= 0)
             )
             invar, _, _ = next(bottom_wall.dataloader)
             assert paddle.allclose(
-                x=invar["y"], y=paddle.zeros_like(x=invar["y"]), rtol=1e-05, atol=1e-05
+                x=invar["y"], y=paddle.zeros_like(x=invar["y"]), rtol=1e-5, atol=1e-5
             ).item()
             assert paddle.all(
                 x=paddle.logical_and(x=invar["x"] <= width, y=invar["x"] >= 0)
             )
             invar, _, _ = next(left_wall.dataloader)
             assert paddle.allclose(
-                x=invar["x"], y=paddle.zeros_like(x=invar["x"]), rtol=1e-05, atol=1e-05
+                x=invar["x"], y=paddle.zeros_like(x=invar["x"]), rtol=1e-5, atol=1e-5
             ).item()
             assert paddle.all(
                 x=paddle.logical_and(x=invar["y"] <= height, y=invar["y"] >= 0)
@@ -136,14 +158,20 @@ def test_PointwiseBoundaryConstraint():
 
 
 def test_PointwiseInteriorConstraint():
-    """define a sinusodial node, create pointwise interior constraint over it and check its loss is zero"""
+    "define a sinusodial node, create pointwise interior constraint over it and check its loss is zero"
+
     ntests = 10
     for fixed_dataset in [True, False]:
+
+        # define sinusodial node
         x, y = Symbol("x"), Symbol("y")
         node = Node.from_sympy(cos(x) + sin(y), "u")
+
+        # make geometry
         height = 3.14159
         width = 3.14159
         rec = Rectangle((0, 0), (width, height))
+
         constraint = PointwiseInteriorConstraint(
             nodes=[node],
             geometry=rec,
@@ -153,15 +181,20 @@ def test_PointwiseInteriorConstraint():
             fixed_dataset=fixed_dataset,
             batch_per_epoch=2 * ntests,
         )
+
         height = float(height)
         width = float(width)
         for _ in range(ntests):
+
+            # check loss is zero
             constraint.load_data()
             constraint.forward()
             loss = constraint.loss(step=0)
             assert paddle.isclose(
-                x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=1e-05, atol=1e-05
+                x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-5, atol=1e-5
             )
+
+            # check invar correct
             invar, _, _ = next(constraint.dataloader)
             assert paddle.all(
                 x=paddle.logical_and(x=invar["x"] <= width, y=invar["x"] >= 0)
@@ -172,11 +205,18 @@ def test_PointwiseInteriorConstraint():
 
 
 def test_IntegralBoundaryConstraint():
-    """define a parabola node, create integral boundary constraint over it and check its loss is zero"""
+    "define a parabola node, create integral boundary constraint over it and check its loss is zero"
+
     ntests = 10
     for fixed_dataset in [True, False]:
+
+        # define parabola node
         node = Node.from_sympy(Symbol("z") ** 2, "u")
+
+        # make geometry
         plane = Plane((0, 0, 0), (0, 2, 1), 1)
+
+        # make constraint
         constraint = IntegralBoundaryConstraint(
             nodes=[node],
             geometry=plane,
@@ -187,17 +227,25 @@ def test_IntegralBoundaryConstraint():
             fixed_dataset=fixed_dataset,
             criteria=Symbol("y") > 1,
         )
+
         for _ in range(ntests):
+            # check loss is zero
             constraint.load_data()
             constraint.forward()
             loss = constraint.loss(step=0)
             assert paddle.isclose(
-                x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=0.001, atol=0.001
+                x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-3, atol=1e-3
             )
+
+        # define parabola node
         node = Node.from_sympy(Symbol("z") ** 3 + Symbol("y") ** 3, "u")
+
+        # make geometry
         z_len = Symbol("z_len")
         y_len = Symbol("y_len")
         plane = Plane((0, -y_len, -z_len), (0, y_len, z_len), 1)
+
+        # make constraint
         constraint = IntegralBoundaryConstraint(
             nodes=[node],
             geometry=plane,
@@ -208,24 +256,32 @@ def test_IntegralBoundaryConstraint():
             fixed_dataset=fixed_dataset,
             parameterization=Parameterization({y_len: (0.1, 1.0), z_len: (0.1, 1.0)}),
         )
+
         for _ in range(ntests):
+            # check loss is zero
             constraint.load_data()
             constraint.forward()
             loss = constraint.loss(step=0)
             assert paddle.isclose(
-                x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=0.001, atol=0.001
+                x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-3, atol=1e-3
             )
 
 
 def test_VariationalDomainConstraint():
-    """define a parabola node, create variational domain constraint over it and check its loss is zero"""
+    "define a parabola node, create variational domain constraint over it and check its loss is zero"
+
     ntests = 10
+
+    # define parabola node
     x, y = Symbol("x"), Symbol("y")
     node = Node.from_sympy(x**2 + y**2, "u")
+
+    # make geometry
     rec = Rectangle((-0.5, -0.5), (0.5, 0.5))
 
+    # define variational loss
     class VariationalLoss(Loss):
-        """fake loss for testing only"""
+        "fake loss for testing only"
 
         def forward(self, list_invar, list_outvar, step):
             losses = []
@@ -234,6 +290,7 @@ def test_VariationalDomainConstraint():
                 losses.append(paddle.sum(x=outvar["u"] - expected))
             return {"u": sum(losses)}
 
+    # make constraint
     constraint = VariationalDomainConstraint(
         nodes=[node],
         geometry=rec,
@@ -244,17 +301,23 @@ def test_VariationalDomainConstraint():
         interior_bounds=Bounds({x: (-0.5, 0.5), y: (-0.5, 0.5)}),
         loss=VariationalLoss(),
     )
+
     for _ in range(ntests):
+        # check loss is zero
         constraint.load_data()
         constraint.forward()
         loss = constraint.loss(step=0)
         assert paddle.isclose(
-            x=loss["u"], y=paddle.to_tensor(data=0.0), rtol=1e-05, atol=1e-05
+            x=loss["u"], y=paddle.to_tensor(0.0), rtol=1e-5, atol=1e-5
         )
 
 
 if __name__ == "__main__":
+
     test_PointwiseBoundaryConstraint()
+
     test_PointwiseInteriorConstraint()
+
     test_IntegralBoundaryConstraint()
+
     test_VariationalDomainConstraint()

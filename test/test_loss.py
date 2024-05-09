@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +24,7 @@ from modulus.sym.loss import (
 
 
 def test_loss_norm():
+    # make pointwise test values
     invar = {
         "x": paddle.arange(end=10)[:, None],
         "area": paddle.ones(shape=[10])[:, None] / 10,
@@ -29,19 +32,27 @@ def test_loss_norm():
     pred_outvar = {"u": paddle.arange(end=10)[:, None]}
     true_outvar = {"u": paddle.arange(end=10)[:, None] + 2}
     lambda_weighting = {"u": paddle.ones(shape=[10])[:, None]}
+
+    # Test Pointwise l2
     loss = PointwiseLossNorm(2)
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=0)
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(4.0))
+
+    # Test Pointwise l1
     loss = PointwiseLossNorm(1)
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=0)
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(2.0))
+
+    # Test Decayed Pointwise l2
     loss = DecayedPointwiseLossNorm(2, 1, decay_steps=1000, decay_rate=0.5)
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=0)
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(4.0))
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=1000)
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.82842712))
+    assert paddle.isclose(l["u"], paddle.to_tensor(2.82842712))
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=1000000)
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(2.0))
+
+    # make Integral test values
     list_invar = [
         {
             "x": paddle.arange(end=10)[:, None],
@@ -49,27 +60,33 @@ def test_loss_norm():
         }
     ]
     list_pred_outvar = [{"u": paddle.arange(end=10)[:, None]}]
-    list_true_outvar = [{"u": paddle.to_tensor(data=2.5)[None, None]}]
+    list_true_outvar = [{"u": paddle.to_tensor(2.5)[None, None]}]
     list_lambda_weighting = [{"u": paddle.ones(shape=[1])[None, None]}]
+
+    # Test Integral l2
     loss = IntegralLossNorm(2)
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=0
     )
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(4.0))
+
+    # Test Integral l1
     loss = IntegralLossNorm(1)
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=0
     )
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(2.0))
+
+    # Test Decayed Integral l2
     loss = DecayedIntegralLossNorm(2, 1, decay_steps=1000, decay_rate=0.5)
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=0
     )
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(4.0))
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=1000
     )
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.82842712))
+    assert paddle.isclose(l["u"], paddle.to_tensor(2.82842712))
     l = loss.forward(
         list_invar,
         list_pred_outvar,
@@ -77,4 +94,4 @@ def test_loss_norm():
         list_lambda_weighting,
         step=1000000,
     )
-    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))
+    assert paddle.isclose(l["u"], paddle.to_tensor(2.0))
