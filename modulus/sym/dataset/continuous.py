@@ -102,6 +102,7 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
         invar_fn: Callable,
         outvar_fn: Callable,
         lambda_weighting_fn: Callable = None,
+        name: str = None,
     ):
 
         self.invar_fn = invar_fn
@@ -118,9 +119,14 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
                 import os
                 load_data_flag = os.getenv("load_data", "False") == "True"
                 if load_data_flag:
-                    invar = np.load(f"contiguous_pointwise_data/invar_torch_{self.iter_step}.npz")
-                    outvar = np.load(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}.npz")
-                    lambda_weighting = np.load(f"contiguous_pointwise_data/lambda_weighting_torch_{self.iter_step}.npz")
+                    if name:
+                        invar = np.load(f"contiguous_pointwise_data/{name}/invar_torch_{self.iter_step}.npz")
+                        outvar = np.load(f"contiguous_pointwise_data/{name}/outvar_torch_{self.iter_step}.npz")
+                        lambda_weighting = np.load(f"contiguous_pointwise_data/{name}/lambda_weighting_torch_{self.iter_step}.npz")
+                    else:
+                        invar = np.load(f"contiguous_pointwise_data/invar_torch_{self.iter_step}.npz")
+                        outvar = np.load(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}.npz")
+                        lambda_weighting = np.load(f"contiguous_pointwise_data/lambda_weighting_torch_{self.iter_step}.npz")
                     invar = Dataset._to_tensor_dict(invar)
                     outvar = Dataset._to_tensor_dict(outvar)
                     lambda_weighting = Dataset._to_tensor_dict(lambda_weighting)
