@@ -87,6 +87,24 @@ class CustomSilu(nn.Layer):
         return custom_silu(x)
 
 
+class Identity(nn.Layer):
+    """Identity activation function
+
+    Dummy function for removing activations from a model
+
+    Example
+    -------
+    >>> idnt_func = modulus.models.layers.Identity()
+    >>> input = torch.randn(2, 2)
+    >>> output = idnt_func(input)
+    >>> torch.allclose(input, output)
+    True
+    """
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x
+
+
 class Stan(nn.Layer):
     """
     Self-scalable Tanh (Stan)

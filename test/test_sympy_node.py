@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,31 +14,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import paddle
 import numpy as np
-from modulus.sym.utils.sympy import SympyToPaddle
+import paddle
+from modulus.sym.utils.sympy import SympyToTorch
 import sympy
 
 
 def test_sympy_node():
+    # Define SymPy symbol and expression
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     expr = sympy.Max(sympy.sin(x), sympy.cos(y))
+
+    # Get numpy reference
     x_np = np.random.random(10)
     y_np = np.random.random(10)
     expr_np = np.maximum(np.sin(x_np), np.cos(y_np))
-    sn = SympyToPaddle(expr, "node")
+    sn = SympyToTorch(expr, "node")
     device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
         "cuda", "gpu"
     )
-    x_th = paddle.to_tensor(data=x_np, dtype="float32", place=device)
-    y_th = paddle.to_tensor(data=y_np, dtype="float32", place=device)
+    x_th = paddle.to_tensor(x_np, dtype="float32", place=device)
+    y_th = paddle.to_tensor(y_np, dtype="float32", place=device)
     assert np.allclose(x_th.cpu().detach().numpy(), x_np)
     assert np.allclose(y_th.cpu().detach().numpy(), y_np)
+
+    # Run the compiled function on input tensors
     var = {"x": x_th, "y": y_th}
     expr_th = sn(var)
     expr_th_out = expr_th["node"].cpu().detach().numpy()
-    assert np.allclose(expr_th_out, expr_np, rtol=0.001), "SymPy printer test failed!"
+
+    assert np.allclose(expr_th_out, expr_np, rtol=1e-3), "SymPy printer test failed!"
 
 
 if __name__ == "__main__":

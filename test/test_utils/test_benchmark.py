@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import paddle
 import pytest
+import paddle
 from modulus.sym.utils.benchmark import timeit
+
 
 skip_if_no_gpu = pytest.mark.skipif(
     not paddle.device.cuda.device_count() >= 1,
@@ -25,7 +28,7 @@ skip_if_no_gpu = pytest.mark.skipif(
 @skip_if_no_gpu
 def test_timeit():
     def func():
-        paddle.zeros(shape=2**20).exp().cos().sin()
+        paddle.zeros(shape=[2**20]).exp().cos().sin()
 
     cpu_timing_ms = timeit(func, cpu_timing=False)
     cuda_event_timing_ms = timeit(func, cpu_timing=True)

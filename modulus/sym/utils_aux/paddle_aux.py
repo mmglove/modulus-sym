@@ -24,12 +24,7 @@ def to(self, *args, **kwargs):
         if "y" not in kwargs and "x" in kwargs:
             if isinstance(kwargs["x"], paddle.dtype):
                 dtype = kwargs["x"]
-            elif isinstance(kwargs["x"], str) and kwargs["x"] not in [
-                "cpu",
-                "cuda",
-                "ipu",
-                "xpu",
-            ]:
+            elif isinstance(kwargs["x"], str) and not any(p in kwargs["x"] for p in ["cpu", "cuda", "ipu", "xpu"]):
                 dtype = kwargs["x"]
             elif isinstance(kwargs["x"], paddle.Tensor):
                 dtype = kwargs["x"].dtype
@@ -52,7 +47,7 @@ def to(self, *args, **kwargs):
             return self
 
 
-setattr(paddle.Tensor, "to", to)
+# setattr(paddle.Tensor, "to", to)
 
 
 def split(self, *args, **kwargs):

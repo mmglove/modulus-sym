@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import paddle
 import itertools
+import paddle
+
 from modulus.sym.key import Key
 from modulus.sym.models.pix2pix import Pix2PixArch
 
 
 def test_pix2pix():
+    # check 1D
     model = Pix2PixArch(
         input_keys=[Key("x", size=4)],
         output_keys=[Key("y", size=4), Key("z", size=2)],
@@ -28,8 +32,11 @@ def test_pix2pix():
     bsize = 4
     x = {"x": paddle.randn(shape=(bsize, 4, 32))}
     outvar = model.forward(x)
-    assert outvar["y"].shape == (bsize, 4, 64)
-    assert outvar["z"].shape == (bsize, 2, 64)
+    # Check output size
+    assert outvar["y"].shape == [bsize, 4, 64]
+    assert outvar["z"].shape == [bsize, 2, 64]
+
+    # check 2D
     model = Pix2PixArch(
         input_keys=[Key("x", size=2)],
         output_keys=[Key("y", size=2), Key("z", size=1)],
@@ -40,8 +47,11 @@ def test_pix2pix():
     bsize = 4
     x = {"x": paddle.randn(shape=(bsize, 2, 28, 28))}
     outvar = model.forward(x)
-    assert outvar["y"].shape == (bsize, 2, 112, 112)
-    assert outvar["z"].shape == (bsize, 1, 112, 112)
+    # Check output size
+    assert outvar["y"].shape == [bsize, 2, 112, 112]
+    assert outvar["z"].shape == [bsize, 1, 112, 112]
+
+    # check 3D
     model = Pix2PixArch(
         input_keys=[Key("x", size=1)],
         output_keys=[Key("y", size=2), Key("z", size=2)],
@@ -50,5 +60,5 @@ def test_pix2pix():
     bsize = 4
     x = {"x": paddle.randn(shape=(bsize, 1, 64, 64, 64))}
     outvar = model.forward(x)
-    assert outvar["y"].shape == (bsize, 2, 64, 64, 64)
-    assert outvar["z"].shape == (bsize, 2, 64, 64, 64)
+    assert outvar["y"].shape == [bsize, 2, 64, 64, 64]
+    assert outvar["z"].shape == [bsize, 2, 64, 64, 64]

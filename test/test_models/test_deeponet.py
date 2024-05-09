@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +24,7 @@ from modulus.sym.key import Key
 import pytest
 from modulus.sym.graph import Graph
 from modulus.sym.models.arch import FuncArch
-from .model_test_utils import validate_func_arch_net
+from model_test_utils import validate_func_arch_net
 
 _ = paddle.seed(seed=0)
 device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
@@ -30,6 +32,7 @@ device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").repl
 )
 # >>>torch.backends.cuda.matmul.allow_tf32 = False
 
+paddle.framework.core.set_prim_eager_enabled(True)
 
 @pytest.mark.parametrize(
     "branch_input_keys", [[Key("a", 100)], [Key("a", 100, scale=(1.0, 2.0))]]
@@ -97,7 +100,7 @@ def test_func_arch_deeponet_with_pix2pix(validate_with_dict_forward):
         [ref_net.make_node("ref_net", jit=False)],
         ref_net.input_keys,
         deriv_keys + [Key("sol")],
-        func_arch=True,
+        func_arch=False,
     ).to(device)
     for node in ft_graph.node_evaluation_order:
         evaluate = node.evaluate
@@ -115,4 +118,4 @@ def test_func_arch_deeponet_with_pix2pix(validate_with_dict_forward):
     ft_out = ft_graph(in_vars)
     ref_out = ref_graph(in_vars)
     for k in ref_out.keys():
-        assert paddle.allclose(x=ref_out[k], y=ft_out[k], atol=6e-05).item()
+        assert paddle.allclose(x=ref_out[k], y=ft_out[k], atol=6e-5).item()

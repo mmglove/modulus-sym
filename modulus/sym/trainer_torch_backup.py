@@ -18,15 +18,14 @@
 import os
 import time
 import numpy as np
-import paddle
-from tensorboardX import SummaryWriter
-from paddle.optimizer import Optimizer
-from paddle.optimizer.lr import LRScheduler
-from paddle.amp import GradScaler
-import datetime
-from paddle import nn
-from paddle import profiler
-import paddle.distributed as dist
+import torch
+from torch.utils.tensorboard import SummaryWriter
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
+from torch.cuda.amp import GradScaler
+import torch.nn as nn
+import torch.cuda.profiler as profiler
+import torch.distributed as dist
 from termcolor import colored, cprint
 from copy import copy
 from operator import add
@@ -37,57 +36,19 @@ from collections import Counter
 from typing import Dict, List, Optional
 import logging
 from contextlib import ExitStack
-from contextlib import nullcontext
 
 from .domain.constraint import Constraint
 from .domain import Domain
 from .loss.aggregator import Sum
 from .utils.training.stop_criterion import StopCriterion
-from .constants import TF_SUMMARY
+from .constants import TF_SUMMARY, JIT_PYTORCH_VERSION
 from .hydra import (
     instantiate_optim,
+    instantiate_sched,
     instantiate_agg,
     add_hydra_run_path,
 )
-import sys
 from .distributed.manager import DistributedManager
-
-from contextlib import ContextDecorator
-
-
-class PaddleProfiler(ContextDecorator):
-    """
-    Profiler list how many kinds of C++ API is called.
-    """
-    def __init__(self, scheduler=None):
-        super().__init__()
-        self.prof = profiler.Profiler(
-            targets=[profiler.ProfilerTarget.CPU, profiler.ProfilerTarget.GPU],
-            scheduler=scheduler,
-            on_trace_ready=profiler.export_chrome_tracing("./log"),
-        )
-
-    def __enter__(self):
-        self.prof.start()
-        return self
-
-    def step(self):
-        self.prof.step()
-
-    def __exit__(self, type, value, traceback):
-        self.prof.stop()
-
-        self.prof.summary(
-            sorted_by=profiler.SortedKeys.GPUTotal,
-            op_detail=False,
-            thread_sep=False,
-            time_unit="ms",
-            views=profiler.SummaryView.OperatorView,
-        )
-        print(
-            "[Warning] This profiler mainly for count how many kinds of C++ API is called. "
-            "It is recommend to exit after 1 step for it is enough to gather called C++ API information."
-        )
 
 
 class AdamMixin:
@@ -96,33 +57,43 @@ class AdamMixin:
     """
 
     def adam_compute_gradients(
-        self, aggregator: nn.Layer, global_optimizer_model: nn.Layer, step: int
+        self, aggregator: nn.Module, global_optimizer_model: nn.Module, step: int
     ):
         loss, losses = 0, Counter({})
+
+        if self.cfg.cuda_graphs and self.grad_agg_freq != 1:
+            raise ValueError(
+                "Gradient Aggregation with CUDA Graphs is not supported currently."
+            )
+
         for agg_step in range(self.grad_agg_freq):
-            with self.auto_cast_ctx:
-                paddle.framework.core.nvprof_nvtx_push("Loss computation")
-                # fwd_tic = time.perf_counter()
+            with torch.autocast(
+                self.device_amp, enabled=self.amp, dtype=self.amp_dtype
+            ):
+                if agg_step != 0:  # load new data for subsequent steps
+                    self.load_data()
+                torch.cuda.nvtx.range_push("Loss computation")
+                torch.cuda.synchronize()
+                fwd_tic = time.perf_counter()
                 losses_minibatch = self.compute_losses(step)
-                paddle.framework.core.nvprof_nvtx_pop()
-                if self.grad_agg_freq > 1:
-                    losses_minibatch = {
-                        key: value / self.grad_agg_freq
-                        for key, value in losses_minibatch.items()
-                    }
-                paddle.framework.core.nvprof_nvtx_push("Loss aggregator")
+                torch.cuda.nvtx.range_pop()
+                losses_minibatch = {
+                    key: value / self.grad_agg_freq
+                    for key, value in losses_minibatch.items()
+                }
+                torch.cuda.nvtx.range_push("Loss aggregator")
                 loss_minibatch = aggregator(losses_minibatch, step)
-                paddle.framework.core.nvprof_nvtx_pop()
+                torch.cuda.nvtx.range_pop()
                 loss += loss_minibatch
-                # self.fwd_cost = time.perf_counter() - fwd_tic
-            paddle.framework.core.nvprof_nvtx_push("Weight gradients")
-            # bwd_tic = time.perf_counter()
-            if not self.enable_scaler:
-                loss_minibatch.backward()
-            else:
-                self.scaler.scale(loss_minibatch).backward()
-            # self.bwd_cost = time.perf_counter() - bwd_tic
-            paddle.framework.core.nvprof_nvtx_pop()
+                torch.cuda.synchronize()
+                self.fwd_cost = time.perf_counter() - fwd_tic
+            torch.cuda.nvtx.range_push("Weight gradients")
+            torch.cuda.synchronize()
+            bwd_tic = time.perf_counter()
+            self.scaler.scale(loss_minibatch).backward()
+            torch.cuda.synchronize()
+            self.bwd_cost = time.perf_counter() - bwd_tic
+            torch.cuda.nvtx.range_pop()
             losses.update(losses_minibatch)
 
         return loss, dict(losses)
@@ -136,16 +107,16 @@ class AdaHessianMixin:
     """Special functions for training using the higher-order optimizer AdaHessian"""
 
     def adahess_compute_gradients(
-        self, aggregator: nn.Layer, global_optimizer_model: nn.Layer, step: int
+        self, aggregator: nn.Module, global_optimizer_model: nn.Module, step: int
     ):
         if self.amp:
             raise NotImplementedError("AMP is not supported for this optimizer.")
         # With data hessian we need to keep grad graph on back-prop to approximate
-        # the hessian with. The suggested Paddle way is to use paddle.grad instead
+        # the hessian with. The suggested PyTorch way is to use torch.grad instead
         # of backward.
         loss, losses = 0, Counter({})
         grads = [
-            paddle.zeros_like(parameter)
+            torch.zeros_like(parameter)
             for parameter in list(global_optimizer_model.parameters())
         ]
         for agg_step in range(self.grad_agg_freq):
@@ -156,7 +127,7 @@ class AdaHessianMixin:
             }
             loss_minibatch = aggregator(losses_minibatch, step)
 
-            grads_step = paddle.grad(
+            grads_step = torch.autograd.grad(
                 loss_minibatch,
                 list(global_optimizer_model.parameters()),
                 create_graph=True,
@@ -179,7 +150,7 @@ class BFGSMixin:
     """Special functions for training using BFGS optimizer"""
 
     def bfgs_compute_gradients(
-        self, aggregator: nn.Layer, global_optimizer_model: nn.Layer, step: int
+        self, aggregator: nn.Module, global_optimizer_model: nn.Module, step: int
     ):
         # Dummy functioned used entirely just for logging purposes and storing
         # objects for internal BFGS updates. Gradients are not calc'd here for BFGS
@@ -203,7 +174,7 @@ class BFGSMixin:
         return loss, losses
 
     def bfgs_closure_func(self):
-        self.optimizer.clear_grad()
+        self.optimizer.zero_grad()
         loss = 0
         losses = self.compute_losses(self.bfgs_step)
         loss = self.bfgs_aggregator(losses, self.bfgs_step)
@@ -264,18 +235,18 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.manager = DistributedManager()
 
         # set device
-        self.place = self.manager.place
+        self.device = self.manager.device
         self.device_amp = "cuda" if self.manager.cuda else "cpu"
 
         # set amp dtype
         if self.cfg.training.amp_dtype == "bfloat16" or self.device_amp == "cpu":
-            self.amp_dtype = "bfloat16"
+            self.amp_dtype = torch.bfloat16
             if self.device_amp == "cpu" and self.amp:
                 self.log.warning(
                     "Switching amp_dtype to bfloat16, AutocastCPU only supports bfloat16"
                 )
         else:
-            self.amp_dtype = "float16"
+            self.amp_dtype = torch.float16
 
     def compute_losses(self, step: int):
         raise NotImplementedError("Subclass of Constraint needs to implement this")
@@ -330,13 +301,13 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.manager.group_rank("data_parallel") if self.manager.distributed else 0
         )
         if data_parallel_rank == 0:
-            rec_inferencer_start = time.perf_counter()
+            rec_inferencer_start = time.time()
             self.record_constraints()
             self.log.debug(
                 f"{self.step_str} saved constraint results to {self.network_dir}"
             )
             self.log.info(
-                f"{self.step_str} record constraint batch time: {time.perf_counter()-rec_inferencer_start:10.3e}s"
+                f"{self.step_str} record constraint batch time: {time.time()-rec_inferencer_start:10.3e}s"
             )
 
     def _record_validators(self, step):
@@ -344,13 +315,13 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.manager.group_rank("data_parallel") if self.manager.distributed else 0
         )
         if data_parallel_rank == 0:
-            rec_validation_start = time.perf_counter()
+            rec_validation_start = time.time()
             self.validator_outvar = self.record_validators(step)
             self.log.debug(
                 f"{self.step_str} saved validator results to {self.network_dir}"
             )
             self.log.info(
-                f"{self.step_str} record validators time: {time.perf_counter()-rec_validation_start:10.3e}s"
+                f"{self.step_str} record validators time: {time.time()-rec_validation_start:10.3e}s"
             )
 
     def _record_inferencers(self, step):
@@ -358,13 +329,13 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.manager.group_rank("data_parallel") if self.manager.distributed else 0
         )
         if data_parallel_rank == 0:
-            rec_inferencer_start = time.perf_counter()
+            rec_inferencer_start = time.time()
             self.record_inferencers(step)
             self.log.debug(
                 f"{self.step_str} saved inferencer results to {self.network_dir}"
             )
             self.log.info(
-                f"{self.step_str} record inferencers time: {time.perf_counter()-rec_inferencer_start:10.3e}s"
+                f"{self.step_str} record inferencers time: {time.time()-rec_inferencer_start:10.3e}s"
             )
 
     def _record_monitors(self, step):
@@ -372,7 +343,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.manager.group_rank("data_parallel") if self.manager.distributed else 0
         )
         if data_parallel_rank == 0:
-            rec_monitor_start = time.perf_counter()
+            rec_monitor_start = time.time()
             self.monitor_outvar = self.record_monitors(step)
             self.log.debug(
                 f"{self.step_str} saved monitor results to {self.network_dir}"
@@ -395,7 +366,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         )
 
             self.log.info(
-                f"{self.step_str} record monitor time: {time.perf_counter()-rec_monitor_start:10.3e}s"
+                f"{self.step_str} record monitor time: {time.time()-rec_monitor_start:10.3e}s"
             )
 
     # check if stopping criterion is met
@@ -404,17 +375,15 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             if self.stop_criterion_metric is None:
                 return False
             elif step % self.stop_criterion_freq == 0:
-                criterion_metric_dict = {
-                    "loss": {"loss": float(loss.cpu().detach().numpy())}
-                }
+                criterion_metric_dict = {"loss": {"loss": loss.cpu().detach().numpy()}}
                 criterion_metric_dict["loss"].update(
-                    {key: float(val.cpu().detach()) for key, val in losses.items()}
+                    {key: val.cpu().detach().numpy() for key, val in losses.items()}
                 )
                 if self.has_monitors:
                     criterion_metric_dict.update(
                         {
                             "monitor": {
-                                key: float(val.cpu().detach().numpy())
+                                key: val.cpu().detach().numpy()
                                 for key, val in self.monitor_outvar.items()
                             }
                         }
@@ -423,7 +392,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     criterion_metric_dict.update(
                         {
                             "validation": {
-                                key: float(val.cpu().detach().numpy())
+                                key: val.cpu().detach().numpy()
                                 for key, val in self.validator_outvar.items()
                             }
                         }
@@ -454,11 +423,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.apply_gradients = getattr(
             self, self.cfg.optimizer._params_.apply_gradients
         )
+        self.optimizer = instantiate_optim(self.cfg, model=self.global_optimizer_model)
 
-        # initialize optimizer and scheduler from hydra
-        self.optimizer, self.scheduler = instantiate_optim(
-            self.cfg, model=self.global_optimizer_model
-        )
+        # initialize scheduler from hydra
+        self.scheduler = instantiate_sched(self.cfg, optimizer=self.optimizer)
 
         # initialize aggregator from hydra
         self.aggregator = instantiate_agg(
@@ -467,10 +435,19 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             num_losses=self.get_num_losses(),
         )
 
+        self.log.info(f"==> self.cfg.jit = {self.cfg.jit}")
+        self.log.info(f"==> self.cfg.cuda_graphs = {self.cfg.cuda_graphs}")
         if self.cfg.jit:
-            raise NotImplementedError(
-                "JIT is not supported for Modulus with Paddle backend."
-            )
+            # Warn user if pytorch version difference
+            if not torch.__version__ == JIT_PYTORCH_VERSION:
+                self.log.warn(
+                    f"Installed PyTorch version {torch.__version__} is not TorchScript"
+                    + f" supported in Modulus. Version {JIT_PYTORCH_VERSION} is officially supported."
+                )
+
+            self.aggregator = torch.jit.script(self.aggregator)
+            if self.amp:
+                torch._C._jit_set_autocast_mode(True)
 
         if len(list(self.aggregator.parameters())) > 0:
             self.log.debug("Adding loss aggregator param group. LBFGS will not work!")
@@ -480,17 +457,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # create grad scalar for AMP
         # grad scaler is only available for float16 dtype on cuda device
-        enable_scaler = self.amp and self.amp_dtype == "float16"
-        self.scaler = GradScaler(
-            enable=enable_scaler, incr_every_n_steps=2000, init_loss_scaling=2**16
-        )
-        self.auto_cast_ctx = (
-            paddle.amp.auto_cast(enable=self.amp, dtype=self.amp_dtype)
-            if self.amp
-            else nullcontext()
-        )
+        enable_scaler = self.amp and self.amp_dtype == torch.float16
+        self.scaler = GradScaler(enabled=enable_scaler)
 
-        self.enable_scaler = enable_scaler
         # make stop criterion
         if self.stop_criterion_metric is not None:
             self.stop_criterion = StopCriterion(
@@ -505,36 +474,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             )
 
         # load network
-        self.initial_step = 0
-        for model in self.saveable_models:
-            try:
-                model.set_state_dict(
-                    paddle.load(f"./init_ckpt/{model.checkpoint_filename}")
-                )
-                self.log.info(f"✨ ✨ Loaded initial pytorch weight for {model.checkpoint_filename}")
-            except Exception as e:
-                self.log.info(f"✨ ✨ Skip load pytorch weight for \n{e}\n")
+        self.initial_step = self.load_network()
 
-        debug_flag = bool(int(os.getenv("debug", False)))
-        loss_monitor = bool(int(os.getenv("loss_monitor", False)))
-        loss_monitor_pytorch_paddle = bool(int(os.getenv("loss_monitor_pytorch_paddle", False)))
-        if debug_flag:
-            self.log.info("✨ ✨ Skip load network as debug=1 in os.getenv")
-            self.initial_step = 0
-            if not loss_monitor:
-                for model in self.saveable_models:
-                    model.set_state_dict(
-                        paddle.load(f"./init_ckpt/{model.checkpoint_filename}")
-                    )
-            if loss_monitor_pytorch_paddle:
-                for model in self.saveable_models:
-                    model.set_state_dict(
-                        paddle.load(f"./init_ckpt/{model.checkpoint_filename}")
-                    )
-        else:
-            self.initial_step = self.load_network()
-
-        # make summary writer
+        # # make summary writer
         self.writer = SummaryWriter(
             log_dir=self.network_dir, purge_step=self.summary_freq + 1
         )
@@ -560,16 +502,18 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # Distributed barrier before starting the train loop
         if self.manager.distributed:
-            dist.barrier()
+            dist.barrier(device_ids=[self.manager.local_rank])
         barrier_flag = False
 
         if self.manager.cuda:
-            start_event = paddle.device.cuda.Event(enable_timing=True)
-            end_event = paddle.device.cuda.Event(enable_timing=True)
+            start_event = torch.cuda.Event(enable_timing=True)
+            end_event = torch.cuda.Event(enable_timing=True)
             start_event.record()
+            # t = time.time()
+            torch.cuda.synchronize()
             t = time.perf_counter()
         else:
-            t = time.perf_counter()
+            t = time.time()
 
         # termination signal handler
         if sigterm_handler is None:
@@ -578,14 +522,11 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.sigterm_handler = sigterm_handler
 
         # train loop
-        # with PaddleProfiler((10, 20)) as pd_prof:
-        self.log.info(f"Prim = {paddle.framework.core._is_eager_prim_enabled()}")
         with ExitStack() as stack:
             if self.profile:
-                raise NotImplementedError(
-                    "Profiler is not supported for Modulus with Paddle backend."
-                )
                 # Add NVTX context if in profile mode
+                self.log.warning("Running in profiling mode")
+                stack.enter_context(torch.autograd.profiler.emit_nvtx())
 
             for step in range(self.initial_step, self.max_steps + 1):
 
@@ -599,15 +540,14 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 if self.profile and step == self.profiler_start_step:
                     # Start profiling
                     self.log.info("Starting profiler at step {}".format(step))
-                    paddle.framework.core.nvprof_start()
-                    paddle.framework.core.nvprof_enable_record_event()
+                    profiler.start()
 
                 if self.profile and step == self.profiler_end_step:
                     # Stop profiling
                     self.log.info("Stopping profiler at step {}".format(step))
-                    paddle.framework.core.nvprof_stop()
+                    profiler.stop()
 
-                paddle.framework.core.nvprof_nvtx_push("Training iteration")
+                torch.cuda.nvtx.range_push("Training iteration")
 
                 if self.cfg.cuda_graphs:
                     # If cuda graphs statically load it into defined allocations
@@ -616,38 +556,38 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     loss, losses = self._cuda_graph_training_step(step)
                 else:
                     # Load all data for constraints
-                    # data_tic = time.perf_counter()
+                    torch.cuda.synchronize()
+                    data_tic = time.perf_counter()
                     self.load_data()
-                    # data_cost = time.perf_counter() - data_tic
+                    torch.cuda.synchronize()
+                    data_cost = time.perf_counter() - data_tic
 
-                    self.optimizer.clear_grad()
+                    self.global_optimizer_model.zero_grad(set_to_none=True)
 
                     # compute gradients
                     loss, losses = self.compute_gradients(
                         self.aggregator, self.global_optimizer_model, step
                     )
+                    # if step == self.max_steps - 10:
+                    #     self.log.info(f"==> max_memory_allocated = {torch.cuda.max_memory_allocated() // (1<<20)} MB")
 
-                    # opt_tic = time.perf_counter()
+                    torch.cuda.synchronize()
+                    opt_tic = time.perf_counter()
                     # take optimizer step
                     self.apply_gradients()
-                    if step == 5:
-                        self.log.info(f"Mem = {paddle.device.cuda.max_memory_allocated() / (1<<30):.3f} GB")
+                    torch.cuda.synchronize()
+                    opt_cost = time.perf_counter() - opt_tic
 
-                    # opt_cost = time.perf_counter() - opt_tic
-
-                    # self.log.info(f"reader_cost: {data_cost:.3f} fwd_cost: {self.fwd_cost:.3f} bwd_cost: {self.bwd_cost:.3f} opt_cost: {opt_cost:.3f}")
+                    self.log.info(f"reader_cost: {data_cost:.3f} fwd_cost: {self.fwd_cost:.3f} bwd_cost: {self.bwd_cost:.3f} opt_cost: {opt_cost:.3f}")
                     # take scheduler step
-                    if hasattr(self.scheduler, "step"):
-                        self.scheduler.step()
+                    self.scheduler.step()
 
                 # check for nans in loss
-                # if paddle.isnan(loss):
-                #     self.log.error("loss went to Nans")
-                #     break
+                if torch.isnan(loss):
+                    self.log.error("loss went to Nans")
+                    break
 
                 self.step_str = f"[step: {step:10d}]"
-                if debug_flag:
-                    self.log.info(f"Step [{step}] Loss {loss.item():.10f} lr {self.optimizer.get_lr():.10f}")
 
                 # write train loss / learning rate tensorboard summaries
                 if step % self.summary_freq == 0:
@@ -658,60 +598,63 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                             if TF_SUMMARY:
                                 self.writer.add_scalar(
                                     "Train_/loss_L2" + str(key),
-                                    float(value),
+                                    value,
                                     step,
+                                    new_style=True,
                                 )
                             else:
                                 self.writer.add_scalar(
                                     "Train/loss_" + str(key),
-                                    float(value),
+                                    value,
                                     step,
+                                    new_style=True,
                                 )
                         if TF_SUMMARY:
-                            self.writer.add_scalar("Optimzer/loss", loss, step)
+                            self.writer.add_scalar(
+                                "Optimzer/loss", loss, step, new_style=True
+                            )
                             self.writer.add_scalar(
                                 "learning_rate/lr",
-                                self.optimizer.get_lr(),
+                                self.scheduler.get_last_lr()[0],  # TODO: handle list
                                 step,
+                                new_style=True,
                             )
                         else:
                             self.writer.add_scalar(
-                                "Train/loss_aggregated", float(loss), step
+                                "Train/loss_aggregated", loss, step, new_style=True
                             )
                             self.writer.add_scalar(
                                 "Train/learning_rate",
-                                self.optimizer.get_lr(),  # TODO: handle list
+                                self.scheduler.get_last_lr()[0],  # TODO: handle list
                                 step,
+                                new_style=True,
                             )
 
                     if self.manager.distributed:
                         barrier_flag = True
 
                 # write train / inference / validation datasets to tensorboard and file
-                # if step % self.cfg.training.rec_constraint_freq == 0:
-                #     barrier_flag = True
-                #     self._record_constraints()
+                if step % self.cfg.training.rec_constraint_freq == 0:
+                    barrier_flag = True
+                    self._record_constraints()
 
                 if (step % self.cfg.training.rec_validation_freq == 0) and (
                     self.has_validators
                 ):
-                    if not debug_flag:
-                        barrier_flag = True
-                        self._record_validators(step)
+                    barrier_flag = True
+                    self._record_validators(step)
 
                 if (step % self.cfg.training.rec_inference_freq == 0) and (
                     self.has_inferencers
                 ):
-                    if not debug_flag:
-                        barrier_flag = True
-                        self._record_inferencers(step)
+                    barrier_flag = True
+                    self._record_inferencers(step)
 
                 if (step % self.cfg.training.rec_monitor_freq == 0) and (
                     self.has_monitors
                 ):
-                    if not debug_flag:
-                        barrier_flag = True
-                        self._record_monitors(step)
+                    barrier_flag = True
+                    self._record_monitors(step)
 
                 # save checkpoint
                 if step % self.save_network_freq == 0:
@@ -724,21 +667,15 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         else 0
                     )
                     if data_parallel_rank == 0:
-                        if not debug_flag:
-                            self.save_checkpoint(step)
-                            self.log.info(
-                                f"{self.step_str} saved checkpoint to {add_hydra_run_path(self.network_dir)}"
-                            )
-                        else:
-                            self.log.info(
-                                f"Skip save checkpoint for debug=1"
-                            )
-
+                        self.save_checkpoint(step)
+                        self.log.info(
+                            f"{self.step_str} saved checkpoint to {add_hydra_run_path(self.network_dir)}"
+                        )
                     if self.manager.distributed:
                         barrier_flag = True
 
                 if self.manager.distributed and barrier_flag:
-                    dist.barrier()
+                    dist.barrier(device_ids=[self.manager.local_rank])
                     barrier_flag = False
 
                 # print loss stats
@@ -747,37 +684,38 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     if self.manager.cuda:
                         end_event.record()
                         end_event.synchronize()
-                        # elapsed_time = start_event.elapsed_time(end_event)  # in milliseconds
-                        t_end = time.perf_counter()
-                        elapsed_time = (t_end - t) * 1000.0  # in milliseconds
-                        t = time.perf_counter()
+                        elapsed_time = start_event.elapsed_time(
+                            end_event
+                        )  # in milliseconds
+                        torch.cuda.synchronize()
+                        end_time = time.perf_counter()
+                        timetime = (end_time - t) * 1.0e3  # in milliseconds
                     else:
-                        t_end = time.perf_counter()
-                        elapsed_time = (t_end - t) * 1000.0  # in milliseconds
-                        t = time.perf_counter()
+                        t_end = time.time()
+                        elapsed_time = (t_end - t) * 1.0e3  # in milliseconds
+
                     # Reduce loss across all GPUs
                     if self.manager.distributed:
                         dist.reduce(loss, 0, op=dist.ReduceOp.AVG)
-                        elapsed_time = paddle.to_tensor(elapsed_time, place=self.place)
+                        elapsed_time = torch.tensor(elapsed_time).to(self.device)
                         dist.reduce(elapsed_time, 0, op=dist.ReduceOp.AVG)
-                        elapsed_time = float(elapsed_time)
+                        elapsed_time = elapsed_time.cpu().numpy()[()]
 
                     # print statement
                     print_statement = (
-                        # f'{self.step_str} loss: {float(loss):.10f}'
-                        f"{self.step_str} lr: {self.optimizer.get_lr():.10f}, loss: {float(loss):.10f}"
+                        f"{self.step_str} loss: {loss.cpu().detach().numpy():10.3e}"
                     )
-                    eta_sec = (self.max_steps - step) * (elapsed_time / self.print_stats_freq) / 1000
-                    eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
                     if step >= self.initial_step + self.print_stats_freq:
-                        print_statement += f", time/iteration: {elapsed_time / self.print_stats_freq:10.3e} ms, ETA: {eta_str}"
+                        print_statement += f", time/iteration: {elapsed_time/self.print_stats_freq:10.3e} ms, timetime: {timetime/self.print_stats_freq:10.3e} ms"
                     if self.manager.rank == 0:
                         self.log.info(print_statement)
 
                     if self.manager.cuda:
                         start_event.record()
-                    else:
+                        torch.cuda.synchronize()
                         t = time.perf_counter()
+                    else:
+                        t = time.time()
 
                 # check stopping criterion
                 stop_training = self._check_stopping_criterion(loss, losses, step)
@@ -796,14 +734,72 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                         )
                     break
 
-                paddle.framework.core.nvprof_nvtx_pop()
-                    # pd_prof.step()
-            if debug_flag:
-                self.log.info("✨ ✨ Training is finished, now exit when debug_flag is enabled.")
-                sys.exit(0)
+                torch.cuda.nvtx.range_pop()
 
     def _cuda_graph_training_step(self, step: int):
-        raise NotImplementedError("CUDA graph training is not implemented yet")
+        # Training step method for using cuda graphs
+        # Warm up
+        if (step - self.initial_step) < self.cfg.cuda_graph_warmup:
+            if (step - self.initial_step) == 0:
+                # Default stream for warm up
+                self.warmup_stream = torch.cuda.Stream()
+
+            self.warmup_stream.wait_stream(torch.cuda.current_stream())
+            with torch.cuda.stream(self.warmup_stream):
+                # zero optimizer gradients
+                self.global_optimizer_model.zero_grad(set_to_none=True)
+
+                # # compute gradients
+                self.loss_static, self.losses_static = self.compute_gradients(
+                    self.aggregator, self.global_optimizer_model, step
+                )
+            torch.cuda.current_stream().wait_stream(self.warmup_stream)
+
+            # take optimizer step
+            self.apply_gradients()
+
+            # take scheduler step
+            self.scheduler.step()
+        # Record graph
+        elif (step - self.initial_step) == self.cfg.cuda_graph_warmup:
+            torch.cuda.synchronize()
+            if self.manager.distributed:
+                dist.barrier(device_ids=[self.manager.local_rank])
+
+            if self.cfg.cuda_graph_warmup < 11:
+                self.log.warn(
+                    f"Graph warm up length ({self.cfg.cuda_graph_warmup}) should be more than 11 steps, higher suggested"
+                )
+            self.log.info("Attempting cuda graph building, this may take a bit...")
+
+            self.g = torch.cuda.CUDAGraph()
+            self.global_optimizer_model.zero_grad(set_to_none=True)
+            # TODO: temporary workaround till this issue is fixed:
+            # https://github.com/pytorch/pytorch/pull/104487#issuecomment-1638665876
+            delay = os.environ.get("MODULUS_CUDA_GRAPH_CAPTURE_DELAY", "10")
+            time.sleep(int(delay))
+            with torch.cuda.graph(self.g):
+                # compute gradients
+                self.loss_static, self.losses_static = self.compute_gradients(
+                    self.aggregator, self.global_optimizer_model, step
+                )
+
+            # take optimizer step
+            # left out of graph for AMP compat, No perf difference
+            self.apply_gradients()
+
+            # take scheduler step
+            self.scheduler.step()
+        # Replay
+        else:
+            # Graph replay
+            self.g.replay()
+            # take optimizer step
+            self.apply_gradients()
+
+            self.scheduler.step()
+
+        return self.loss_static, self.losses_static
 
     def _eval(
         self,
@@ -817,8 +813,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.saveable_models = self.get_saveable_models()
 
         # set device
-        if self.place is None:
-            self.place = self.manager.place
+        if self.device is None:
+            self.device = self.manager.device
 
         # load model
         self.step = self.load_step()
@@ -832,7 +828,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.summary_histograms = self.cfg["summary_histograms"]
 
         if self.manager.cuda:
-            paddle.device.synchronize()
+            torch.cuda.synchronize(self.device)
 
         # write inference / validation datasets to tensorboard and file
         if self.has_validators:
@@ -854,8 +850,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.saveable_models = self.get_saveable_models()
 
         # set device
-        if self.place is None:
-            self.place = self.manager.place
+        if self.device is None:
+            self.device = self.manager.device
 
         # load model
         self.step = self.load_step()
@@ -863,7 +859,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.step_str = f"[step: {self.step:10d}]"
 
         if self.manager.cuda:
-            paddle.device.synchronize()
+            torch.cuda.synchronize(self.device)
 
         # write streamed results to file
         return self.record_stream
@@ -872,18 +868,18 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
     def _load_network(
         initialization_network_dir: str,
         network_dir: str,
-        models: List[nn.Layer],
+        models: List[nn.Module],
         optimizer: Optimizer,
-        aggregator: nn.Layer,
-        scheduler: LRScheduler,
+        aggregator: nn.Module,
+        scheduler: _LRScheduler,
         scaler: GradScaler,
         log: logging.Logger,
         manager: DistributedManager,
-        device: Optional[str] = None,
+        device: Optional[torch.device] = None,
     ):
         # set device
         if device is None:
-            device = manager.place
+            device = manager.device
 
         # load optimizer
         step = Trainer._load_optimizer(
@@ -911,11 +907,11 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
     def _load_optimizer(
         network_dir: str,
         optimizer: Optimizer,
-        aggregator: nn.Layer,
-        scheduler: LRScheduler,
+        aggregator: nn.Module,
+        scheduler: _LRScheduler,
         scaler: GradScaler,
         log: logging.Logger,
-        device: str,
+        device: torch.device,
     ):
         manager = DistributedManager()
         model_parallel_rank = (
@@ -924,15 +920,15 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # attempt to restore optimizer
         optimizer_checkpoint_file = (
-            network_dir + f"/optim_checkpoint.{model_parallel_rank}.pdparams"
+            network_dir + f"/optim_checkpoint.{model_parallel_rank}.pth"
         )
         log.info("attempting to restore from: " + add_hydra_run_path(network_dir))
         if os.path.exists(optimizer_checkpoint_file):
             try:
-                checkpoint = paddle.load(optimizer_checkpoint_file)
-                optimizer.set_state_dict(checkpoint["optimizer_state_dict"])
-                aggregator.set_state_dict(checkpoint["aggregator_state_dict"])
-                scheduler.set_state_dict(checkpoint["scheduler_state_dict"])
+                checkpoint = torch.load(optimizer_checkpoint_file, map_location=device)
+                optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+                aggregator.load_state_dict(checkpoint["aggregator_state_dict"])
+                scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
                 scaler.load_state_dict(checkpoint["scaler_state_dict"])
                 step = checkpoint["step"]
                 success = colored("Success loading optimizer: ", "green")
@@ -941,7 +937,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 fail = colored("Fail loading optimizer: ", "red")
                 step = 0
                 log.info(
-                    fail + add_hydra_run_path(network_dir + "/optim_checkpoint.pdparams")
+                    fail + add_hydra_run_path(network_dir + "/optim_checkpoint.pth")
                 )
         else:
             log.warning("optimizer checkpoint not found")
@@ -952,10 +948,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
     def _load_model(
         initialization_network_dir: str,
         network_dir: str,
-        models: List[nn.Layer],
+        models: List[nn.Module],
         step: int,
         log: logging.Logger,
-        device: str,
+        device: torch.device,
     ):
         manager = DistributedManager()
         model_parallel_rank = (
@@ -964,7 +960,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # attempt to restrore from initialization network dir
         if initialization_network_dir != "":
-            for i_dir in initialization_network_dir.split(" "):
+            for i_dir in initialization_network_dir.split(","):
                 if os.path.exists(i_dir):
                     log.info("attempting to initialize network from " + i_dir)
                     for model in models:
@@ -1016,19 +1012,18 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
     @staticmethod
     def _load_step(
         network_dir: str,
-        device: Optional[str] = None,
+        device: Optional[torch.device] = None,
     ):
         manager = DistributedManager()
         model_parallel_rank = (
             manager.group_rank("model_parallel") if manager.distributed else 0
         )
 
-        if os.path.exists(network_dir + f"/optim_checkpoint.{model_parallel_rank}.pdparams"):
+        if os.path.exists(network_dir + f"/optim_checkpoint.{model_parallel_rank}.pth"):
             try:
-                checkpoint = paddle.load(
-                    os.path.join(
-                        network_dir, f"optim_checkpoint.{model_parallel_rank}.pdparams"
-                    )
+                checkpoint = torch.load(
+                    network_dir + f"/optim_checkpoint.{model_parallel_rank}.pth",
+                    map_location=device,
                 )
                 step = checkpoint["step"]
             except:
@@ -1040,10 +1035,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
     @staticmethod
     def _save_checkpoint(
         network_dir: str,
-        models: List[nn.Layer],
+        models: List[nn.Module],
         optimizer: Optimizer,
-        aggregator: nn.Layer,
-        scheduler: LRScheduler,
+        aggregator: nn.Module,
+        scheduler: _LRScheduler,
         scaler: GradScaler,
         step: int,
     ):
@@ -1057,11 +1052,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # save models
         for model in models:
-            # model.save(network_dir, step)
-            model.save(network_dir, step)
+            model.save(network_dir)
 
         # save step, optimizer, aggregator, and scaler
-        paddle.save(
+        torch.save(
             {
                 "step": step,
                 "optimizer_state_dict": optimizer.state_dict(),
@@ -1069,7 +1063,5 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 "scheduler_state_dict": scheduler.state_dict(),
                 "scaler_state_dict": scaler.state_dict(),
             },
-            os.path.join(
-                network_dir, f"{step}_optim_checkpoint.{model_parallel_rank}.pdparams"
-            ),
+            network_dir + f"/optim_checkpoint.{model_parallel_rank}.pth",
         )

@@ -58,7 +58,7 @@ class SpectralConv1d(nn.Layer):
             t = t.transpose([1, 2, 0])
             return t
 
-        return einsum_bix_iox(input, cweights)
+        # return einsum_bix_iox(input, cweights)
         return paddle.einsum("bix,iox->box", input, cweights)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -245,18 +245,18 @@ class SpectralConv3d(nn.Layer):
     ) -> Tensor:
         cweights = paddle.as_complex(weights)
 
-        def einsum_bixyz_ioxyz(x, y):
-            b, i, x, y, z = x.shape
-            o = y.sahpe[1]
+        def einsum_bixyz_ioxyz(x_, y_):
+            b, i, x, y, z = x_.shape
+            o = y_.shape[1]
             t = paddle.bmm(
-                x.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, b, i]),
-                y.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, i, o]),
+                x_.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, b, i]),
+                y_.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, i, o]),
             ) # [xyz,b,o]
             t = t.reshape([x, y, z, b, o])
             t = t.transpose([3, 4, 0, 1, 2])
             return t
 
-        return einsum_bixyz_ioxyz(input, cweights)
+        # return einsum_bixyz_ioxyz(input, cweights)
         return paddle.einsum("bixyz,ioxyz->boxyz", input, cweights)
 
     def forward(self, x: Tensor) -> Tensor:
