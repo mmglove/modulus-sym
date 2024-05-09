@@ -353,6 +353,7 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
                 invar_fn=invar_fn,
                 outvar_fn=outvar_fn,
                 lambda_weighting_fn=lambda_weighting_fn,
+                name=loss.name,
             )
 
         # initialize constraint
@@ -521,6 +522,7 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
                 invar_fn=invar_fn,
                 outvar_fn=outvar_fn,
                 lambda_weighting_fn=lambda_weighting_fn,
+                name=loss.name,
             )
 
         # initialize constraint
