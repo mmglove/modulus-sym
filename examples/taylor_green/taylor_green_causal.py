@@ -132,7 +132,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"continuity": 0, "momentum_x": 0, "momentum_y": 0, "momentum_z": 0},
         bounds=box_bounds,
         batch_size=4000,
-        loss=CausalLossNorm(eps=1.0),
+        loss=CausalLossNorm(eps=1.0, name="interior"),
         fixed_dataset=False,
         shuffle=False,
     )
