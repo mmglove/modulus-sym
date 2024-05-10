@@ -90,7 +90,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=geo,
         outvar={"wave_equation": 0},
         batch_size=cfg.batch_size.interior,
-        loss=CausalLossNorm(eps=1.0),
+        loss=CausalLossNorm(eps=1.0, name="interior"),
         fixed_dataset=False,
         shuffle=False,
     )

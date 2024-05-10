@@ -289,11 +289,12 @@ class CausalLossNorm(Loss):
         Number of chunks splitting the temporal domain evenly.
     """
 
-    def __init__(self, ord: int = 2, eps: float = 1.0, n_chunks=10):
+    def __init__(self, ord: int = 2, eps: float = 1.0, n_chunks=10, name: str = ""):
         super().__init__()
         self.ord: int = ord
         self.eps: float = eps
         self.n_chunks: int = n_chunks
+        self.name = name
 
     @staticmethod
     def _loss(
