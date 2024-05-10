@@ -109,10 +109,10 @@ class Constraint:
             build_strategy = static.BuildStrategy()
             build_strategy.build_cinn_pass = enable_cinn
             self.model.forward = jit.to_static(full_graph=True, build_strategy=build_strategy)(self.model.forward)
-            logger.info(f"🍰 🍰 Using jit.to_static with FLAGS_use_cinn={enable_cinn} in Constraint.__init__ in {__file__}, to_static can be disabled by set 'to_static=0 python example.py'")
+            logger.info(f"🍰 🍰 Using jit.to_static with FLAGS_use_cinn={enable_cinn} in Constraint.__init__ in {__file__}, to_static can be disabled by set 'to_static=False python example.py'")
         elif enable_cinn:
             raise RuntimeError(
-                f"Please set cinn=0 when 'to_static' is set to 0"
+                f"Please set FLAGS_use_cinn=0 when 'to_static' is set to 0"
             )
 
 
