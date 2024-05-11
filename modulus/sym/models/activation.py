@@ -24,7 +24,7 @@ import paddle.nn.functional as F
 from paddle import Tensor
 from modulus.sym.manager import JitManager, JitArchMode
 
-use_silu_forward_composite = os.getenv("silu_comp", "False") == "True"
+use_silu_forward_composite = os.getenv("silu_comp", "True") == "True"
 if use_silu_forward_composite:
     silu_func = lambda x: x * F.sigmoid(x)
     print(f"✨ ✨ Using silu(x) = x * sigmoid(x)")
