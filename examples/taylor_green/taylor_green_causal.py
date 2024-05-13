@@ -133,7 +133,7 @@ def run(cfg: ModulusConfig) -> None:
         bounds=box_bounds,
         batch_size=4000,
         loss=CausalLossNorm(eps=1.0, name="interior"),
-s        fixed_dataset=False,
+        fixed_dataset=False,
         shuffle=False,
     )
     ic_domain.add_constraint(interior, name="interior")
