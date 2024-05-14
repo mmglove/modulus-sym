@@ -29,9 +29,9 @@ def torch_to_paddle(torch_state_dict: Dict[str, "torch.Tensor"], output_dir: str
         )
 
     dump_path = osp.join(output_dir, filename)
-    # if osp.exists(dump_path):
-    #     print(f"✨ ✨ Skip converting as {dump_path} already exist.")
-    #     return
+    if osp.exists(dump_path):
+        print(f"✨ ✨ Skip converting as {dump_path} already exist.")
+        return
 
     torch_dump_path = dump_path.replace(".pdparams", ".pth")
     os.makedirs(output_dir, exist_ok=True)
