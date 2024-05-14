@@ -72,6 +72,7 @@ class AFNO2D(nn.Layer):
         self.hard_thresholding_fraction = hard_thresholding_fraction
         self.hidden_size_factor = hidden_size_factor
         self.scale = 0.02
+
         self.w1 = self.create_parameter(
             [
                 2,
@@ -82,7 +83,7 @@ class AFNO2D(nn.Layer):
             default_initializer=nn.initializer.Assign(
                 self.scale
                 * paddle.randn(
-                    shape=[
+                    [
                         2,
                         self.num_blocks,
                         self.block_size,
@@ -100,7 +101,7 @@ class AFNO2D(nn.Layer):
             default_initializer=nn.initializer.Assign(
                 self.scale
                 * paddle.randn(
-                    shape=[
+                    [
                         2,
                         self.num_blocks,
                         self.block_size * self.hidden_size_factor,
@@ -118,7 +119,7 @@ class AFNO2D(nn.Layer):
             default_initializer=nn.initializer.Assign(
                 self.scale
                 * paddle.randn(
-                    shape=[
+                    [
                         2,
                         self.num_blocks,
                         self.block_size * self.hidden_size_factor,
@@ -130,19 +131,22 @@ class AFNO2D(nn.Layer):
         self.b2 = self.create_parameter(
             [2, self.num_blocks, self.block_size],
             default_initializer=nn.initializer.Assign(
-                self.scale * paddle.randn(shape=[2, self.num_blocks, self.block_size])
+                self.scale * paddle.randn([2, self.num_blocks, self.block_size])
             ),
         )
 
     def forward(self, x):
         bias = x
+
         dtype = x.dtype
         x = x.astype(dtype="float32")
         B, H, W, C = x.shape
+
         x = paddle.fft.rfft2(x=x, axes=(1, 2), norm="ortho")
         x = x.reshape([B, H, W // 2 + 1, self.num_blocks, self.block_size])
+
         o1_real = paddle.zeros(
-            shape=[
+            [
                 B,
                 H,
                 W // 2 + 1,
@@ -151,7 +155,7 @@ class AFNO2D(nn.Layer):
             ]
         )
         o1_imag = paddle.zeros(
-            shape=[
+            [
                 B,
                 H,
                 W // 2 + 1,
@@ -159,10 +163,12 @@ class AFNO2D(nn.Layer):
                 self.block_size * self.hidden_size_factor,
             ]
         )
-        o2_real = paddle.zeros(shape=x.shape)
-        o2_imag = paddle.zeros(shape=x.shape)
+        o2_real = paddle.zeros(x.shape)
+        o2_imag = paddle.zeros(x.shape)
+
         total_modes = H // 2 + 1
         kept_modes = int(total_modes * self.hard_thresholding_fraction)
+
         o1_real[
             :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
         ] = F.relu(
@@ -182,6 +188,7 @@ class AFNO2D(nn.Layer):
             )
             + self.b1[0]
         )
+
         o1_imag[
             :, total_modes - kept_modes : total_modes + kept_modes, :kept_modes
         ] = F.relu(
@@ -201,6 +208,7 @@ class AFNO2D(nn.Layer):
             )
             + self.b1[1]
         )
+
         o2_real[:, total_modes - kept_modes : total_modes + kept_modes, :kept_modes] = (
             paddle.einsum(
                 "acdbi,bio->acdbo",
@@ -218,6 +226,7 @@ class AFNO2D(nn.Layer):
             )
             + self.b2[0]
         )
+
         o2_imag[:, total_modes - kept_modes : total_modes + kept_modes, :kept_modes] = (
             paddle.einsum(
                 "acdbi,bio->acdbo",
@@ -235,12 +244,14 @@ class AFNO2D(nn.Layer):
             )
             + self.b2[1]
         )
+
         x = paddle.stack([o2_real, o2_imag], axis=-1)
         x = F.softshrink(x, threshold=self.sparsity_threshold)
         x = paddle.as_complex(x)
         x = x.reshape([B, H, W // 2 + 1, C])
         x = paddle.fft.irfft2(x, s=(H, W), axes=(1, 2), norm="ortho")
         x = x.astype(dtype)
+
         return x + bias
 
 
@@ -276,9 +287,11 @@ class Block(nn.Layer):
         residual = x
         x = self.norm1(x)
         x = self.filter(x)
+
         if self.double_skip:
             x = x + residual
             residual = x
+
         x = self.norm2(x)
         x = self.mlp(x)
         x = x + residual
@@ -310,7 +323,7 @@ class AFNONet(nn.Layer):
         self.patch_size = patch_size
         self.num_features = self.embed_dim = embed_dim
         self.num_blocks = num_blocks
-        norm_layer = partial(nn.LayerNorm, epsilon=1e-06)
+        norm_layer = partial(nn.LayerNorm, epsilon=1e-6)
 
         self.patch_embed = PatchEmbed(
             img_size=img_size,
@@ -319,11 +332,13 @@ class AFNONet(nn.Layer):
             embed_dim=embed_dim,
         )
         num_patches = self.patch_embed.num_patches
+
         self.pos_embed = self.create_parameter(
             [1, num_patches, embed_dim],
             default_initializer=nn.initializer.Constant(0),
         )
         self.pos_drop = nn.Dropout(drop_rate)
+
         self.h = img_size[0] // self.patch_size[0]
         self.w = img_size[1] // self.patch_size[1]
 
@@ -375,11 +390,18 @@ class AFNONet(nn.Layer):
     def forward(self, x: paddle.Tensor) -> paddle.Tensor:
         x = self.forward_features(x)
         x = self.head(x)
+
+        # Correct tensor shape back into [B, C, H, W]
+        # [b h w (p1 p2 c_out)]
         out = x.reshape(
             list(x.shape[:-1]) + [self.patch_size[0], self.patch_size[1], -1]
         )
+        # [b h w p1 p2 c_out]
         out = paddle.transpose(x=out, perm=(0, 5, 1, 3, 2, 4))
+        # [b c_out, h, p1, w, p2]
         out = out.reshape(list(out.shape[:2]) + [self.img_size[0], self.img_size[1]])
+        # [b c_out, (h*p1), (w*p2)]
+
         return out
 
 
@@ -405,10 +427,7 @@ class PatchEmbed(nn.Layer):
             H == self.img_size[0] and W == self.img_size[1]
         ), f"Input image size ({H}*{W}) doesn't match model ({self.img_size[0]}*{self.img_size[1]})."
         x = self.proj(x).flatten(start_axis=2)
-        perm_6 = list(range(x.ndim))
-        perm_6[1] = 2
-        perm_6[2] = 1
-        x = x.transpose(perm=perm_6)
+        x = x.transpose(perm=[0, 2, 1])
         return x
 
 
