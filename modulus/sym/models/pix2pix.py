@@ -196,12 +196,18 @@ class ResnetBlock(nn.Layer):
         self,
         dimension: int,
         channels: int,
-        padding_type: str = "zero",
+        padding_type: str = "reflect",
         activation: nn.Layer = nn.ReLU(),
         use_batch_norm: bool = False,
         use_dropout: bool = False,
     ):
         super().__init__()
+        if padding_type not in [
+            "reflect",
+            "zero",
+            "replicate",
+        ]:
+            raise ValueError(f"Invalid padding type {padding_type}")
 
         if dimension == 1:
             conv = nn.Conv1D
@@ -209,8 +215,8 @@ class ResnetBlock(nn.Layer):
                 padding = nn.Pad1D(padding=1, mode="reflect")
             elif padding_type == "replicate":
                 padding = nn.Pad1D(padding=1, mode="replicate")
-            elif padding_type == "zero":
-                padding = 1
+            else:
+                padding = None
             norm = nn.BatchNorm1D
         elif dimension == 2:
             conv = nn.Conv2D
@@ -218,8 +224,8 @@ class ResnetBlock(nn.Layer):
                 padding = nn.Pad2D(padding=1, mode="reflect")
             elif padding_type == "replicate":
                 padding = nn.Pad2D(padding=1, mode="replicate")
-            elif padding_type == "zero":
-                padding = 1
+            else:
+                padding = None
             norm = nn.BatchNorm2D
         elif dimension == 3:
             conv = nn.Conv3D
@@ -227,22 +233,25 @@ class ResnetBlock(nn.Layer):
                 padding = nn.Pad3D(padding=1, mode="reflect")
             elif padding_type == "replicate":
                 padding = nn.Pad3D(padding=1, mode="replicate")
-            elif padding_type == "zero":
-                padding = 1
+            else:
+                padding = None
             norm = nn.BatchNorm3D
+        else:
+            raise NotImplementedError(
+                f"Pix2Pix ResnetBlock only supported dimensions 1, 2, 3. Got {dimension}"
+            )
 
         conv_block = []
-        p = 0
         if padding_type != "zero":
             conv_block += [padding]
+            p = 0
+        else:
+            p = 1  # Use built in conv padding
 
         conv_block.append(conv(channels, channels, kernel_size=3, padding=p))
         if use_batch_norm:
             conv_block.append(norm(channels))
         conv_block.append(activation)
-
-        if use_dropout:
-            conv_block += [nn.Dropout(0.5)]
 
         if padding_type != "zero":
             conv_block += [padding]
