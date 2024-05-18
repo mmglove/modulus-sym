@@ -25,10 +25,9 @@ from paddle import Tensor
 from modulus.sym.manager import JitManager, JitArchMode
 
 # Use silu forward decomposition only when
-# 1) `FLAGS_use_cinn` is set to True, or
 # 2) `silu_comp` env variable is set to True.
 use_silu_forward_composite = os.getenv("silu_comp", "False") == "True"
-use_silu_forward_composite |= bool(os.getenv("FLAGS_use_cinn", "False") == "True")
+# use_silu_forward_composite |= bool(os.getenv("FLAGS_use_cinn", "False") == "True")
 
 if use_silu_forward_composite:
     silu_func = lambda x: x * F.sigmoid(x)
