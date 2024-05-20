@@ -206,7 +206,7 @@ def run(cfg: ModulusConfig) -> None:
     flow_domain.add_constraint(integral_continuity, "integral_continuity")
 
     # flow data
-    file_path = "../openfoam/"
+    file_path = "./openfoam/"
     if os.path.exists(to_absolute_path(file_path)):
         mapping = {
             "Points:0": "x",
