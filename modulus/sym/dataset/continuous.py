@@ -118,7 +118,8 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
             while True:
                 import os
                 load_data_flag = os.getenv("load_data", "False") == "True"
-                if load_data_flag:
+                full_train = os.getenv("full_train", "False") == "True"
+                if (not full_train) and load_data_flag:
                     if name:
                         invar = np.load(f"contiguous_pointwise_data/{name}/invar_torch_{self.iter_step}.npz")
                         outvar = np.load(f"contiguous_pointwise_data/{name}/outvar_torch_{self.iter_step}.npz")
@@ -317,7 +318,8 @@ class ContinuousIntegralIterableDataset(IterableDataset):
             while True:
                 import os
                 load_data_flag = os.getenv("load_data", "False") == "True"
-                if load_data_flag:
+                full_train = os.getenv("full_train", "False") == "True"
+                if (not full_train) and load_data_flag:
                     print("✨ ✨ load data for ContinuousIntegralIterableDataset")
                     list_invar = [dict(np.load(f"./contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
                     list_outvar = [dict(np.load(f"./contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
