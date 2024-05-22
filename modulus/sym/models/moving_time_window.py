@@ -80,7 +80,7 @@ class MovingTimeWindowArch(Arch):
 
     def move_window(self):
         with paddle.no_grad():
-            self.window_location = self.window_location + self.window_size
+            paddle.assign(self.window_location + self.window_size, self.window_location)
         for param, param_prev_step in zip(
             self.arch.parameters(), self.arch_prev_step.parameters()
         ):

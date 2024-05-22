@@ -153,8 +153,9 @@ class GradNorm(Aggregator):
         with paddle.no_grad():
             normalizer: paddle.Tensor = self.num_losses / paddle.exp(self.lmbda).sum()
             for i in range(self.num_losses):
-                self.lmbda[i] = self.lmbda[i].clone() + paddle.log(
-                    normalizer.detach()
+                self.lmbda[i].set_value(
+                    self.lmbda[i].clone() + paddle.log(
+                    normalizer.detach())
                 )  # c*exp(x) = exp(log(c)+x)
         lmbda_exp: paddle.Tensor = paddle.exp(self.lmbda)
 
@@ -230,8 +231,8 @@ class ResNorm(Aggregator):
         with paddle.no_grad():
             normalizer: paddle.Tensor = self.num_losses / paddle.exp(self.lmbda).sum()
             for i in range(self.num_losses):
-                self.lmbda[i] = self.lmbda[i].clone() + paddle.log(
-                    normalizer.detach()
+                self.lmbda[i].set_value(
+                    self.lmbda[i].clone() + paddle.log(normalizer.detach())
                 )  # c*exp(x) = exp(log(c)+x)
         lmbda_exp: paddle.Tensor = paddle.exp(self.lmbda)
 
