@@ -124,19 +124,21 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
                 import os
                 debug_flag = bool(int(os.getenv("debug", 0)))
                 save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
-                if debug_flag or save_init_weight_data_flag:
-                    if name:
-                        os.makedirs(f"contiguous_pointwise_data/{name}", exist_ok=True)
-                        np.savez(f"contiguous_pointwise_data/{name}/invar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in invar.items()})
-                        np.savez(f"contiguous_pointwise_data/{name}/outvar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in outvar.items()})
-                        np.savez(f"contiguous_pointwise_data/{name}/lambda_weighting_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in lambda_weighting.items()})
-                        print(f"✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_pointwise_data/{name}/*.npz")
-                    else:
-                        os.makedirs("contiguous_pointwise_data", exist_ok=True)
-                        np.savez(f"contiguous_pointwise_data/invar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in invar.items()})
-                        np.savez(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in outvar.items()})
-                        np.savez(f"contiguous_pointwise_data/lambda_weighting_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in lambda_weighting.items()})
-                        print("✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_pointwise_data/*.npz")
+                full_train = os.getenv("full_train", "False") == "True"
+                if not full_train:
+                    if debug_flag or save_init_weight_data_flag:
+                        if name:
+                            os.makedirs(f"contiguous_pointwise_data/{name}", exist_ok=True)
+                            np.savez(f"contiguous_pointwise_data/{name}/invar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in invar.items()})
+                            np.savez(f"contiguous_pointwise_data/{name}/outvar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in outvar.items()})
+                            np.savez(f"contiguous_pointwise_data/{name}/lambda_weighting_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in lambda_weighting.items()})
+                            print(f"✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_pointwise_data/{name}/*.npz")
+                        else:
+                            os.makedirs("contiguous_pointwise_data", exist_ok=True)
+                            np.savez(f"contiguous_pointwise_data/invar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in invar.items()})
+                            np.savez(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in outvar.items()})
+                            np.savez(f"contiguous_pointwise_data/lambda_weighting_torch_{self.iter_step}", **{k: (v.detach().cpu().numpy() if not isinstance(v, np.ndarray) else v) for k, v in lambda_weighting.items()})
+                            print("✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_pointwise_data/*.npz")
 
                 yield (invar, outvar, lambda_weighting)
                 self.iter_step += 1
@@ -332,15 +334,17 @@ class ContinuousIntegralIterableDataset(IterableDataset):
                 import os
                 debug_flag = bool(int(os.getenv("debug", 0)))
                 save_init_weight_data_flag = os.getenv("save_init_weight_data", "False") == "True"
-                if debug_flag or save_init_weight_data_flag:
-                    os.makedirs("contiguous_integral_data", exist_ok=True)
-                    for i in range(len(list_invar)):
-                        np.savez(f"contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}]", **list_invar[i])
-                    for i in range(len(list_outvar)):
-                        np.savez(f"contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}]", **list_outvar[i])
-                    for i in range(len(list_lambda_weighting)):
-                        np.savez(f"contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}]", **list_lambda_weighting[i])
-                    print("✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_integral_data/*.npz")
+                full_train = os.getenv("full_train", "False") == "True"
+                if not full_train:
+                    if debug_flag or save_init_weight_data_flag:
+                        os.makedirs("contiguous_integral_data", exist_ok=True)
+                        for i in range(len(list_invar)):
+                            np.savez(f"contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}]", **list_invar[i])
+                        for i in range(len(list_outvar)):
+                            np.savez(f"contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}]", **list_outvar[i])
+                        for i in range(len(list_lambda_weighting)):
+                            np.savez(f"contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}]", **list_lambda_weighting[i])
+                        print("✨ ✨ ContinuousIntegralIterableDataset data saved to: contiguous_integral_data/*.npz")
                 invar = Dataset._to_tensor_dict(_stack_list_numpy_dict(list_invar))
                 outvar = Dataset._to_tensor_dict(_stack_list_numpy_dict(list_outvar))
                 lambda_weighting = Dataset._to_tensor_dict(
