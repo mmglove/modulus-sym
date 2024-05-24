@@ -422,28 +422,28 @@ def first_order_pino_grads(
     # print(f"weights_1.shape = {weights_1.shape}") # [32, 32, 1, 1]
     # print(f"diff_tanh.shape = {diff_tanh.shape}") # [8, 32, 241, 241]
     # print(f"weights_2.shape = {weights_2.shape}") # [1, 32, 1, 1]
-    b, i, k, m, x, y = (
-        diff_tanh.shape[0], # b
-        weights_1.shape[1], # i
-        weights_2.shape[0], # k
-        weights_1.shape[0], # m
-        diff_tanh.shape[2], # x
-        diff_tanh.shape[3], # y
-    )
-    weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
-    diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
-    weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
+    # b, i, k, m, x, y = (
+    #     diff_tanh.shape[0], # b
+    #     weights_1.shape[1], # i
+    #     weights_2.shape[0], # k
+    #     weights_1.shape[0], # m
+    #     diff_tanh.shape[2], # x
+    #     diff_tanh.shape[3], # y
+    # )
+    # weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
+    # diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
+    # weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
 
-    diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
+    # diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
     # print(diff_fg.shape)
     # print(torch.allclose(z, diff_fg))
 
-    # diff_fg = paddle.einsum(
-    #     "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
-    #     weights_1,
-    #     diff_tanh,
-    #     weights_2,
-    # )
+    diff_fg = paddle.einsum(
+        "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
+        weights_1,
+        diff_tanh,
+        weights_2,
+    )
 
     # compute diff(f(g)) * diff(g)
     def einsum_bixy_bixy(A, B):
@@ -494,25 +494,25 @@ def second_order_pino_grads(
     # print(weights_1.shape)
     # print(diff_tanh.shape)
     # print(weights_2.shape)
-    b, i, k, m, x, y = (
-        diff_tanh.shape[0], # b
-        weights_1.shape[1], # i
-        weights_2.shape[0], # k
-        weights_1.shape[0], # m
-        diff_tanh.shape[2], # x
-        diff_tanh.shape[3], # y
-    )
-    weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
-    diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
-    weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
-    diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
-
-    # diff_fg = paddle.einsum(
-    #     "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
-    #     weights_1,
-    #     diff_tanh,
-    #     weights_2,
+    # b, i, k, m, x, y = (
+    #     diff_tanh.shape[0], # b
+    #     weights_1.shape[1], # i
+    #     weights_2.shape[0], # k
+    #     weights_1.shape[0], # m
+    #     diff_tanh.shape[2], # x
+    #     diff_tanh.shape[3], # y
     # )
+    # weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
+    # diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
+    # weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
+    # diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
+
+    diff_fg = paddle.einsum(
+        "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
+        weights_1,
+        diff_tanh,
+        weights_2,
+    )
 
     # compute diagonal of hessian
     # double derivative of hidden layer
