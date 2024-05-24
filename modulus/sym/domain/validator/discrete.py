@@ -127,6 +127,7 @@ class GridValidator(Validator):
         }
         # compute losses on cpu
         losses = GridValidator._l2_relative_error(true_outvar_cpu, pred_outvar_cpu)
+        print({k: float(v) for k, v in losses.items()})
 
         # convert to numpy arrays
         invar = {k: v.numpy() for k, v in invar_cpu.items()}
@@ -295,6 +296,7 @@ class DeepONet_Physics_Validator(_DeepONet_Validator):
         losses = DeepONet_Physics_Validator._l2_relative_error(
             true_outvar_cpu, pred_outvar_cpu
         )
+        print({k: float(v) for k, v in losses.items()})
 
         # convert to numpy arrays
         invar = {k: v.numpy() for k, v in invar_cpu.items()}
@@ -439,6 +441,7 @@ class DeepONet_Data_Validator(_DeepONet_Validator):
         losses = DeepONet_Data_Validator._l2_relative_error(
             true_outvar_cpu, pred_outvar_cpu
         )
+        print({k: float(v) for k, v in losses.items()})
 
         # convert to numpy arrays
         invar = {k: v.numpy() for k, v in invar_cpu.items()}
