@@ -161,11 +161,18 @@ def run(cfg: ModulusConfig) -> None:
         )
 
     # make solver
-    slv = SequentialSolver(
-        cfg,
-        [(1, ic_domain), (nr_time_windows, window_domain)],
-        custom_update_operation=time_window_net.move_window,
-    )
+    if cfg.training.max_steps <= 600:
+        slv = SequentialSolver(
+            cfg,
+            [(1, ic_domain)],
+            custom_update_operation=time_window_net.move_window,
+        )
+    else:
+        slv = SequentialSolver(
+            cfg,
+            [(1, ic_domain), (nr_time_windows, window_domain)],
+            custom_update_operation=time_window_net.move_window,
+        )
 
     # start solver
     slv.solve()
