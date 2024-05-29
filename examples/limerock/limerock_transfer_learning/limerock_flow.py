@@ -129,7 +129,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"continuity": 0, "momentum_x": 0, "momentum_y": 0, "momentum_z": 0},
         batch_size=cfg.batch_size.hr_interior,
-        batch_per_epoch=50,
+        batch_per_epoch=5000,
         compute_sdf_derivatives=True,
         lambda_weighting={
             "continuity": 3 * Symbol("sdf"),
