@@ -4,7 +4,7 @@ from __future__ import annotations
 try:
     import paddle
     import torch
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     pass
 
 import numpy as np
