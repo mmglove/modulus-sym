@@ -69,6 +69,8 @@ def main(config_path: str, config_name: str = "config"):
             np.random.seed(GLOBAL_RANDOM_SEED)  # Numpy module.
             paddle.seed(GLOBAL_RANDOM_SEED) # Paddle random.
             print(f"✨ ✨ Set global random seed to {GLOBAL_RANDOM_SEED}")
+            print(f"✨ ✨ paddle commit is {paddle.version.commit}")
+
             # os.environ['PYTHONHASHSEED'] = str(GLOBAL_RANDOM_SEED)
 
             # Enable prim mode
