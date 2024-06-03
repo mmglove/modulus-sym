@@ -252,7 +252,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interface,
         criteria=z > limerock.geo_bounds_lower[2],
         lambda_weighting={"theta_f": 100.0},
-        loss=modulus.sym.loss.PointwiseLossNorm(name="interface"),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interface_1"),
     )
     cycle_1_domain.add_constraint(interface, "interface")
 
@@ -364,7 +364,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.interface,
         criteria=z > limerock.geo_bounds_lower[2],
         lambda_weighting={"dirichlet_theta_s_theta_f": 100.0, "robin_theta_s": 1.0},
-        loss=modulus.sym.loss.PointwiseLossNorm(name="interface"),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="interface_n"),
     )
     cycle_n_domain.add_constraint(interface, "interface")
 
