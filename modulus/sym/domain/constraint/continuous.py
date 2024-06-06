@@ -750,9 +750,9 @@ class IntegralBoundaryConstraint(IntegralConstraint):
 
             if load_data_flag:
                 print("✨ ✨ load data for IntegralBoundaryConstraint")
-                list_invar = [dict(np.load(f"./{loss.name}/list_invar_torch[{i}].npz")) for i in range(len(list_invar))]
-                list_outvar = [dict(np.load(f"./{loss.name}/list_outvar_torch[{i}].npz")) for i in range(len(list_outvar))]
-                list_lambda_weighting = [dict(np.load(f"./{loss.name}/list_lambda_weighting_torch[{i}].npz")) for i in range(len(list_lambda_weighting))]
+                list_invar = [dict(np.load(f"./{loss.name}/list_invar_torch[{i}].npz")) for i in range(batch_size * batch_per_epoch)]
+                list_outvar = [dict(np.load(f"./{loss.name}/list_outvar_torch[{i}].npz")) for i in range(batch_size * batch_per_epoch)]
+                list_lambda_weighting = [dict(np.load(f"./{loss.name}/list_lambda_weighting_torch[{i}].npz")) for i in range(batch_size * batch_per_epoch)]
 
             # make dataset of integral planes
             dataset = ListIntegralDataset(
