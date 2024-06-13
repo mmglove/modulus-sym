@@ -219,7 +219,7 @@ def run(cfg: ModulusConfig) -> None:
             timestep_outvar,
             batch_size,
             lambda_weighting=lambda_weighting,
-        loss=modulus.sym.loss.PointwiseLossNorm(name=f"BC{i:04d}"),
+            loss=modulus.sym.loss.PointwiseLossNorm(name=f"BC{i:04d}"),
         )
         domain.add_constraint(timestep, f"BC{i:04d}")
 
