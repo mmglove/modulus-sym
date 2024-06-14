@@ -3,7 +3,7 @@ from __future__ import annotations
 
 try:
     import paddle
-    import torch
+    # import torch
 except (ModuleNotFoundError, ImportError):
     pass
 
