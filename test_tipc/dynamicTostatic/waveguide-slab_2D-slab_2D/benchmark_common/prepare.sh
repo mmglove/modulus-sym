@@ -1,3 +1,6 @@
+pip install https://paddle-qa.bj.bcebos.com/benchmark/pretrained/sympy-1.12.1-py3-none-any.whl
+pip install https://paddle-qa.bj.bcebos.com/benchmark/pretrained/mpmath-1.3.0-py3-none-any.whl
+
 pip install -e .
 
 if [ ! -f './examples_sym.zip' ]; then

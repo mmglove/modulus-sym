@@ -48,7 +48,7 @@ function _train(){
 #   以下为通用执行命令，无特殊可不用修改
 
     export DDE_BACKEND=paddle
-    train_cmd="pushd examples/waveguide/slab_2D; python slab_2D.py training.max_steps=600; popd"
+    train_cmd="pushd examples/waveguide/slab_2D; python slab_2D.py training.max_steps=2000; popd"
     echo "pwd: $PWD train_cmd: ${train_cmd} log_file: ${train_log_file}"
     set -x
     timeout 15m bash -c "${train_cmd}" > ${train_log_file} 2>&1

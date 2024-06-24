@@ -1,3 +1,6 @@
+pip install https://paddle-qa.bj.bcebos.com/benchmark/pretrained/sympy-1.12.1-py3-none-any.whl
+pip install https://paddle-qa.bj.bcebos.com/benchmark/pretrained/mpmath-1.3.0-py3-none-any.whl
+
 pip install -e .
 
 if [ ! -f './examples_sym.zip' ]; then
@@ -9,10 +12,3 @@ if [ ! -d './examples_sym' ]; then
 fi
 unalias cp 2>/dev/null
 \cp -r -f -v ./examples_sym/examples/* ./examples/
-
-if [ ! -d './examples/darcy/datasets' ]; then
-    mkdir -p ./examples/darcy/datasets && cd ./examples/darcy/datasets
-    wget https://paddle-qa.bj.bcebos.com/benchmark/pretrained/Darcy_241.tar.gz
-    tar xf Darcy_241.tar.gz
-    cd -
-fi

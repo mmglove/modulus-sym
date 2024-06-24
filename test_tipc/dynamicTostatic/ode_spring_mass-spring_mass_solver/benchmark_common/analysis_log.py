@@ -40,6 +40,7 @@ def parse_args():
     parser.add_argument("--run_mode", type=str, default="DP", help="DP|MP|PP")
     parser.add_argument("--fp_item", type=str, help="fp_item:fp16|fp32")
     parser.add_argument("--keyword", type=str, help="Keyword to specify analysis data")
+    parser.add_argument("--loss_keyword", type=str, default="loss:", help="loss Keyword to specify analysis data")
     parser.add_argument(
         "--skip_steps", type=int, default=2, help="The number of steps to be skipped"
     )
@@ -60,7 +61,7 @@ def _is_number(num):
 
 
 class TimeAnalyzer(object):
-    def __init__(self, filename, keyword=None):
+    def __init__(self, filename, keyword=None, loss_keyword=None):
         if filename is None:
             raise Exception("Please specify the filename!")
 
@@ -69,9 +70,11 @@ class TimeAnalyzer(object):
 
         self.filename = filename
         self.keyword = keyword
+        self.loss_keyword = loss_keyword
 
     def get_iteration_cost(self):
         iteration_costs = []
+        loss_value = None
         with open(self.filename, "r") as f_object:
             lines = f_object.read().splitlines()
             for line in lines:
@@ -87,12 +90,19 @@ class TimeAnalyzer(object):
                         if line_words[i] == self.keyword:
                             result = float(line_words[i + 1])
                             iteration_costs.append(result)
+                        if line_words[i] == self.loss_keyword:
+                            # 剔除掉该值后面的逗号并保留5位小数点
+                            loss_value = line_words[i + 1].replace(',', '')  
+                            # 保留5位小数
+                            # loss_value = float("{:.5f}".format(float(loss_str_without_comma)))
+                            
                     # Distil the result from the picked string.
 
                 except Exception as exc:
                     print("line is: {}; failed".format(line_prefix))
-
-        return mean(iteration_costs[2:])
+        if loss_value is None:
+            loss_value = -1
+        return mean(iteration_costs[2:]), loss_value
 
 
 if __name__ == "__main__":
@@ -113,7 +123,7 @@ if __name__ == "__main__":
     else:
         run_info["run_mode"] = args.run_mode
     run_info["convergence_value"] = 0
-    run_info["convergence_key"] = ""
+    run_info["convergence_key"] = "loss:"
     run_info["ips"] = 0
     run_info["device_num"] = args.device_num
     run_info["model_run_time"] = os.getenv("model_run_time")
@@ -135,8 +145,8 @@ if __name__ == "__main__":
         args.keyword = "avg_ms:"
 
     try:
-        analyzer = TimeAnalyzer(args.filename, args.keyword)
-        run_info["ips"] = analyzer.get_iteration_cost()
+        analyzer = TimeAnalyzer(args.filename, args.keyword, args.loss_keyword)
+        run_info["ips"], run_info["convergence_value"] = analyzer.get_iteration_cost()
         run_info["speed_unit"] = "ms/iteration"
 
     except Exception:
