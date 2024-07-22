@@ -85,7 +85,7 @@ class Node:
         from modulus.sym.utils.sympy.paddle_printer import (
             paddle_lambdify,
             _subs_derivatives,
-            SympyToTorch,
+            SympyToPaddle,
         )
 
         # sub all functions and derivatives with symbols
@@ -104,7 +104,7 @@ class Node:
             print("Verify before proceeding!")
         else:
             pass
-        evaluate = SympyToTorch(sub_eq, out_name, freeze_terms, detach_names)
+        evaluate = SympyToPaddle(sub_eq, out_name, freeze_terms, detach_names)
         inputs = Key.convert_list(evaluate.keys)
         outputs = Key.convert_list([out_name])
         node = cls(inputs, outputs, evaluate, name="Sympy Node: " + out_name)

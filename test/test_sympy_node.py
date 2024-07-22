@@ -14,7 +14,7 @@
 
 import paddle
 import numpy as np
-from modulus.sym.utils.sympy import SympyToTorch
+from modulus.sym.utils.sympy import SympyToPaddle
 import sympy
 
 
@@ -25,7 +25,7 @@ def test_sympy_node():
     x_np = np.random.random(10)
     y_np = np.random.random(10)
     expr_np = np.maximum(np.sin(x_np), np.cos(y_np))
-    sn = SympyToTorch(expr, "node")
+    sn = SympyToPaddle(expr, "node")
     device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
         "cuda", "gpu"
     )
