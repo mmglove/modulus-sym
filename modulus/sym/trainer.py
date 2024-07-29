@@ -964,7 +964,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # attempt to restrore from initialization network dir
         if initialization_network_dir != "":
-            for i_dir in initialization_network_dir.split(","):
+            for i_dir in initialization_network_dir.split(" "):
                 if os.path.exists(i_dir):
                     log.info("attempting to initialize network from " + i_dir)
                     for model in models:
