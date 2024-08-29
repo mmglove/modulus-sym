@@ -99,7 +99,7 @@ def run(cfg: ModulusConfig) -> None:
         bounds=box_bounds,
         lambda_weighting={"u": 100, "v": 100, "w": 100, "p": 100},
         parameterization={t_symbol: 0},
-        loss=modulus.sym.loss.PointwiseLossNorm(name="ic"),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="ic1"),
     )
     ic_domain.add_constraint(ic, name="ic")
 
@@ -116,7 +116,7 @@ def run(cfg: ModulusConfig) -> None:
             "w_prev_step_diff": 100,
         },
         parameterization={t_symbol: 0},
-        loss=modulus.sym.loss.PointwiseLossNorm(name="ic"),
+        loss=modulus.sym.loss.PointwiseLossNorm(name="ic2"),
     )
     window_domain.add_constraint(ic, name="ic")
 
