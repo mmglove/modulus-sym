@@ -212,7 +212,7 @@ class Constraint:
                     batch_sampler=BatchSampler(sampler=batch_sampler, batch_size=1),
                     num_workers=num_workers,
                     worker_init_fn=dataset.worker_init_fn,
-                    # persistent_workers=persistent_workers,
+                    persistent_workers=persistent_workers,
                     collate_fn=lambda batch: batch[0],
                 )
 
@@ -225,7 +225,7 @@ class Constraint:
                     batch_sampler=batch_sampler,
                     num_workers=num_workers,
                     worker_init_fn=dataset.worker_init_fn,
-                    # persistent_workers=persistent_workers,
+                    persistent_workers=persistent_workers,
                 )
 
         # iterable-style
@@ -248,7 +248,7 @@ class Constraint:
                         batch_size=None,
                         num_workers=num_workers,
                         worker_init_fn=dataset.worker_init_fn,
-                        # persistent_workers=persistent_workers,
+                        persistent_workers=persistent_workers,
                     )
                 else:
                     # for iterable datasets, must do batching/sampling within dataset
