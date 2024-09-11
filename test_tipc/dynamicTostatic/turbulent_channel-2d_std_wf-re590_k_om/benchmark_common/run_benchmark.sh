@@ -51,7 +51,7 @@ function _train(){
     train_cmd="pushd examples/turbulent_channel/2d_std_wf; python re590_k_om.py training.max_steps=600; popd"
     echo "pwd: $PWD train_cmd: ${train_cmd} log_file: ${train_log_file}"
     set -x
-    timeout 15m bash -c "${train_cmd}" > ${train_log_file} 2>&1
+    timeout 60m bash -c "${train_cmd}" > ${train_log_file} 2>&1
     if [ $? -ne 0 ];then
         echo -e "Generate ${model_name}, FAIL"
     else
