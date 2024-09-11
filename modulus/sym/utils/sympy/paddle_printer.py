@@ -58,9 +58,13 @@ def paddle_lambdify(f, r, separable=False):
     else:
         vars = [k for k in r] if separable else [[k for k in r]]
         try:  # NOTE this fixes a very odd bug in SymPy TODO add issue to SymPy
-            lambdify_f = lambdify(vars, f, [PADDLE_SYMPY_PRINTER])
+            lambdify_f = lambdify(
+                vars, f, [{**PADDLE_SYMPY_PRINTER, **PADDLE_SPECIAL_SYMPY_PRINTER}]
+            )
         except:
-            lambdify_f = lambdify(vars, f, [PADDLE_SYMPY_PRINTER])
+            lambdify_f = lambdify(
+                vars, f, [{**PADDLE_SYMPY_PRINTER, **PADDLE_SPECIAL_SYMPY_PRINTER}]
+            )
     return lambdify_f
 
 
@@ -73,7 +77,14 @@ def _where_paddle(conditions, x, y):
 
 
 def _heaviside_paddle(x, values=0):
-    return paddle.maximum(paddle.sign(x), paddle.zeros([1, ]))
+    return paddle.maximum(
+        paddle.sign(x),
+        paddle.zeros(
+            [
+                1,
+            ]
+        ),
+    )
 
 
 def _sqrt_paddle(x):
@@ -180,6 +191,18 @@ def _dirac_delta_paddle(x):
     return paddle.equal(x=x, y=0.0)
 
 
+def softplus(x):
+    # Numeric stable version of softplus
+    THRESHOLD = 20.0
+    gt_mask = (x > THRESHOLD).astype(x.dtype)
+    le_mask = 1 - gt_mask
+    x_le = le_mask * x
+    y = gt_mask * x + le_mask * (  # keep the original value for x > THRESHOLD
+        paddle.log(1 + paddle.exp(x_le))
+    )  # compute 1+e^x for x <= THRESHOLD
+    return y
+
+
 PADDLE_SYMPY_PRINTER = {
     "abs": paddle.abs,
     "Abs": paddle.abs,
@@ -213,6 +236,12 @@ PADDLE_SYMPY_PRINTER = {
     "where": _where_paddle,
     "pi": np.pi,
     "conjugate": paddle.conj,
+}
+
+
+# NOTE: Special symbolic and its implementation, for nuerical stability or other reason
+PADDLE_SPECIAL_SYMPY_PRINTER = {
+    "softplus": softplus,
 }
 
 
@@ -252,7 +281,14 @@ def _subs_derivatives(expr):
     while True:
         try:
             fn = {
-                fn for fn in expr.atoms(Function) if fn.class_key()[1] == 0
+                fn
+                for fn in expr.atoms(Function)
+                if (
+                    fn.class_key()[1] == 0
+                    # keep function style for no sympy implementation of
+                    # those special symbolic functions
+                    and fn.name not in PADDLE_SPECIAL_SYMPY_PRINTER
+                )
             }.pop()  # check if standard Sympy Eq (TODO better check)
             new_symbol_name = str(fn)
             expr = expr.subs(fn, Symbol(new_symbol_name))
@@ -267,7 +303,7 @@ Basic.__str__ = lambda self: CustomDerivativePrinter().doprint(self)
 
 # Class to compile and evaluate a sympy expression in Paddle
 # Cannot currently script this module because self.paddle_expr is unknown
-class SympyToTorch(paddle.nn.Layer):
+class SympyToPaddle(paddle.nn.Layer):
     def __init__(
         self,
         sympy_expr,

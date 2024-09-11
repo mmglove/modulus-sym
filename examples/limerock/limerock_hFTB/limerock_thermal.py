@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import paddle
-from paddle. io import DataLoader, Dataset
+from paddle.io import DataLoader, Dataset
 from paddle import Tensor
 import copy
 

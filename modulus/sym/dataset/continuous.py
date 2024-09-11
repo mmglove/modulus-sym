@@ -117,6 +117,7 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
         def iterable_function():
             while True:
                 import os
+
                 load_data_flag = os.getenv("load_data", "False") == "True"
                 full_train = os.getenv("full_train", "False") == "True"
                 if (not full_train) and load_data_flag:
@@ -317,13 +318,35 @@ class ContinuousIntegralIterableDataset(IterableDataset):
         def iterable_function():
             while True:
                 import os
+
                 load_data_flag = os.getenv("load_data", "False") == "True"
                 full_train = os.getenv("full_train", "False") == "True"
                 if (not full_train) and load_data_flag:
                     print("✨ ✨ load data for ContinuousIntegralIterableDataset")
-                    list_invar = [dict(np.load(f"./contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
-                    list_outvar = [dict(np.load(f"./contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
-                    list_lambda_weighting = [dict(np.load(f"./contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}].npz")) for i in range(self.batch_size)]
+                    list_invar = [
+                        dict(
+                            np.load(
+                                f"./contiguous_integral_data/list_invar_torch_{self.iter_step}[{i}].npz"
+                            )
+                        )
+                        for i in range(self.batch_size)
+                    ]
+                    list_outvar = [
+                        dict(
+                            np.load(
+                                f"./contiguous_integral_data/list_outvar_torch_{self.iter_step}[{i}].npz"
+                            )
+                        )
+                        for i in range(self.batch_size)
+                    ]
+                    list_lambda_weighting = [
+                        dict(
+                            np.load(
+                                f"./contiguous_integral_data/list_lambda_weighting_torch_{self.iter_step}[{i}].npz"
+                            )
+                        )
+                        for i in range(self.batch_size)
+                    ]
                 else:
                     list_invar = []
                     list_outvar = []
@@ -334,7 +357,9 @@ class ContinuousIntegralIterableDataset(IterableDataset):
                         if (
                             not param_range
                         ):  # TODO this can be removed after a np_lambdify rewrite
-                            param_range = {"_": next(iter(list_invar[-1].values()))[0:1]}
+                            param_range = {
+                                "_": next(iter(list_invar[-1].values()))[0:1]
+                            }
 
                         list_outvar.append(self.outvar_fn(param_range))
                         list_lambda_weighting.append(

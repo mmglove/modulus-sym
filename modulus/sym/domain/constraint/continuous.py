@@ -283,6 +283,7 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
         # if fixed dataset then sample points and fix for all of training
         if fixed_dataset:
             import os
+
             load_data_flag = os.getenv("load_data", "False") == "True"
             if not load_data_flag:
                 # sample boundary
@@ -304,7 +305,9 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
                 print("✨ ✨ load data for PointwiseBoundaryConstraint")
                 invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
                 outvar = dict(np.load(f"./{loss.name}/outvar_torch.npz"))
-                lambda_weighting = dict(np.load(f"./{loss.name}/lambda_weighting_torch.npz"))
+                lambda_weighting = dict(
+                    np.load(f"./{loss.name}/lambda_weighting_torch.npz")
+                )
             # make point dataset
             if importance_measure is None:
                 invar["area"] *= batch_per_epoch  # TODO find better way to do this
@@ -446,6 +449,7 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
         if fixed_dataset:
             # sample interior
             import os
+
             load_data_flag = os.getenv("load_data", "False") == "True"
             if not load_data_flag:
                 invar = geometry.sample_interior(
@@ -468,7 +472,9 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
                 print("✨ ✨ load data for PointwiseInteriorConstraint")
                 invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
                 outvar = dict(np.load(f"./{loss.name}/outvar_torch.npz"))
-                lambda_weighting = dict(np.load(f"./{loss.name}/lambda_weighting_torch.npz"))
+                lambda_weighting = dict(
+                    np.load(f"./{loss.name}/lambda_weighting_torch.npz")
+                )
 
             # make point dataset
             if importance_measure is None:
@@ -705,6 +711,7 @@ class IntegralBoundaryConstraint(IntegralConstraint):
         # Fixed number of integral examples
         if fixed_dataset:
             import os
+
             load_data_flag = os.getenv("load_data", "False") == "True"
             if not load_data_flag:
                 # sample geometry to generate integral batchs
