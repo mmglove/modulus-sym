@@ -74,7 +74,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.inlet,
         outvar={"u": inlet_velocity_normalized, "v": 0, "w": 0},
         batch_size=cfg.batch_size.inlet,
-        batch_per_epoch=50,
+        batch_per_epoch=5000,
         lambda_weighting={"u": channel_sdf, "v": 1.0, "w": 1.0},
         num_workers=0,
         loss=modulus.sym.loss.PointwiseLossNorm(name="inlet"),
@@ -87,7 +87,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.outlet,
         outvar={"p": 0},
         batch_size=cfg.batch_size.outlet,
-        batch_per_epoch=50,
+        batch_per_epoch=5000,
         num_workers=0,
         loss=modulus.sym.loss.PointwiseLossNorm(name="outlet"),
     )
@@ -99,7 +99,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"u": 0, "v": 0, "w": 0},
         batch_size=cfg.batch_size.no_slip,
-        batch_per_epoch=50,
+        batch_per_epoch=15000,
         num_workers=0,
         loss=modulus.sym.loss.PointwiseLossNorm(name="no_slip"),
     )
@@ -111,7 +111,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"continuity": 0, "momentum_x": 0, "momentum_y": 0, "momentum_z": 0},
         batch_size=cfg.batch_size.lr_interior,
-        batch_per_epoch=50,
+        batch_per_epoch=5000,
         compute_sdf_derivatives=True,
         lambda_weighting={
             "continuity": 3 * Symbol("sdf"),
@@ -133,7 +133,7 @@ def run(cfg: ModulusConfig) -> None:
         geometry=limerock.geo,
         outvar={"continuity": 0, "momentum_x": 0, "momentum_y": 0, "momentum_z": 0},
         batch_size=cfg.batch_size.hr_interior,
-        batch_per_epoch=50,
+        batch_per_epoch=5000,
         compute_sdf_derivatives=True,
         lambda_weighting={
             "continuity": 3 * Symbol("sdf"),

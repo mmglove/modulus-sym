@@ -224,7 +224,7 @@ class OVVoxelInferencer(Inferencer):
         # Clean up
         gc.collect()
         paddle.device.cuda.empty_cache()
-        paddle.device.cuda.synchronize()
+        paddle.device.synchronize()
 
         return invar, predvar
 
@@ -440,7 +440,7 @@ class OVFourCastNetInferencer(Inferencer):
         # Clean up
         gc.collect()
         paddle.device.cuda.empty_cache()
-        paddle.device.cuda.synchronize()
+        paddle.device.synchronize()
         return outputs
 
     def get_array_from_tar(self, tar_file_path: str, np_file_path: str):

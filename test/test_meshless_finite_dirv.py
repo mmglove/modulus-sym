@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +15,7 @@
 # limitations under the License.
 
 import paddle
+
 from modulus.sym.eq.derivatives import MeshlessFiniteDerivative
 from modulus.sym.node import Node
 from modulus.sym.key import Key
@@ -22,23 +25,28 @@ from modulus.sym.graph import Graph
 class SineNet(paddle.nn.Layer):
     def forward(self, inputs):
         return {
-            "y": inputs["w"] ** 3 * paddle.sin(x=inputs["x"]),
-            "z": inputs["w"] * paddle.cos(x=inputs["x"]),
+            "y": (inputs["w"] ** 3) * paddle.sin(inputs["x"]),
+            "z": inputs["w"] * paddle.cos(inputs["x"]),
         }
 
 
 class ParabolaNet(paddle.nn.Layer):
     def forward(self, inputs):
-        return {"p": inputs["nu"] ** 3 + inputs["x"], "q": 2 * inputs["z"]}
+        return {
+            "p": (inputs["nu"] ** 3) + inputs["x"],
+            "q": 2 * inputs["z"],
+        }
 
 
 def test_meshless_finite_deriv():
+    # Define sinisoidal function node
     function_node = Node(
         inputs=[Key("w"), Key("x")],
         outputs=[Key("y"), Key("z")],
         evaluate=SineNet(),
         name="Test Node",
     )
+    # Define finite derivative node
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=function_node,
         derivatives=[
@@ -52,37 +60,41 @@ def test_meshless_finite_deriv():
         order=2,
         max_batch_size=15,
     )
+
     inputs = {
-        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
-        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "x": paddle.randn([5, 1]).astype(dtype="float64"),
+        "w": paddle.randn([5, 1]).astype(dtype="float64"),
     }
-    inputs.update(function_node.evaluate(inputs))
+    inputs.update(function_node.evaluate(inputs))  # Forward to get y
     outputs = deriv.evaluate(inputs)
+
     assert paddle.allclose(
-        x=outputs["y__x"].astype(dtype="float64"),
-        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
-        atol=0.001,
+        outputs["y__x"].astype(dtype="float64"),
+        inputs["w"] ** 3 * paddle.cos(inputs["x"]),
+        atol=1e-3,
     ).item(), "First derivative test failed"
     assert paddle.allclose(
-        x=outputs["z__x__x"].astype(dtype="float64"),
-        y=-inputs["w"] * paddle.cos(x=inputs["x"]),
-        atol=0.001,
+        outputs["z__x__x"].astype(dtype="float64"),
+        -inputs["w"] * paddle.cos(inputs["x"]),
+        atol=1e-3,
     ).item(), "Second derivative test failed"
     assert paddle.allclose(
-        x=outputs["y__x__w"].astype(dtype="float64"),
-        y=3 * inputs["w"] ** 2 * paddle.cos(x=inputs["x"]),
-        atol=0.001,
+        outputs["y__x__w"].astype(dtype="float64"),
+        3 * inputs["w"] ** 2 * paddle.cos(inputs["x"]),
+        atol=1e-3,
     ).item(), "Mixed second derivative test failed"
     assert paddle.allclose(
-        x=outputs["y__w__w__w"].astype(dtype="float64"),
-        y=6 * paddle.sin(x=inputs["x"]),
-        atol=0.001,
+        outputs["y__w__w__w"].astype(dtype="float64"),
+        6 * paddle.sin(inputs["x"]),
+        atol=1e-3,
     ).item(), "Third derivative test failed"
     assert paddle.allclose(
-        x=outputs["z__x__x__x__x"].astype(dtype="float64"),
-        y=inputs["w"] * paddle.cos(x=inputs["x"]),
-        atol=0.001,
+        outputs["z__x__x__x__x"].astype(dtype="float64"),
+        inputs["w"] * paddle.cos(inputs["x"]),
+        atol=1e-3,
     ).item(), "Forth derivative test failed"
+
+    # Testing forth order derivs
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=function_node,
         derivatives=[
@@ -93,28 +105,34 @@ def test_meshless_finite_deriv():
         order=4,
         max_batch_size=20,
     )
+
     inputs = {
-        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
-        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "x": paddle.randn([5, 1]).astype(dtype="float64"),
+        "w": paddle.randn([5, 1]).astype(dtype="float64"),
     }
     inputs.update(function_node.evaluate(inputs))
     outputs = deriv.evaluate(inputs)
+
     assert paddle.allclose(
-        x=outputs["y__x"].astype(dtype="float64"),
-        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
+        outputs["y__x"].astype(dtype="float64"),
+        inputs["w"] ** 3 * paddle.cos(inputs["x"]),
         atol=0.01,
     ).item(), "Forth order first derivative test failed"
     assert paddle.allclose(
-        x=outputs["z__x__x"].astype(dtype="float64"),
-        y=-inputs["w"] * paddle.cos(x=inputs["x"]),
+        outputs["z__x__x"].astype(dtype="float64"),
+        -inputs["w"] * paddle.cos(inputs["x"]),
         atol=0.01,
     ).item(), "Forth order second derivative test failed"
+
+    # Multinode checks
     function_node_2 = Node(
         inputs=[Key("nu"), Key("w"), Key("z")],
         outputs=[Key("p"), Key("q")],
         evaluate=ParabolaNet(),
         name="Test Node 2",
     )
+
+    # Define finite derivative node
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=Graph(
             nodes=[function_node, function_node_2],
@@ -127,22 +145,26 @@ def test_meshless_finite_deriv():
         ],
         dx=0.01,
     )
+
     inputs = {
-        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
-        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
-        "nu": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "x": paddle.randn([5, 1]).astype(dtype="float64"),
+        "w": paddle.randn([5, 1]).astype(dtype="float64"),
+        "nu": paddle.randn([5, 1]).astype(dtype="float64"),
     }
     outputs = deriv.evaluate(inputs)
+
     assert paddle.allclose(
-        x=outputs["p__nu"].astype(dtype="float64"), y=3 * inputs["nu"] ** 2, atol=0.001
+        outputs["p__nu"].astype(dtype="float64"), 3 * inputs["nu"] ** 2, atol=1e-3
     ).item(), "Multi-node first derivative test failed"
     assert paddle.allclose(
-        x=outputs["q__x__w"].astype(dtype="float64"),
-        y=2 * -paddle.sin(x=inputs["x"]),
-        atol=0.001,
+        outputs["q__x__w"].astype(dtype="float64"),
+        2 * -paddle.sin(inputs["x"]),
+        atol=1e-3,
     ).item(), "Multi-node second derivative test failed"
 
+    # Testing callable dx
     def dx_func(count: int):
+        # First pass should be inaccurate
         if count == 1:
             return 10.0
         else:
@@ -150,35 +172,41 @@ def test_meshless_finite_deriv():
 
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=function_node,
-        derivatives=[Key("y", derivatives=[Key("x")])],
+        derivatives=[
+            Key("y", derivatives=[Key("x")]),
+        ],
         dx=dx_func,
         order=2,
     )
+
     inputs = {
-        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
-        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "x": paddle.randn([5, 1]).astype(dtype="float64"),
+        "w": paddle.randn([5, 1]).astype(dtype="float64"),
     }
-    inputs.update(function_node.evaluate(inputs))
-    outputs_1 = deriv.evaluate(inputs)
-    outputs_2 = deriv.evaluate(inputs)
+    inputs.update(function_node.evaluate(inputs))  # Forward to get y
+    outputs_1 = deriv.evaluate(inputs)  # Inaccruate pass
+    outputs_2 = deriv.evaluate(inputs)  # Accruate pass
+
     assert not paddle.allclose(
-        x=outputs_1["y__x"].astype(dtype="float64"),
-        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
-        atol=0.001,
+        outputs_1["y__x"].astype(dtype="float64"),
+        inputs["w"] ** 3 * paddle.cos(inputs["x"]),
+        atol=1e-3,
     ).item(), "Callable dx first derivative test failed"
     assert paddle.allclose(
-        x=outputs_2["y__x"].astype(dtype="float64"),
-        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
-        atol=0.001,
+        outputs_2["y__x"].astype(dtype="float64"),
+        (inputs["w"] ** 3) * paddle.cos(inputs["x"]),
+        atol=1e-3,
     ).item(), "Callable dx first derivative test failed"
 
 
 class GradModel(paddle.nn.Layer):
     def forward(self, inputs):
-        return {"u": paddle.cos(x=inputs["x"]), "v": paddle.sin(x=inputs["y"])}
+        return {"u": paddle.cos(inputs["x"]), "v": paddle.sin(inputs["y"])}
 
 
 def test_meshless_finite_deriv_grads():
+    # Testing gradient calcs
+    # TODO: Grad tests for every grad
     model = GradModel()
     dx = 0.01
     deriv = MeshlessFiniteDerivative.make_node(
@@ -189,38 +217,49 @@ def test_meshless_finite_deriv_grads():
         ],
         dx=dx,
     )
+
+    # == First derivative test ==
     inputs_mfd = {
-        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
-        "y": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "x": paddle.randn([5, 1]).astype(dtype="float64"),
+        "y": paddle.randn([5, 1]).astype(dtype="float64"),
     }
     inputs_mfd["x"].stop_gradient = not True
     inputs_mfd["y"].stop_gradient = not True
+
     inputs_mfd.update(model.forward(inputs_mfd))
     outputs = deriv.evaluate(inputs_mfd)
     loss = outputs["u__x"].sum()
     loss.backward()
+
+    # Auto diff calc
     inputs_auto = inputs_mfd["x"].detach().clone()
     inputs_auto.stop_gradient = not True
-    inputs_up1 = paddle.cos(x=inputs_auto + dx)
-    inputs_um1 = paddle.cos(x=inputs_auto - dx)
+    inputs_up1 = paddle.cos(inputs_auto + dx)
+    inputs_um1 = paddle.cos(inputs_auto - dx)
     grad = (inputs_up1 - inputs_um1) / (2.0 * dx)
     loss = grad.sum()
     loss.backward()
+
     assert paddle.allclose(
-        x=inputs_auto.grad, y=inputs_mfd["x"].grad, atol=0.001
+        inputs_auto.grad, inputs_mfd["x"].grad, atol=1e-3
     ).item(), "First derivative gradient test failed"
+
+    # == Second derivative test ==
     loss = outputs["v__y__y"].sum()
     loss.backward()
+
+    # Auto diff calc
     inputs_auto = inputs_mfd["y"].detach().clone()
     inputs_auto.stop_gradient = not True
-    inputs = paddle.sin(x=inputs_auto)
-    inputs_up1 = paddle.sin(x=inputs_auto + dx)
-    inputs_um1 = paddle.sin(x=inputs_auto - dx)
+    inputs = paddle.sin(inputs_auto)
+    inputs_up1 = paddle.sin(inputs_auto + dx)
+    inputs_um1 = paddle.sin(inputs_auto - dx)
     grad = (inputs_up1 - 2 * inputs + inputs_um1) / (dx * dx)
     loss = grad.sum()
     loss.backward()
+
     assert paddle.allclose(
-        x=inputs_auto.grad, y=inputs_mfd["y"].grad, atol=0.001
+        inputs_auto.grad, inputs_mfd["y"].grad, atol=1e-3
     ).item(), "Second derivative gradient test failed"
 
 

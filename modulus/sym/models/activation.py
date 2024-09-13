@@ -24,7 +24,11 @@ import paddle.nn.functional as F
 from paddle import Tensor
 from modulus.sym.manager import JitManager, JitArchMode
 
+# Use silu forward decomposition only when
+# 2) `silu_comp` env variable is set to True.
 use_silu_forward_composite = os.getenv("silu_comp", "False") == "True"
+# use_silu_forward_composite |= bool(os.getenv("FLAGS_use_cinn", "False") == "True")
+
 if use_silu_forward_composite:
     silu_func = lambda x: x * F.sigmoid(x)
     print(f"✨ ✨ Using silu(x) = x * sigmoid(x)")
@@ -85,6 +89,24 @@ class CustomSilu(nn.Layer):
 
     def forward(self, x):
         return custom_silu(x)
+
+
+class Identity(nn.Layer):
+    """Identity activation function
+
+    Dummy function for removing activations from a model
+
+    Example
+    -------
+    >>> idnt_func = modulus.models.layers.Identity()
+    >>> input = torch.randn(2, 2)
+    >>> output = idnt_func(input)
+    >>> torch.allclose(input, output)
+    True
+    """
+
+    def forward(self, x: Tensor) -> Tensor:
+        return x
 
 
 class Stan(nn.Layer):

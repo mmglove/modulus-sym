@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import paddle
 from modulus.sym.models.fourier_net import FourierNetArch
+import paddle
 import numpy as np
 from pathlib import Path
 from modulus.sym.key import Key
 import pytest
-from .model_test_utils import validate_func_arch_net
+from model_test_utils import validate_func_arch_net
 
 dir_path = Path(__file__).parent
 
@@ -44,6 +46,7 @@ def test_fourier_net():
     params = test_data["params"][()]
     frequencies = test_data["frequencies"]
     frequencies_params = test_data["frequencies_params"]
+    # create graph
     arch = FourierNetArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -53,21 +56,22 @@ def test_fourier_net():
         nr_layers=params["nr_layers"],
     )
     name_dict = make_dict(params["nr_layers"])
+    Wbs[name_dict['fc.final_layer.linear.weight']] = Wbs[name_dict['fc.final_layer.linear.weight']].T
     for _name, _tensor in arch.named_parameters():
         if not _tensor.stop_gradient:
-            _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]].T)
+            _tensor.data = paddle.to_tensor(Wbs[name_dict[_name]].T)
+
     arch.fourier_layer_xyzt.frequencies = paddle.to_tensor(
         data=Wbs["fourier_layer_xyzt:0"].T
     )
     data_out2 = arch(
-        {
-            "x": paddle.to_tensor(data=data_in[:, 0:1]),
-            "y": paddle.to_tensor(data=data_in[:, 1:2]),
-        }
+        {"x": paddle.to_tensor(data_in[:, 0:1]), "y": paddle.to_tensor(data_in[:, 1:2])}
     )
     data_out2 = data_out2["u"].detach().numpy()
+    # load outputs
     data_out1 = test_data["data_out"]
-    assert np.allclose(data_out1, data_out2, rtol=0.001), "Test failed!"
+    # verify
+    assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
     print("Success!")
 
 
@@ -82,7 +86,10 @@ def test_func_arch_fourier_net(input_keys, validate_with_dict_forward):
         Key.from_str("v__y"),
         Key.from_str("v__y__y"),
     ]
-    ref_net = FourierNetArch(input_keys=input_keys, output_keys=[Key("u"), Key("v")])
+    ref_net = FourierNetArch(
+        input_keys=input_keys,
+        output_keys=[Key("u"), Key("v")],
+    )
     validate_func_arch_net(ref_net, deriv_keys, validate_with_dict_forward)
 
 

@@ -109,10 +109,10 @@ class Constraint:
             build_strategy = static.BuildStrategy()
             build_strategy.build_cinn_pass = enable_cinn
             self.model.forward = jit.to_static(full_graph=True, build_strategy=build_strategy)(self.model.forward)
-            logger.info(f"🍰 🍰 Using jit.to_static with FLAGS_use_cinn={enable_cinn} in Constraint.__init__ in {__file__}, to_static can be disabled by set 'to_static=0 python example.py'")
+            logger.info(f"🍰 🍰 Using jit.to_static with FLAGS_use_cinn={enable_cinn} in Constraint.__init__ in {__file__}, to_static can be disabled by set 'to_static=False python example.py'")
         elif enable_cinn:
             raise RuntimeError(
-                f"Please set cinn=0 when 'to_static' is set to 0"
+                f"Please set FLAGS_use_cinn=0 when 'to_static' is set to 0"
             )
 
 
@@ -236,20 +236,20 @@ class Constraint:
                 if isinstance(dataset, DictImportanceSampledPointwiseIterableDataset):
                     # do not wrap with DataLoader for CUDA computation is not supported in
                     # current paddle's DataLoader
-                    # dataloader = dataset
-                    if num_workers > 0:
-                        logger.warning(
-                            f"num_workers({num_workers}) > 0 may cause CUDA error for CUDA"
-                            " operation is not supported in current paddle's DataLoader."
-                            " Please set num_workers=0 to avoid this error."
-                        )
-                    dataloader = DataLoader(
-                        dataset,
-                        batch_size=None,
-                        num_workers=num_workers,
-                        worker_init_fn=dataset.worker_init_fn,
-                        persistent_workers=persistent_workers,
-                    )
+                    dataloader = dataset
+                    # if num_workers > 0:
+                    #     logger.warning(
+                    #         f"num_workers({num_workers}) > 0 may cause CUDA error for CUDA"
+                    #         " operation is not supported in current paddle's DataLoader."
+                    #         " Please set num_workers=0 to avoid this error."
+                    #     )
+                    # dataloader = DataLoader(
+                    #     dataset,
+                    #     batch_size=None,
+                    #     num_workers=num_workers,
+                    #     worker_init_fn=dataset.worker_init_fn,
+                    #     # persistent_workers=persistent_workers,
+                    # )
                 else:
                     # for iterable datasets, must do batching/sampling within dataset
                     dataloader = DataLoader(

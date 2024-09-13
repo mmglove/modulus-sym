@@ -33,7 +33,6 @@ def timeit(
     Returns time/step in ms.
     If run_profile is True, then return (time/step in ms, a captured cuda events table)
     """
-    raise NotImplementedError("This function is not implemented yet.")
 
     if label is None:
         assert func.__name__, "please provide a label for this benchmark"
@@ -47,11 +46,14 @@ def timeit(
 
     # start timer
     if cpu_timing:
-        paddle.device.cuda.synchronize()
+        paddle.device.synchronize()
         start = time.time()
     else:
-        start_event = paddle.device.cuda.Event(enable_timing=True)
-        start_event.record()
+        # NOTE: cuda.Event is not implemented correct.
+        # start_event = paddle.device.cuda.Event(enable_timing=True)
+        # start_event.record()
+        paddle.device.synchronize()
+        start = time.time()
 
     paddle.framework.core.nvprof_nvtx_push(f"{label}")
     if run_profile:
@@ -83,13 +85,15 @@ def timeit(
 
     # stop timer
     if cpu_timing:
-        paddle.device.cuda.synchronize()
+        paddle.device.synchronize()
         time_ms = ((time.time() - start) / steps) * 1000
     else:
-        end_event = paddle.device.cuda.Event(enable_timing=True)
-        end_event.record()
-        end_event.synchronize()
-        time_ms = start_event.elapsed_time(end_event) / steps
+        # end_event = paddle.device.cuda.Event(enable_timing=True)
+        # end_event.record()
+        # end_event.synchronize()
+        # time_ms = start_event.elapsed_time(end_event) / steps
+        paddle.device.synchronize()
+        time_ms = ((time.time() - start) / steps) * 1000
 
     if verbose:
         print(f"{label.ljust(label_padding)}: {time_ms:.3f} ms/step")

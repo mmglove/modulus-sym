@@ -151,7 +151,7 @@ class PointwiseConstraint(Constraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
         """
         Create custom pointwise constraint from numpy arrays.
@@ -270,7 +270,7 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
         importance_measure: Union[Callable, None] = None,
         batch_per_epoch: int = 1000,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
     ):
@@ -282,24 +282,25 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
 
         # if fixed dataset then sample points and fix for all of training
         if fixed_dataset:
-            # sample boundary
-            invar = geometry.sample_boundary(
-                batch_size * batch_per_epoch,
-                criteria=criteria,
-                parameterization=parameterization,
-                quasirandom=quasirandom,
-            )
-
-            # compute outvar
-            outvar = _compute_outvar(invar, outvar)
-
-            # set lambda weighting
-            lambda_weighting = _compute_lambda_weighting(
-                invar, outvar, lambda_weighting
-            )
             import os
 
             load_data_flag = os.getenv("load_data", "False") == "True"
+            if not load_data_flag:
+                # sample boundary
+                invar = geometry.sample_boundary(
+                    batch_size * batch_per_epoch,
+                    criteria=criteria,
+                    parameterization=parameterization,
+                    quasirandom=quasirandom,
+                )
+
+                # compute outvar
+                outvar = _compute_outvar(invar, outvar)
+
+                # set lambda weighting
+                lambda_weighting = _compute_lambda_weighting(
+                    invar, outvar, lambda_weighting
+                )
             if load_data_flag:
                 print("✨ ✨ load data for PointwiseBoundaryConstraint")
                 invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
@@ -434,7 +435,7 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
         importance_measure: Union[Callable, None] = None,
         batch_per_epoch: int = 1000,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
     ):
@@ -447,25 +448,26 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
         # if fixed dataset then sample points and fix for all of training
         if fixed_dataset:
             # sample interior
-            invar = geometry.sample_interior(
-                batch_size * batch_per_epoch,
-                bounds=bounds,
-                criteria=criteria,
-                parameterization=parameterization,
-                quasirandom=quasirandom,
-                compute_sdf_derivatives=compute_sdf_derivatives,
-            )
-
-            # compute outvar
-            outvar = _compute_outvar(invar, outvar)
-
-            # set lambda weighting
-            lambda_weighting = _compute_lambda_weighting(
-                invar, outvar, lambda_weighting
-            )
             import os
 
             load_data_flag = os.getenv("load_data", "False") == "True"
+            if not load_data_flag:
+                invar = geometry.sample_interior(
+                    batch_size * batch_per_epoch,
+                    bounds=bounds,
+                    criteria=criteria,
+                    parameterization=parameterization,
+                    quasirandom=quasirandom,
+                    compute_sdf_derivatives=compute_sdf_derivatives,
+                )
+
+                # compute outvar
+                outvar = _compute_outvar(invar, outvar)
+
+                # set lambda weighting
+                lambda_weighting = _compute_lambda_weighting(
+                    invar, outvar, lambda_weighting
+                )
             if load_data_flag:
                 print("✨ ✨ load data for PointwiseInteriorConstraint")
                 invar = dict(np.load(f"./{loss.name}/invar_torch.npz"))
@@ -517,7 +519,7 @@ class PointwiseInteriorConstraint(PointwiseConstraint):
                 invar_fn=invar_fn,
                 outvar_fn=outvar_fn,
                 lambda_weighting_fn=lambda_weighting_fn,
-                name=loss.name,
+                name=loss.name
             )
 
         # initialize constraint
@@ -695,7 +697,7 @@ class IntegralBoundaryConstraint(IntegralConstraint):
         fixed_dataset: bool = True,
         batch_per_epoch: int = 100,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = IntegralLossNorm(),
         shuffle: bool = True,
     ):
@@ -708,63 +710,56 @@ class IntegralBoundaryConstraint(IntegralConstraint):
 
         # Fixed number of integral examples
         if fixed_dataset:
-            # sample geometry to generate integral batchs
-            list_invar = []
-            list_outvar = []
-            list_lambda_weighting = []
-            for i in range(batch_size * batch_per_epoch):
-                # sample parameter ranges
-                if parameterization:
-                    specific_param_ranges = parameterization.sample(1)
-                else:
-                    specific_param_ranges = {}
-
-                # sample boundary
-                invar = geometry.sample_boundary(
-                    integral_batch_size,
-                    criteria=criteria,
-                    parameterization=Parameterization(
-                        {
-                            sp.Symbol(key): float(value)
-                            for key, value in specific_param_ranges.items()
-                        }
-                    ),
-                    quasirandom=quasirandom,
-                )
-
-                # compute outvar
-                if (
-                    not specific_param_ranges
-                ):  # TODO this can be removed after a np_lambdify rewrite
-                    specific_param_ranges = {"_": next(iter(invar.values()))[0:1]}
-                outvar_star = _compute_outvar(specific_param_ranges, outvar)
-
-                # set lambda weighting
-                lambda_weighting_star = _compute_lambda_weighting(
-                    specific_param_ranges, outvar, lambda_weighting
-                )
-
-                # store samples
-                list_invar.append(invar)
-                list_outvar.append(outvar_star)
-                list_lambda_weighting.append(lambda_weighting_star)
             import os
 
             load_data_flag = os.getenv("load_data", "False") == "True"
+            if not load_data_flag:
+                # sample geometry to generate integral batchs
+                list_invar = []
+                list_outvar = []
+                list_lambda_weighting = []
+                for i in range(batch_size * batch_per_epoch):
+                    # sample parameter ranges
+                    if parameterization:
+                        specific_param_ranges = parameterization.sample(1)
+                    else:
+                        specific_param_ranges = {}
+
+                    # sample boundary
+                    invar = geometry.sample_boundary(
+                        integral_batch_size,
+                        criteria=criteria,
+                        parameterization=Parameterization(
+                            {
+                                sp.Symbol(key): float(value)
+                                for key, value in specific_param_ranges.items()
+                            }
+                        ),
+                        quasirandom=quasirandom,
+                    )
+
+                    # compute outvar
+                    if (
+                        not specific_param_ranges
+                    ):  # TODO this can be removed after a np_lambdify rewrite
+                        specific_param_ranges = {"_": next(iter(invar.values()))[0:1]}
+                    outvar_star = _compute_outvar(specific_param_ranges, outvar)
+
+                    # set lambda weighting
+                    lambda_weighting_star = _compute_lambda_weighting(
+                        specific_param_ranges, outvar, lambda_weighting
+                    )
+
+                    # store samples
+                    list_invar.append(invar)
+                    list_outvar.append(outvar_star)
+                    list_lambda_weighting.append(lambda_weighting_star)
+
             if load_data_flag:
                 print("✨ ✨ load data for IntegralBoundaryConstraint")
-                list_invar = [
-                    dict(np.load(f"./{loss.name}/list_invar_torch[{i}].npz"))
-                    for i in range(len(list_invar))
-                ]
-                list_outvar = [
-                    dict(np.load(f"./{loss.name}/list_outvar_torch[{i}].npz"))
-                    for i in range(len(list_outvar))
-                ]
-                list_lambda_weighting = [
-                    dict(np.load(f"./{loss.name}/list_lambda_weighting_torch[{i}].npz"))
-                    for i in range(len(list_lambda_weighting))
-                ]
+                list_invar = [dict(np.load(f"./{loss.name}/list_invar_torch[{i}].npz")) for i in range(batch_size * batch_per_epoch)]
+                list_outvar = [dict(np.load(f"./{loss.name}/list_outvar_torch[{i}].npz")) for i in range(batch_size * batch_per_epoch)]
+                list_lambda_weighting = [dict(np.load(f"./{loss.name}/list_lambda_weighting_torch[{i}].npz")) for i in range(batch_size * batch_per_epoch)]
 
             # make dataset of integral planes
             dataset = ListIntegralDataset(
@@ -839,7 +834,7 @@ class VariationalConstraint(Constraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
 
         # Get DDP manager
@@ -986,7 +981,7 @@ class VariationalDomainConstraint(VariationalConstraint):
         parameterization: Union[Parameterization, None] = None,
         batch_per_epoch: int = 1000,
         quasirandom: bool = False,
-        num_workers: int = 1,
+        num_workers: int = 0,
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
     ):
@@ -1087,7 +1082,7 @@ class DeepONetConstraint(PointwiseConstraint):
         loss: Loss = PointwiseLossNorm(),
         shuffle: bool = True,
         drop_last: bool = True,
-        num_workers: int = 1,
+        num_workers: int = 0,
     ):
         """
         Create custom DeepONet constraint from numpy arrays.

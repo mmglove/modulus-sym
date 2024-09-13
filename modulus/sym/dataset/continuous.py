@@ -119,16 +119,16 @@ class ContinuousPointwiseIterableDataset(IterableDataset):
                 import os
 
                 load_data_flag = os.getenv("load_data", "False") == "True"
-                if load_data_flag:
-                    invar = np.load(
-                        f"contiguous_pointwise_data/{name}/invar_torch_{self.iter_step}.npz"
-                    )
-                    outvar = np.load(
-                        f"contiguous_pointwise_data/{name}/outvar_torch_{self.iter_step}.npz"
-                    )
-                    lambda_weighting = np.load(
-                        f"contiguous_pointwise_data/{name}/lambda_weighting_torch_{self.iter_step}.npz"
-                    )
+                full_train = os.getenv("full_train", "False") == "True"
+                if (not full_train) and load_data_flag:
+                    if name:
+                        invar = np.load(f"contiguous_pointwise_data/{name}/invar_torch_{self.iter_step}.npz")
+                        outvar = np.load(f"contiguous_pointwise_data/{name}/outvar_torch_{self.iter_step}.npz")
+                        lambda_weighting = np.load(f"contiguous_pointwise_data/{name}/lambda_weighting_torch_{self.iter_step}.npz")
+                    else:
+                        invar = np.load(f"contiguous_pointwise_data/invar_torch_{self.iter_step}.npz")
+                        outvar = np.load(f"contiguous_pointwise_data/outvar_torch_{self.iter_step}.npz")
+                        lambda_weighting = np.load(f"contiguous_pointwise_data/lambda_weighting_torch_{self.iter_step}.npz")
                     invar = Dataset._to_tensor_dict(invar)
                     outvar = Dataset._to_tensor_dict(outvar)
                     lambda_weighting = Dataset._to_tensor_dict(lambda_weighting)
@@ -202,7 +202,9 @@ class DictImportanceSampledPointwiseIterableDataset(
                     for i in range(len(next(iter(list_invar.values())))):
                         importance = self.importance_measure(
                             {key: value[i] for key, value in list_invar.items()}
-                        ).numpy()
+                        )
+                        if not isinstance(importance, np.ndarray):
+                            importance = importance.numpy()
                         list_importance.append(importance)
                     importance = np.concatenate(list_importance, axis=0)
                     prob = importance / np.sum(self.invar["area"] * importance)
@@ -318,7 +320,8 @@ class ContinuousIntegralIterableDataset(IterableDataset):
                 import os
 
                 load_data_flag = os.getenv("load_data", "False") == "True"
-                if load_data_flag:
+                full_train = os.getenv("full_train", "False") == "True"
+                if (not full_train) and load_data_flag:
                     print("✨ ✨ load data for ContinuousIntegralIterableDataset")
                     list_invar = [
                         dict(

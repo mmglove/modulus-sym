@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,10 +22,10 @@ from functools import partial
 
 paddle.seed(seed=0)
 np.random.seed(0)
-cuda_device = str("cpu:0").replace("cuda", "gpu")
+cuda_device = str("cpu").replace("cuda", "gpu")
 
 
-class SpectralConv2d(paddle.nn.Layer):
+class SpectralConv2d(nn.Layer):
     def __init__(self, in_channels, out_channels, modes1, modes2):
         super().__init__()
         """
@@ -51,7 +53,7 @@ class SpectralConv2d(paddle.nn.Layer):
             )
             .numpy()
             .dtype,
-            default_initializer=paddle.nn.initializer.Assign(
+            default_initializer=nn.initializer.Assign(
                 self.scale
                 * paddle.rand(
                     shape=[in_channels, out_channels, self.modes1, self.modes2],
@@ -78,7 +80,7 @@ class SpectralConv2d(paddle.nn.Layer):
             )
             .numpy()
             .dtype,
-            default_initializer=paddle.nn.initializer.Assign(
+            default_initializer=nn.initializer.Assign(
                 self.scale
                 * paddle.rand(
                     shape=[in_channels, out_channels, self.modes1, self.modes2],
@@ -109,7 +111,7 @@ class SpectralConv2d(paddle.nn.Layer):
         return x
 
 
-class FNO2d(paddle.nn.Layer):
+class FNO2d(nn.Layer):
     def __init__(self, modes1, modes2, width):
         super().__init__()
         """
@@ -128,25 +130,25 @@ class FNO2d(paddle.nn.Layer):
         self.modes2 = modes2
         self.width = width
         self.padding = 9
-        self.fc0 = paddle.nn.Linear(in_features=3, out_features=self.width)
+        self.fc0 = nn.Linear(in_features=3, out_features=self.width)
         self.conv0 = SpectralConv2d(self.width, self.width, self.modes1, self.modes2)
         self.conv1 = SpectralConv2d(self.width, self.width, self.modes1, self.modes2)
         self.conv2 = SpectralConv2d(self.width, self.width, self.modes1, self.modes2)
         self.conv3 = SpectralConv2d(self.width, self.width, self.modes1, self.modes2)
-        self.w0 = paddle.nn.Conv2D(
+        self.w0 = nn.Conv2D(
             in_channels=self.width, out_channels=self.width, kernel_size=1
         )
-        self.w1 = paddle.nn.Conv2D(
+        self.w1 = nn.Conv2D(
             in_channels=self.width, out_channels=self.width, kernel_size=1
         )
-        self.w2 = paddle.nn.Conv2D(
+        self.w2 = nn.Conv2D(
             in_channels=self.width, out_channels=self.width, kernel_size=1
         )
-        self.w3 = paddle.nn.Conv2D(
+        self.w3 = nn.Conv2D(
             in_channels=self.width, out_channels=self.width, kernel_size=1
         )
-        self.fc1 = paddle.nn.Linear(in_features=self.width, out_features=128)
-        self.fc2 = paddle.nn.Linear(in_features=128, out_features=1)
+        self.fc1 = nn.Linear(in_features=self.width, out_features=128)
+        self.fc2 = nn.Linear(in_features=128, out_features=1)
 
     def forward(self, x):
         batchsize = x.shape[0]
@@ -154,36 +156,36 @@ class FNO2d(paddle.nn.Layer):
         x = paddle.concat(x=(x, grid), axis=-1)
         x = self.fc0(x)
         x = x.transpose(perm=[0, 3, 1, 2])
-        x = paddle.nn.functional.pad(x, [0, self.padding, 0, self.padding])
+        x = nn.functional.pad(x, [0, self.padding, 0, self.padding])
         x1 = self.conv0(x)
         x2 = self.w0(x)
         x = x1 + x2
-        x = paddle.nn.functional.gelu(x=x)
+        x = nn.functional.gelu(x=x)
         x1 = self.conv1(x)
         x2 = self.w1(x)
         x = x1 + x2
-        x = paddle.nn.functional.gelu(x=x)
+        x = nn.functional.gelu(x=x)
         x1 = self.conv2(x)
         x2 = self.w2(x)
         x = x1 + x2
-        x = paddle.nn.functional.gelu(x=x)
+        x = nn.functional.gelu(x=x)
         x1 = self.conv3(x)
         x2 = self.w3(x)
         x = x1 + x2
         x = x[..., : -self.padding, : -self.padding]
         x = x.transpose(perm=[0, 2, 3, 1])
         x = self.fc1(x)
-        x = paddle.nn.functional.gelu(x=x)
+        x = nn.functional.gelu(x=x)
         x = self.fc2(x)
         return x
 
     def get_grid(self, shape, device):
         batchsize, size_x, size_y = shape[0], shape[1], shape[2]
-        gridx = paddle.to_tensor(data=np.linspace(0, 1, size_x), dtype="float32")
+        gridx = paddle.to_tensor(np.linspace(0, 1, size_x), dtype="float32")
         gridx = gridx.reshape(1, size_x, 1, 1).tile(
             repeat_times=[batchsize, 1, size_y, 1]
         )
-        gridy = paddle.to_tensor(data=np.linspace(0, 1, size_y), dtype="float32")
+        gridy = paddle.to_tensor(np.linspace(0, 1, size_y), dtype="float32")
         gridy = gridy.reshape(1, 1, size_y, 1).tile(
             repeat_times=[batchsize, size_x, 1, 1]
         )
@@ -194,7 +196,7 @@ modes = 12
 width = 32
 model = FNO2d(modes, modes, width).to(cuda_device)
 x_numpy = np.random.rand(100, 50, 50, 1).astype(np.float32)
-x_tensor = paddle.to_tensor(data=x_numpy).to(cuda_device)
+x_tensor = paddle.to_tensor(x_numpy).to(cuda_device)
 y_tensor = model(x_tensor)
 y_numpy = y_tensor.detach().numpy()
 Wbs = {

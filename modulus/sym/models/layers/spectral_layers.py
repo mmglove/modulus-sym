@@ -58,7 +58,7 @@ class SpectralConv1d(nn.Layer):
             t = t.transpose([1, 2, 0])
             return t
 
-        return einsum_bix_iox(input, cweights)
+        # return einsum_bix_iox(input, cweights)
         return paddle.einsum("bix,iox->box", input, cweights)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -102,15 +102,9 @@ class SpectralConv2d(nn.Layer):
         self.scale = 1 / (in_channels * out_channels)
         self.weights1 = self.create_parameter(
             [in_channels, out_channels, self.modes1, self.modes2, 2],
-            default_initializer=nn.initializer.Assign(
-                paddle.empty([in_channels, out_channels, self.modes1, self.modes2, 2])
-            ),
         )
         self.weights2 = self.create_parameter(
             [in_channels, out_channels, self.modes1, self.modes2, 2],
-            default_initializer=nn.initializer.Assign(
-                paddle.empty([in_channels, out_channels, self.modes1, self.modes2, 2])
-            ),
         )
         self.reset_parameters()
 
@@ -159,8 +153,8 @@ class SpectralConv2d(nn.Layer):
         return x
 
     def reset_parameters(self):
-        self.weights1.data = self.scale * paddle.rand(self.weights1.data.shape)
-        self.weights2.data = self.scale * paddle.rand(self.weights2.data.shape)
+        paddle.assign(self.weights1, self.scale * paddle.rand(self.weights1.shape))
+        paddle.assign(self.weights2, self.scale * paddle.rand(self.weights2.shape))
 
 
 class SpectralConv3d(nn.Layer):
@@ -245,18 +239,18 @@ class SpectralConv3d(nn.Layer):
     ) -> Tensor:
         cweights = paddle.as_complex(weights)
 
-        def einsum_bixyz_ioxyz(x, y):
-            b, i, x, y, z = x.shape
-            o = y.sahpe[1]
+        def einsum_bixyz_ioxyz(x_, y_):
+            b, i, x, y, z = x_.shape
+            o = y_.shape[1]
             t = paddle.bmm(
-                x.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, b, i]),
-                y.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, i, o]),
+                x_.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, b, i]),
+                y_.transpose([2, 3, 4, 0, 1]).reshape([x*y*z, i, o]),
             ) # [xyz,b,o]
             t = t.reshape([x, y, z, b, o])
             t = t.transpose([3, 4, 0, 1, 2])
             return t
 
-        return einsum_bixyz_ioxyz(input, cweights)
+        # return einsum_bixyz_ioxyz(input, cweights)
         return paddle.einsum("bixyz,ioxyz->boxyz", input, cweights)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -428,28 +422,28 @@ def first_order_pino_grads(
     # print(f"weights_1.shape = {weights_1.shape}") # [32, 32, 1, 1]
     # print(f"diff_tanh.shape = {diff_tanh.shape}") # [8, 32, 241, 241]
     # print(f"weights_2.shape = {weights_2.shape}") # [1, 32, 1, 1]
-    b, i, k, m, x, y = (
-        diff_tanh.shape[0], # b
-        weights_1.shape[1], # i
-        weights_2.shape[0], # k
-        weights_1.shape[0], # m
-        diff_tanh.shape[2], # x
-        diff_tanh.shape[3], # y
-    )
-    weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
-    diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
-    weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
+    # b, i, k, m, x, y = (
+    #     diff_tanh.shape[0], # b
+    #     weights_1.shape[1], # i
+    #     weights_2.shape[0], # k
+    #     weights_1.shape[0], # m
+    #     diff_tanh.shape[2], # x
+    #     diff_tanh.shape[3], # y
+    # )
+    # weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
+    # diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
+    # weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
 
-    diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
+    # diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
     # print(diff_fg.shape)
     # print(torch.allclose(z, diff_fg))
 
-    # diff_fg = paddle.einsum(
-    #     "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
-    #     weights_1,
-    #     diff_tanh,
-    #     weights_2,
-    # )
+    diff_fg = paddle.einsum(
+        "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
+        weights_1,
+        diff_tanh,
+        weights_2,
+    )
 
     # compute diff(f(g)) * diff(g)
     def einsum_bixy_bixy(A, B):
@@ -500,25 +494,25 @@ def second_order_pino_grads(
     # print(weights_1.shape)
     # print(diff_tanh.shape)
     # print(weights_2.shape)
-    b, i, k, m, x, y = (
-        diff_tanh.shape[0], # b
-        weights_1.shape[1], # i
-        weights_2.shape[0], # k
-        weights_1.shape[0], # m
-        diff_tanh.shape[2], # x
-        diff_tanh.shape[3], # y
-    )
-    weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
-    diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
-    weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
-    diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
-
-    # diff_fg = paddle.einsum(
-    #     "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
-    #     weights_1,
-    #     diff_tanh,
-    #     weights_2,
+    # b, i, k, m, x, y = (
+    #     diff_tanh.shape[0], # b
+    #     weights_1.shape[1], # i
+    #     weights_2.shape[0], # k
+    #     weights_1.shape[0], # m
+    #     diff_tanh.shape[2], # x
+    #     diff_tanh.shape[3], # y
     # )
+    # weights_1_tmp = paddle.broadcast_to(weights_1.transpose((1, 0, 2, 3)).unsqueeze(1).unsqueeze(0), [b, i, k, m, x, y])
+    # diff_tanh_tmp = paddle.broadcast_to(diff_tanh.unsqueeze(1).unsqueeze(1), [b, i, k, m, x, y])
+    # weights_2_tmp = paddle.broadcast_to(weights_2.unsqueeze(0).unsqueeze(0), [b, i, k, m, x, y])
+    # diff_fg = (weights_1_tmp * diff_tanh_tmp * weights_2_tmp).sum(axis=(2, 3))
+
+    diff_fg = paddle.einsum(
+        "mi" + dim_str + ",bm" + dim_str + ",km" + dim_str + "->bi" + dim_str,
+        weights_1,
+        diff_tanh,
+        weights_2,
+    )
 
     # compute diagonal of hessian
     # double derivative of hidden layer

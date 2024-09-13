@@ -67,8 +67,8 @@ def _no_grad_trunc_normal_(tensor, mean, std, a, b):
         tensor = tensor * std * math.sqrt(2.0)
         tensor.add_(paddle.to_tensor(mean))
 
-        # Clamp to ensure it's in the proper range
-        tensor.clamp_(min=a, max=b)
+        # clip to ensure it's in the proper range
+        paddle.assign(tensor.clip(min=a, max=b), tensor)
         return tensor
 
 

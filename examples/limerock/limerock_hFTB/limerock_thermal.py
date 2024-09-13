@@ -187,6 +187,8 @@ def run(cfg: ModulusConfig) -> None:
         loss=modulus.sym.loss.PointwiseLossNorm(name="inlet"),
     )
     cycle_1_domain.add_constraint(inlet, "inlet")
+    for m in cycle_1_domain.get_saveable_models():
+        print("inlet", m.checkpoint_filename)
 
     # outlet
     outlet = PointwiseBoundaryConstraint(
@@ -199,6 +201,8 @@ def run(cfg: ModulusConfig) -> None:
         loss=modulus.sym.loss.PointwiseLossNorm(name="outlet"),
     )
     cycle_1_domain.add_constraint(outlet, "outlet")
+    for m in cycle_1_domain.get_saveable_models():
+        print("outlet", m.checkpoint_filename)
 
     # channel walls insulating
     walls = PointwiseBoundaryConstraint(

@@ -33,7 +33,7 @@ class FirstDerivO2_f(PyLayer):
 
     @staticmethod
     def backward(ctx, grad_output):
-        return ctx.c0 * grad_output, ctx.c1 * grad_output, None
+        return ctx.c0 * grad_output, ctx.c1 * grad_output
 
 
 class FirstDerivO4_f(PyLayer):
@@ -53,7 +53,6 @@ class FirstDerivO4_f(PyLayer):
             ctx.c1 * grad_output,
             ctx.c2 * grad_output,
             ctx.c3 * grad_output,
-            None,
         )
 
 
@@ -71,7 +70,6 @@ class SecondDerivO2_f(PyLayer):
             ctx.c0 * grad_output,
             ctx.c1 * grad_output,
             ctx.c0 * grad_output,
-            None,
         )
 
 
@@ -98,7 +96,6 @@ class SecondDerivO4_f(PyLayer):
             ctx.c2 * grad_output,
             ctx.c1 * grad_output,
             ctx.c0 * grad_output,
-            None,
         )
 
 
@@ -117,7 +114,6 @@ class MixedSecondDerivO2_f(PyLayer):
             ctx.c1 * grad_output,
             ctx.c1 * grad_output,
             ctx.c0 * grad_output,
-            None,
         )
 
 
@@ -138,7 +134,6 @@ class ThirdDerivO2_f(PyLayer):
             ctx.c1 * grad_output,
             ctx.c2 * grad_output,
             ctx.c3 * grad_output,
-            None,
         )
 
 
@@ -167,5 +162,4 @@ class ForthDerivO2_f(PyLayer):
             ctx.c2 * grad_output,
             ctx.c3 * grad_output,
             ctx.c4 * grad_output,
-            None,
         )

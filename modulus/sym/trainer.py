@@ -832,7 +832,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.summary_histograms = self.cfg["summary_histograms"]
 
         if self.manager.cuda:
-            paddle.device.cuda.synchronize()
+            paddle.device.synchronize()
 
         # write inference / validation datasets to tensorboard and file
         if self.has_validators:
@@ -863,7 +863,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.step_str = f"[step: {self.step:10d}]"
 
         if self.manager.cuda:
-            paddle.device.cuda.synchronize()
+            paddle.device.synchronize()
 
         # write streamed results to file
         return self.record_stream

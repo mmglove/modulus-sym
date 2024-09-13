@@ -20,6 +20,7 @@ from paddle import Tensor
 
 
 import modulus.sym.models.layers as layers
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -45,7 +46,7 @@ class DGMArch(Arch):
         Number of hidden layers of the model.
     skip_connections : bool = False
         If true then apply skip connections every 2 hidden layers.
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     adaptive_activations : bool = False
         If True then use an adaptive activation function as described here
@@ -61,7 +62,7 @@ class DGMArch(Arch):
         detach_keys: List[Key] = [],
         layer_size: int = 512,
         nr_layers: int = 6,
-        activation_fn=layers.Activation.SIN,
+        activation_fn=Activation.SIN,
         adaptive_activations: bool = False,
         weight_norm: bool = True,
     ) -> None:
@@ -105,7 +106,7 @@ class DGMArch(Arch):
         self.fc_end = layers.FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=Activation.IDENTITY,
             weight_norm=False,
             activation_par=None,
         )
