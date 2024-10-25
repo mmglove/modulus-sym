@@ -105,6 +105,94 @@ class TimeAnalyzer(object):
         return mean(iteration_costs[2:]), loss_value
 
 
+
+class CINNMetricsParser(object):  
+    def __init__(self, filename):  
+        """
+        初始化一个类实例。
+        
+        Args:
+            filename (str): 需要处理的文件名。
+        
+        Raises:
+            ValueError: 如果filename为None，则抛出ValueError异常，提示需要指定文件名。
+        
+        Attributes:
+            filename (str): 处理的文件名。
+            compiling_program_times (list): 编译程序时间列表。
+            compression_ratios (list): 压缩比率列表。
+        """
+        if filename is None:  
+            raise ValueError("Please specify the filename!")  
+        self.filename = filename  
+        self.compiling_program_times = []  
+        self.compression_ratios = []  
+  
+    def parse_metrics(self):  
+        """
+        解析文件中的编译时间和压缩比率。
+        
+        Args:
+            无
+        
+        Returns:
+            无
+        
+        Raises:
+            无
+        
+        """
+        # 定义正则表达式来匹配编译时间和压缩比率  
+        compiling_time_pattern = r"Time of lowering and compiling program: .*?\[ (\d+) \] .*?seconds\."  
+        compression_ratio_pattern = r"compression ratio: \d+/\d+ = ([0-9\.]+)"  
+ 
+  
+        with open(self.filename, "r") as f_object:  
+            for line in f_object:  
+                # 匹配编译时间  
+                compiling_time_match = re.search(compiling_time_pattern, line)  
+                if compiling_time_match:  
+                    self.compiling_program_times.append(int(compiling_time_match.group(1)))  
+  
+                # 匹配压缩比率  
+                compression_ratio_match = re.search(compression_ratio_pattern, line)  
+                if compression_ratio_match:  
+                    self.compression_ratios.append(float(compression_ratio_match.group(1)))  
+        print("compiling_program_times:", self.compiling_program_times, 
+            "compression_ratios:", self.compression_ratios)
+
+    def get_average_compiling_program_time(self):
+        """
+        获取编译程序时间的平均值。
+        
+        Args:
+            无
+        
+        Returns:
+            float: 如果self.compiling_program_times不为空，则返回编译程序时间的平均值；
+                 如果为空，则返回None（或者根据您的需求抛出异常）。
+        
+        """
+        if not self.compiling_program_times:  
+            return -1  
+        return sum(self.compiling_program_times) / len(self.compiling_program_times)  
+  
+    def get_average_compression_ratio(self):
+        """
+        获取平均压缩率
+        
+        Args:
+            无
+        
+        Returns:
+            float: 平均压缩率，如果压缩率列表为空则返回 None
+        
+        """
+        if not self.compression_ratios:  
+            return -1
+        return sum(self.compression_ratios) / len(self.compression_ratios)
+
+
 if __name__ == "__main__":
     args = parse_args()
     run_info = dict()
@@ -148,7 +236,11 @@ if __name__ == "__main__":
         analyzer = TimeAnalyzer(args.filename, args.keyword, args.loss_keyword)
         run_info["ips"], run_info["convergence_value"] = analyzer.get_iteration_cost()
         run_info["speed_unit"] = "ms/iteration"
-
+        if 'data_attribute' in os.environ and 'cinn' in os.environ['data_attribute']:
+            cinn_metrics_parser = CINNMetricsParser(args.filename)
+            cinn_metrics_parser.parse_metrics()
+            run_info['avg_cinn_compiling_time'] = cinn_metrics_parser.get_average_compiling_program_time()
+            run_info['avg_cinn_compression_ratio'] = cinn_metrics_parser.get_average_compression_ratio()
     except Exception:
         traceback.print_exc()
     print(
